@@ -82,7 +82,6 @@
 
   <!-- Filter Bar -->
   <nav class="product-filter">
-    <h1>Mugs</h1>
     <div class="sort">
       <div class="collection-sort">
         <label>Collection:</label>
@@ -117,23 +116,51 @@
 
     function filterFunc() {
       var val = document.getElementById('sel1').value;
-      document.querySelectorAll('#sectionpart .product-card').forEach(function(card) {
-        card.style.display = (val === 'all' || card.getAttribute('data-collection') === val) ? '' : 'none';
+      document.querySelectorAll('#sectionpart .collection-group').forEach(function(group) {
+        group.style.display = (val === 'all' || group.dataset.collection === val) ? '' : 'none';
       });
     }
 
     function sortFunc() {
       var val = document.getElementById('sel2').value;
-      var section = document.getElementById('sectionpart');
-      var cards = Array.from(section.querySelectorAll('.product-card'));
-      if (val === 'price-asc') {
-        cards.sort(function(a, b) { return parseFloat(a.dataset.price) - parseFloat(b.dataset.price); });
-      } else if (val === 'price-desc') {
-        cards.sort(function(a, b) { return parseFloat(b.dataset.price) - parseFloat(a.dataset.price); });
-      } else {
-        cards.sort(function(a, b) { return (a.dataset.sort || a.id) > (b.dataset.sort || b.id) ? 1 : -1; });
-      }
-      cards.forEach(function(c) { section.appendChild(c); });
+      document.querySelectorAll('#sectionpart .collection-group').forEach(function(group) {
+        var grid = group.querySelector('.collection-group-grid');
+        var cards = Array.from(grid.querySelectorAll('.product-card'));
+        if (val === 'price-asc') {
+          cards.sort(function(a, b) { return parseFloat(a.dataset.price) - parseFloat(b.dataset.price); });
+        } else if (val === 'price-desc') {
+          cards.sort(function(a, b) { return parseFloat(b.dataset.price) - parseFloat(a.dataset.price); });
+        } else {
+          cards.sort(function(a, b) { return parseInt(a.dataset.sort || 0) - parseInt(b.dataset.sort || 0); });
+        }
+        cards.forEach(function(c) { grid.appendChild(c); });
+      });
+    }
+
+    function cardHTML(p) {
+      var img = p.image || p.imageLeft || p.imageCenter || p.imageRight || '';
+      var badge = collectionBadges[p.collection] || '';
+      var label = collectionLabels[p.collection] || escH(p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
+      var pid = p.printifyIdLeft || p.printifyProductId || '';
+      var vid = p.variantIdLeft  || p.variantId        || '';
+      return '<div class="product-card" id="' + escH(p.id) + '" data-collection="' + escH(p.collection) + '" data-price="' + p.price + '" data-sort="' + p.sortOrder + '">' +
+        '<div class="product-image"><a href="item.html?id=' + escH(p.id) + '"><img src="' + escH(img) + '" class="primg0" alt="' + escH(p.pname) + '" onerror="this.style.opacity=\'0.3\'"/></a></div>' +
+        '<div class="product-info">' +
+          '<span class="collection-badge ' + escH(badge) + '">' + label + '</span>' +
+          '<h5>' + escH(p.pname) + '</h5>' +
+          '<h6>$' + parseFloat(p.price).toFixed(2) + '</h6>' +
+          '<span class="rating" data-default-rating="' + escH(p.rating) + '"></span>' +
+          '<button class="card-add-btn" onclick="Cart.add(' +
+            '\'' + escH(p.id) + '\',' +
+            '\'' + escH(p.pname).replace(/'/g, "\\'") + '\',' +
+            p.price + ',' +
+            '\'' + escH(img) + '\',' +
+            '1,' +
+            '\'' + escH(pid) + '\',' +
+            '\'' + escH(vid) + '\')">Add to Cart</button>' +
+          '<a href="item.html?id=' + escH(p.id) + '" class="card-view-link">View Details &rsaquo;</a>' +
+        '</div>' +
+      '</div>';
     }
 
     function renderCollections() {
@@ -144,47 +171,33 @@
         return;
       }
 
-      // Build unique collection options dynamically
-      var seen = {};
+      // Group products by collection (preserving insertion order)
+      var groups = {};
+      var order = [];
       prodb.forEach(function(p) {
-        if (!seen[p.collection]) {
-          seen[p.collection] = true;
+        if (!groups[p.collection]) {
+          groups[p.collection] = [];
+          order.push(p.collection);
+          // Add to filter dropdown
           var label = collectionLabels[p.collection] || (p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
           var opt = document.createElement('option');
           opt.value = p.collection;
           opt.textContent = label.replace(/&amp;/g, '&');
           sel.appendChild(opt);
         }
+        groups[p.collection].push(p);
       });
 
-      // Render cards
-      section.innerHTML = prodb.map(function(p) {
-        var img = p.image || p.imageLeft || p.imageCenter || p.imageRight || '';
-        var badge = collectionBadges[p.collection] || '';
-        var label = collectionLabels[p.collection] || escH(p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
-        var pid = p.printifyIdLeft || p.printifyProductId || '';
-        var vid = p.variantIdLeft  || p.variantId        || '';
-        return '<div class="product-card" id="' + escH(p.id) + '" data-collection="' + escH(p.collection) + '" data-price="' + p.price + '" data-sort="' + p.sortOrder + '">' +
-          '<div class="product-image"><a href="item.html?id=' + escH(p.id) + '"><img src="' + escH(img) + '" class="primg0" alt="' + escH(p.pname) + '" onerror="this.style.opacity=\'0.3\'"/></a></div>' +
-          '<div class="product-info">' +
-            '<span class="collection-badge ' + escH(badge) + '">' + label + '</span>' +
-            '<h5>' + escH(p.pname) + '</h5>' +
-            '<h6>$' + parseFloat(p.price).toFixed(2) + '</h6>' +
-            '<span class="rating" data-default-rating="' + escH(p.rating) + '"></span>' +
-            '<button class="card-add-btn" onclick="Cart.add(' +
-              '\'' + escH(p.id) + '\',' +
-              '\'' + escH(p.pname).replace(/'/g, "\\'") + '\',' +
-              p.price + ',' +
-              '\'' + escH(img) + '\',' +
-              '1,' +
-              '\'' + escH(pid) + '\',' +
-              '\'' + escH(vid) + '\')">Add to Cart</button>' +
-            '<a href="item.html?id=' + escH(p.id) + '" class="card-view-link">View Details &rsaquo;</a>' +
-          '</div>' +
+      // Render each collection as a labelled group
+      section.innerHTML = order.map(function(col) {
+        var label = (collectionLabels[col] || (col.charAt(0).toUpperCase() + col.slice(1))).replace(/&amp;/g, '&');
+        return '<div class="collection-group" data-collection="' + escH(col) + '">' +
+          '<p class="collection-group-heading">' + escH(label) + '</p>' +
+          '<div class="collection-group-grid">' + groups[col].map(cardHTML).join('') + '</div>' +
         '</div>';
       }).join('');
 
-      // Init star ratings on newly rendered elements
+      // Init star ratings
       var ratings = section.getElementsByClassName('rating');
       for (var i = 0; i < ratings.length; i++) { new SimpleStarRating(ratings[i]); }
 
