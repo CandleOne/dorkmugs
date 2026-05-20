@@ -1308,6 +1308,19 @@ function pmCreate() {
   if (!designUrl) {
     errEl.textContent = 'Design image URL is required.'; errEl.style.display = 'block'; return;
   }
+  // Auto-convert Cloudinary console thumbnail URLs to public delivery URLs
+  // Format: res-console.cloudinary.com/{cloud}/thumbnails/transform/v1/image/upload/{xfmB64}/v\d+/{publicIdB64}/...
+  var cdnMatch = designUrl.match(/^https?:\/\/res-console\.cloudinary\.com\/([^/]+)\/thumbnails\/transform\/v1\/image\/upload\/[^/]+\/v\d+\/([^/]+)/);
+  if (cdnMatch) {
+    try {
+      var publicId = atob(cdnMatch[2]);
+      designUrl = 'https://res.cloudinary.com/' + cdnMatch[1] + '/image/upload/' + publicId;
+      document.getElementById('pm-design-url').value = designUrl;
+    } catch(e) {
+      errEl.textContent = 'Could not parse Cloudinary console URL — please use a direct delivery URL from the Cloudinary Media Library.';
+      errEl.style.display = 'block'; return;
+    }
+  }
   // Warn if the URL looks like an image host viewer page rather than a direct image
   if (/^https?:\/\/(ibb\.co|imgur\.com\/(?!.*\.(png|jpe?g|gif|webp)))[^/]/.test(designUrl) &&
       !/\.(png|jpe?g|gif|webp)(\?|$)/i.test(designUrl)) {
