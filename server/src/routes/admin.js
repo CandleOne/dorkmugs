@@ -23,6 +23,12 @@ router.patch('/orders/:id/status', ctrl.updateOrderStatus);
 router.get('/printify/products', ctrl.listPrintifyProducts);
 router.post('/printify/orders/:printifyOrderId/send', ctrl.sendPrintifyOrderToProduction);
 
+// Printify catalog + mug creator
+router.get('/printify/blueprints', ctrl.printifyCatalogBlueprints);
+router.get('/printify/blueprints/:bid/providers', ctrl.printifyCatalogProviders);
+router.get('/printify/blueprints/:bid/providers/:pid/variants', ctrl.printifyCatalogVariants);
+router.post('/printify/create-mug', ctrl.printifyCreateMug);
+
 // Shop Products (catalog management)
 router.get('/shop-products', ctrl.adminListShopProducts);
 router.post('/shop-products', ctrl.createShopProduct);

@@ -314,6 +314,88 @@
         </div>
       </div>
 
+      <!-- Printify Mug Creator -->
+      <div class="sm-section-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span><i class="fas fa-magic"></i> Create Mug in Printify</span>
+        <button type="button" id="pm-toggle-btn" onclick="pmToggle()" style="background:none;border:1px solid #bbb;border-radius:6px;padding:2px 10px;font-size:.8rem;cursor:pointer;color:#555">Expand</button>
+      </div>
+      <div id="pm-wizard" style="display:none;background:#f8f9fb;border:1px solid #e0e3e8;border-radius:8px;padding:14px 16px;margin-bottom:14px">
+        <!-- Step 1: Blueprint search -->
+        <div id="pm-step1">
+          <div class="sm-form-group" style="margin-bottom:8px">
+            <label style="font-weight:600">Step 1 — Choose mug type</label>
+            <input type="text" id="pm-bp-search" placeholder="Search blueprints e.g. mug…" oninput="pmFilterBlueprints()" style="margin-top:6px" />
+          </div>
+          <div id="pm-bp-list" style="max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;background:#fff"></div>
+          <div id="pm-bp-selected" style="display:none;margin-top:8px;font-size:.82rem;color:#2255aa;font-weight:600"></div>
+        </div>
+        <!-- Step 2: Provider -->
+        <div id="pm-step2" style="display:none;margin-top:12px">
+          <div class="sm-form-group" style="margin-bottom:8px">
+            <label style="font-weight:600">Step 2 — Choose print provider</label>
+          </div>
+          <div id="pm-prov-list" style="border:1px solid #ddd;border-radius:6px;background:#fff;max-height:130px;overflow-y:auto"></div>
+          <div id="pm-prov-selected" style="display:none;margin-top:6px;font-size:.82rem;color:#2255aa;font-weight:600"></div>
+        </div>
+        <!-- Step 3: Variants -->
+        <div id="pm-step3" style="display:none;margin-top:12px">
+          <div class="sm-form-group" style="margin-bottom:6px">
+            <label style="font-weight:600">Step 3 — Map variants to positions</label>
+            <p style="font-size:.78rem;color:#777;margin:2px 0 8px">Pick one variant per position (or the same variant for all three).</p>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="pm-variant-selects">
+            <div>
+              <label style="font-size:.78rem;font-weight:600;display:block;margin-bottom:3px">Left</label>
+              <select id="pm-var-left" style="width:100%;font-size:.78rem"></select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:600;display:block;margin-bottom:3px">Center</label>
+              <select id="pm-var-center" style="width:100%;font-size:.78rem"></select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:600;display:block;margin-bottom:3px">Right</label>
+              <select id="pm-var-right" style="width:100%;font-size:.78rem"></select>
+            </div>
+          </div>
+        </div>
+        <!-- Step 4: Design + details -->
+        <div id="pm-step4" style="display:none;margin-top:12px">
+          <label style="font-weight:600">Step 4 — Design &amp; details</label>
+          <div class="sm-form-row" style="margin-top:8px">
+            <div class="sm-form-group">
+              <label for="pm-design-url">Design Image URL</label>
+              <input type="url" id="pm-design-url" placeholder="https://…/design.png" />
+            </div>
+            <div class="sm-form-group">
+              <label for="pm-print-pos">Print Position</label>
+              <select id="pm-print-pos">
+                <option value="front">Front</option>
+                <option value="back">Back</option>
+                <option value="left_chest">Left Chest</option>
+                <option value="right_chest">Right Chest</option>
+              </select>
+            </div>
+          </div>
+          <div class="sm-form-row">
+            <div class="sm-form-group">
+              <label for="pm-title">Printify Product Title</label>
+              <input type="text" id="pm-title" placeholder="Auto-filled from product name" />
+            </div>
+            <div class="sm-form-group">
+              <label for="pm-price-cents">Price (cents, e.g. 1999)</label>
+              <input type="number" id="pm-price-cents" placeholder="1999" min="0" step="1" />
+            </div>
+          </div>
+        </div>
+        <!-- Action -->
+        <div id="pm-action" style="display:none;margin-top:12px;display:none">
+          <div id="pm-error" style="display:none;color:#b00020;font-size:.82rem;margin-bottom:8px"></div>
+          <button type="button" id="pm-create-btn" onclick="pmCreate()" class="btn-sm btn-primary" style="width:100%">
+            <i class="fas fa-magic"></i> Create Mug Product in Printify
+          </button>
+        </div>
+      </div>
+
       <!-- Left placement -->
       <div class="sm-section-title"><i class="fas fa-align-left"></i> Left Placement</div>
       <div class="sm-form-group">
@@ -1045,6 +1127,188 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
+
+// ─── Printify Mug Creator Wizard ──────────────────────────────────────────────
+
+var pmBlueprintsAll = [];
+var pmSelectedBlueprint = null;
+var pmSelectedProvider = null;
+
+function pmToggle() {
+  var w = document.getElementById('pm-wizard');
+  var btn = document.getElementById('pm-toggle-btn');
+  if (w.style.display === 'none') {
+    w.style.display = 'block';
+    btn.textContent = 'Collapse';
+    if (!pmBlueprintsAll.length) pmLoadBlueprints();
+    // Pre-fill title from product name
+    var pname = document.getElementById('sm-pname').value;
+    if (pname) document.getElementById('pm-title').value = pname;
+  } else {
+    w.style.display = 'none';
+    btn.textContent = 'Expand';
+  }
+}
+
+function pmLoadBlueprints() {
+  var list = document.getElementById('pm-bp-list');
+  list.innerHTML = '<div style="padding:8px;color:#888;font-size:.82rem">Loading…</div>';
+  apiFetch('/admin/printify/blueprints').then(function(data) {
+    pmBlueprintsAll = Array.isArray(data) ? data : [];
+    pmFilterBlueprints();
+  }).catch(function() {
+    list.innerHTML = '<div style="padding:8px;color:#b00;font-size:.82rem">Failed to load blueprints.</div>';
+  });
+}
+
+function pmFilterBlueprints() {
+  var q = (document.getElementById('pm-bp-search').value || '').toLowerCase();
+  var filtered = q
+    ? pmBlueprintsAll.filter(function(b) { return b.title.toLowerCase().includes(q); })
+    : pmBlueprintsAll;
+  var list = document.getElementById('pm-bp-list');
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:8px;color:#888;font-size:.82rem">No matches.</div>';
+    return;
+  }
+  list.innerHTML = filtered.slice(0, 60).map(function(b) {
+    return '<div onclick="pmSelectBlueprint(' + b.id + ',\'' + esc(b.title) + '\')" ' +
+      'style="padding:7px 10px;cursor:pointer;font-size:.82rem;border-bottom:1px solid #f0f0f0" ' +
+      'onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'\'">' +
+      esc(b.title) + ' <span style="color:#999;font-size:.74rem">#' + b.id + '</span></div>';
+  }).join('');
+}
+
+function pmSelectBlueprint(id, title) {
+  pmSelectedBlueprint = { id: id, title: title };
+  pmSelectedProvider = null;
+  document.getElementById('pm-bp-selected').style.display = 'block';
+  document.getElementById('pm-bp-selected').textContent = '✓ ' + title;
+  document.getElementById('pm-bp-list').style.display = 'none';
+  document.getElementById('pm-bp-search').style.display = 'none';
+  // Load providers
+  var step2 = document.getElementById('pm-step2');
+  var provList = document.getElementById('pm-prov-list');
+  step2.style.display = 'block';
+  provList.innerHTML = '<div style="padding:8px;color:#888;font-size:.82rem">Loading providers…</div>';
+  document.getElementById('pm-step3').style.display = 'none';
+  document.getElementById('pm-step4').style.display = 'none';
+  document.getElementById('pm-action').style.display = 'none';
+  apiFetch('/admin/printify/blueprints/' + id + '/providers').then(function(data) {
+    var providers = Array.isArray(data) ? data : [];
+    if (!providers.length) {
+      provList.innerHTML = '<div style="padding:8px;color:#888;font-size:.82rem">No providers available.</div>';
+      return;
+    }
+    provList.innerHTML = providers.map(function(p) {
+      return '<div onclick="pmSelectProvider(' + p.id + ',\'' + esc(p.title) + '\')" ' +
+        'style="padding:7px 10px;cursor:pointer;font-size:.82rem;border-bottom:1px solid #f0f0f0" ' +
+        'onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'\'">' +
+        esc(p.title) + ' <span style="color:#999;font-size:.74rem">#' + p.id + '</span></div>';
+    }).join('');
+  }).catch(function() {
+    provList.innerHTML = '<div style="padding:8px;color:#b00;font-size:.82rem">Failed to load providers.</div>';
+  });
+}
+
+function pmSelectProvider(id, title) {
+  pmSelectedProvider = { id: id, title: title };
+  document.getElementById('pm-prov-selected').style.display = 'block';
+  document.getElementById('pm-prov-selected').textContent = '✓ ' + title;
+  document.getElementById('pm-prov-list').style.display = 'none';
+  // Load variants
+  var step3 = document.getElementById('pm-step3');
+  step3.style.display = 'block';
+  document.getElementById('pm-step4').style.display = 'none';
+  document.getElementById('pm-action').style.display = 'none';
+  ['pm-var-left','pm-var-center','pm-var-right'].forEach(function(sid) {
+    document.getElementById(sid).innerHTML = '<option value="">Loading…</option>';
+  });
+  apiFetch('/admin/printify/blueprints/' + pmSelectedBlueprint.id + '/providers/' + id + '/variants').then(function(data) {
+    var variants = (data && data.variants) ? data.variants : (Array.isArray(data) ? data : []);
+    if (!variants.length) {
+      ['pm-var-left','pm-var-center','pm-var-right'].forEach(function(sid) {
+        document.getElementById(sid).innerHTML = '<option value="">No variants</option>';
+      });
+      return;
+    }
+    var opts = variants.map(function(v) {
+      return '<option value="' + v.id + '">' + esc(v.title || v.id) + '</option>';
+    }).join('');
+    ['pm-var-left','pm-var-center','pm-var-right'].forEach(function(sid) {
+      document.getElementById(sid).innerHTML = opts;
+    });
+    document.getElementById('pm-step4').style.display = 'block';
+    document.getElementById('pm-action').style.display = 'block';
+  }).catch(function() {
+    ['pm-var-left','pm-var-center','pm-var-right'].forEach(function(sid) {
+      document.getElementById(sid).innerHTML = '<option value="">Error loading</option>';
+    });
+  });
+}
+
+function pmCreate() {
+  var btn = document.getElementById('pm-create-btn');
+  var errEl = document.getElementById('pm-error');
+  errEl.style.display = 'none';
+  if (!pmSelectedBlueprint || !pmSelectedProvider) {
+    errEl.textContent = 'Please complete all steps first.'; errEl.style.display = 'block'; return;
+  }
+  var designUrl = document.getElementById('pm-design-url').value.trim();
+  if (!designUrl) {
+    errEl.textContent = 'Design image URL is required.'; errEl.style.display = 'block'; return;
+  }
+  var title = document.getElementById('pm-title').value.trim() || document.getElementById('sm-pname').value.trim() || 'Mug';
+  var priceCents = parseInt(document.getElementById('pm-price-cents').value, 10) || 1999;
+  var position = document.getElementById('pm-print-pos').value;
+  var variants = [
+    { id: document.getElementById('pm-var-left').value,   role: 'left' },
+    { id: document.getElementById('pm-var-center').value, role: 'center' },
+    { id: document.getElementById('pm-var-right').value,  role: 'right' },
+  ].filter(function(v) { return v.id; });
+  // Deduplicate variants by id (keep unique IDs, preserve all roles)
+  var seen = {};
+  variants.forEach(function(v) { seen[v.id] = seen[v.id] || []; seen[v.id].push(v.role); });
+
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  apiFetch('/admin/printify/create-mug', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: title,
+      blueprintId: pmSelectedBlueprint.id,
+      providerId: pmSelectedProvider.id,
+      variants: variants,
+      designUrl: designUrl,
+      position: position,
+      price: priceCents,
+    }),
+  }).then(function(result) {
+    // Auto-fill all six Printify ID fields
+    document.getElementById('sm-pid-left').value   = result.printifyId;
+    document.getElementById('sm-vid-left').value   = result.variantIdLeft;
+    document.getElementById('sm-pid-center').value = result.printifyId;
+    document.getElementById('sm-vid-center').value = result.variantIdCenter;
+    document.getElementById('sm-pid-right').value  = result.printifyId;
+    document.getElementById('sm-vid-right').value  = result.variantIdRight;
+    btn.textContent = '✓ Done! IDs filled below.';
+    btn.style.background = '#27ae60';
+    // Collapse wizard after 2s
+    setTimeout(function() {
+      document.getElementById('pm-wizard').style.display = 'none';
+      document.getElementById('pm-toggle-btn').textContent = 'Expand';
+      btn.disabled = false;
+      btn.textContent = 'Create Mug Product in Printify';
+      btn.style.background = '';
+    }, 2000);
+  }).catch(function(err) {
+    errEl.textContent = (err && err.message) || 'Failed to create product.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Create Mug Product in Printify';
+  });
+}
 </script>
 </body>
 </html>

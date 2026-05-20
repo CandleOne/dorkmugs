@@ -75,6 +75,53 @@ async function calculateShipping(addressTo, lineItems) {
   return data;
 }
 
+// ─── Catalog ─────────────────────────────────────────────────────────────────
+
+/** List all blueprints (product types) in the Printify catalog */
+async function getBlueprints() {
+  const { data } = await client.get('/catalog/blueprints.json');
+  return data; // array of { id, title, brand, model, images, ... }
+}
+
+/** List print providers available for a given blueprint */
+async function getBlueprintProviders(blueprintId) {
+  const { data } = await client.get(`/catalog/blueprints/${blueprintId}/print_providers.json`);
+  return data; // array of { id, title, location }
+}
+
+/** List variants for a blueprint + provider combination */
+async function getBlueprintVariants(blueprintId, providerId) {
+  const { data } = await client.get(
+    `/catalog/blueprints/${blueprintId}/print_providers/${providerId}/variants.json`
+  );
+  return data; // { variants: [...], print_details: [...] }
+}
+
+// ─── Image Upload ─────────────────────────────────────────────────────────────
+
+/**
+ * Upload an image to Printify by URL.
+ * Returns the Printify image object including { id, preview_url, ... }.
+ */
+async function uploadImage(imageUrl, fileName) {
+  const { data } = await client.post('/uploads/images.json', {
+    file_name: fileName || 'design.png',
+    url: imageUrl,
+  });
+  return data;
+}
+
+// ─── Product Creation ─────────────────────────────────────────────────────────
+
+/**
+ * Create a new Printify product.
+ * @param {object} payload — see https://developers.printify.com/#products
+ */
+async function createProduct(payload) {
+  const { data } = await client.post(`/shops/${SHOP_ID}/products.json`, payload);
+  return data;
+}
+
 // ─── Webhooks ────────────────────────────────────────────────────────────────
 
 /** Register a Printify webhook for a given topic */
@@ -97,6 +144,11 @@ module.exports = {
   sendOrderToProduction,
   cancelOrder,
   calculateShipping,
+  getBlueprints,
+  getBlueprintProviders,
+  getBlueprintVariants,
+  uploadImage,
+  createProduct,
   registerWebhook,
   listWebhooks,
 };

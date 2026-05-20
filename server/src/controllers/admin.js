@@ -337,7 +337,101 @@ async function deleteAdminCollection(req, res) {
   return res.json({ ok: true });
 }
 
-// ─── Image Assets ─────────────────────────────────────────────────────────────
+// ─── Printify Catalog / Mug Creator ──────────────────────────────────────────
+
+// GET /api/admin/printify/blueprints
+async function printifyCatalogBlueprints(req, res) {
+  try {
+    const blueprints = await printify.getBlueprints();
+    return res.json(blueprints);
+  } catch (err) {
+    return res.status(502).json({ error: 'Could not fetch Printify blueprints.' });
+  }
+}
+
+// GET /api/admin/printify/blueprints/:bid/providers
+async function printifyCatalogProviders(req, res) {
+  try {
+    const providers = await printify.getBlueprintProviders(req.params.bid);
+    return res.json(providers);
+  } catch (err) {
+    return res.status(502).json({ error: 'Could not fetch providers.' });
+  }
+}
+
+// GET /api/admin/printify/blueprints/:bid/providers/:pid/variants
+async function printifyCatalogVariants(req, res) {
+  try {
+    const data = await printify.getBlueprintVariants(req.params.bid, req.params.pid);
+    return res.json(data);
+  } catch (err) {
+    return res.status(502).json({ error: 'Could not fetch variants.' });
+  }
+}
+
+/**
+ * POST /api/admin/printify/create-mug
+ * Body: { title, blueprintId, providerId, variants: [{id, role}], designUrl, position, price }
+ *   - variants: array of { id: variantId, role: 'left'|'center'|'right' }
+ *   - position: Printify print area position string, default 'front'
+ *   - price: cents (integer)
+ * Creates ONE Printify product with the given variants and returns the product ID + variant map.
+ */
+async function printifyCreateMug(req, res) {
+  const { title, blueprintId, providerId, variants, designUrl, position, price } = req.body || {};
+  if (!blueprintId || !providerId || !variants || !variants.length || !designUrl) {
+    return res.status(400).json({ error: 'blueprintId, providerId, variants, and designUrl are required.' });
+  }
+
+  // 1. Upload design image to Printify
+  let uploadedImage;
+  try {
+    const fileName = (designUrl.split('/').pop() || 'design.png').replace(/\?.*$/, '');
+    uploadedImage = await printify.uploadImage(designUrl, fileName);
+  } catch (err) {
+    return res.status(502).json({ error: 'Could not upload design image to Printify: ' + err.message });
+  }
+
+  const variantIds = variants.map(v => Number(v.id));
+  const printPosition = position || 'front';
+  const priceInCents = price ? Number(price) : 2000;
+
+  // 2. Create Printify product
+  let product;
+  try {
+    product = await printify.createProduct({
+      title: String(title || 'Mug').trim(),
+      blueprint_id: Number(blueprintId),
+      print_provider_id: Number(providerId),
+      variants: variantIds.map(id => ({ id, price: priceInCents, is_enabled: true })),
+      print_areas: [{
+        variant_ids: variantIds,
+        placeholders: [{
+          position: printPosition,
+          images: [{
+            id: uploadedImage.id,
+            x: 0.5, y: 0.5, scale: 1, angle: 0,
+          }],
+        }],
+      }],
+    });
+  } catch (err) {
+    return res.status(502).json({ error: 'Could not create Printify product: ' + err.message });
+  }
+
+  // 3. Build role → variantId map so the frontend can fill the form
+  const roleMap = {};
+  variants.forEach(v => { roleMap[v.role] = String(v.id); });
+
+  return res.json({
+    printifyId: product.id,
+    variantIdLeft:   roleMap.left   || '',
+    variantIdCenter: roleMap.center || '',
+    variantIdRight:  roleMap.right  || '',
+  });
+}
+
+
 
 // GET /api/admin/image-assets  — lists image files in Assets/productpreviews
 async function listImageAssets(req, res) {
@@ -374,5 +468,9 @@ module.exports = {
   createAdminCollection,
   updateAdminCollection,
   deleteAdminCollection,
+  printifyCatalogBlueprints,
+  printifyCatalogProviders,
+  printifyCatalogVariants,
+  printifyCreateMug,
   listImageAssets,
 };
