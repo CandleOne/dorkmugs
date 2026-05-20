@@ -1,0 +1,197 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dork Mugs â€“ Mugs For Dorks</title>
+<script src="./include/prodbs.js"></script>
+<link href="style.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
+  </div>
+
+  <!-- Search Bar -->
+  <div class="srcbar-wrap">
+  <form class="srcbartn" action="search.html">
+    <input type="text" id="srch001" placeholder="Search mugs & mug accessories..." name="search"
+           onclick="listFunction()" onkeyup="searchFunction()" autocomplete="off" />
+    <button type="submit"><i class="fa fa-search"></i></button>
+    <ul id="productline"></ul>
+  </form>
+  <script>
+    function listFunction() {
+      var prdlin = document.getElementById("productline");
+      var allist = "";
+      for (var i = 0; i < prodb.length; i++) {
+        allist += "<li id='liid" + i + "'><a href='product.html'>" + prodb[i].pname + "</a></li>";
+      }
+      prdlin.innerHTML = allist;
+      document.getElementById("srch001").removeAttribute("onclick");
+    }
+    function searchFunction() {
+      var filter = document.getElementById("srch001").value.toUpperCase();
+      for (var i = 0; i < prodb.length; i++) {
+        var el = document.getElementById("liid" + i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  </script>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button">Log In</button>
+      <button id="btn001" type="button">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" class="fas fa-shopping-cart fa-lg" title="View cart" aria-label="View cart"></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <img src="./Assets/Branding/mugsfordorks.png" alt="Mugs For Dorks" style="max-width:520px;width:100%;height:auto;" />
+    <p>Original designs printed on premium 11oz ceramic mugs, for your <img src="./Assets/designassets/pleasure.png" alt="for your pleasure" class="inline-pleasure-img" /></p>
+    <a href="product.html" class="cta-btn">Shop All Mugs</a>
+  </div>
+
+  <!-- Collections -->
+  <div class="content">
+    <h2>Collections</h2>
+    <div class="collections">
+      <a class="collection-card bp-card" href="search.html?filter=bp">
+        <h3>BP Collection</h3>
+        <p>Bold, provocative, and unapologetically you.</p>
+      </a>
+      <a class="collection-card fame-card" href="search.html?filter=fame">
+        <h3>Fame &amp; Infamy</h3>
+        <p>Gothic elegance for those who leave a mark.</p>
+      </a>
+      <a class="collection-card stem-card" href="search.html?filter=stem">
+        <h3>STEM Collection</h3>
+        <p>Science-themed mugs for the beautifully nerdy.</p>
+      </a>
+    </div>
+
+    <h2>Featured Products</h2>
+  </div>
+
+  <!-- Featured Products -->
+  <section class="products">
+    <div class="card">
+      <a href="item.html?id=gc01">
+        <img src="./Assets/finaldesigns/BPcollection/geneticallycursed design.png" class="primg0" alt="Genetically Cursed! Mug" />
+      </a>
+      <span class="collection-badge badge-bp">BP Collection</span>
+      <h1>Genetically Cursed! Mug</h1>
+      <span class="price-tag">$18.99</span>
+      <button class="card-add-btn" onclick="Cart.add('gc01','Genetically Cursed! Mug',18.99,'./Assets/finaldesigns/BPcollection/geneticallycursed design.png',1,'6a0d441cf34bf3e7a90b8942','65216')">Add to Cart</button>
+      <a href="item.html?id=gc01" class="card-view-link">View Details &rsaquo;</a>
+    </div>
+    <div class="card">
+      <a href="item.html?id=sg01">
+        <img src="./Assets/finaldesigns/StemCollection/spontaneousgeneration.png" class="primg0" alt="Made Via Spontaneous Generation Mug" />
+      </a>
+      <span class="collection-badge badge-stem">STEM Collection</span>
+      <h1>Made Via Spontaneous Generation Mug</h1>
+      <span class="price-tag">$19.99</span>
+      <button class="card-add-btn" onclick="Cart.add('sg01','Made Via Spontaneous Generation Mug',19.99,'./Assets/finaldesigns/StemCollection/spontaneousgeneration.png',1,'','')">Add to Cart</button>
+      <a href="item.html?id=sg01" class="card-view-link">View Details &rsaquo;</a>
+    </div>
+    <div class="card">
+      <a href="item.html?id=bi01">
+        <img src="./Assets/finaldesigns/Fame&InfamyCollection/bigep.png" class="primg0" alt="Big EP Mug" />
+      </a>
+      <span class="collection-badge badge-fame">Fame &amp; Infamy</span>
+      <h1>Big EP Mug</h1>
+      <span class="price-tag">$21.99</span>
+      <button class="card-add-btn" onclick="Cart.add('bi01','Big EP Mug',21.99,'./Assets/finaldesigns/Fame&amp;InfamyCollection/bigep.png',1,'','')">Add to Cart</button>
+      <a href="item.html?id=bi01" class="card-view-link">View Details &rsaquo;</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Info</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Shipping</a></li>
+          <li><a href="#">Returns</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+
+</div>
+
+<!-- Cart Overlay -->
+<div id="cart-overlay" class="cart-overlay"></div>
+
+<!-- Cart Drawer -->
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div id="cart-toast" class="cart-toast"></div>
+
+<script src="./include/cart.js"></script>
+<script src="./include/auth.js"></script>
+</body>
