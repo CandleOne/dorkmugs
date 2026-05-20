@@ -313,7 +313,27 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 	display: block;
 	margin-top: auto;
 }
-.bp-card, .fame-card, .stem-card { background: transparent; border-color: #1a2540; color: #1a2540; }
+.bp-card, .fame-card, .stem-card { background: #f7f8fa; border-color: #1a2540; color: #1a2540; }
+
+.btn-collections-all {
+	display: inline-block;
+	padding: 11px 28px;
+	border: 2px solid #1a2540;
+	background: #fff;
+	color: #1a2540;
+	font-size: 0.85rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	text-decoration: none;
+	transition: background 0.15s, color 0.15s;
+	border-radius: 0;
+}
+.btn-collections-all:hover {
+	background: #1a2540;
+	color: #fff;
+	text-decoration: none;
+}
 
 /* ===== Product Cards (featured grid) ===== */
 .products {
