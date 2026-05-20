@@ -7,9 +7,30 @@ function required(key) {
   return val;
 }
 
+function parseTrustProxy(value) {
+  if (value === undefined || value === null || value === '') return 1;
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'true') return 1;
+  if (normalized === 'false') return false;
+  const asNumber = Number(normalized);
+  if (!Number.isNaN(asNumber)) return asNumber;
+  return value;
+}
+
+const port = parseInt(process.env.PORT, 10) || 5000;
+const configuredOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+const localOrigins = [
+  `http://localhost:${port}`,
+  `http://127.0.0.1:${port}`,
+];
+
 module.exports = {
   env: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT, 10) || 5000,
+  port,
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
 
   jwt: {
     accessSecret: required('JWT_ACCESS_SECRET'),
@@ -40,8 +61,5 @@ module.exports = {
     from: process.env.EMAIL_FROM || 'Dork Mugs <noreply@dorkmugs.com>',
   },
 
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean),
+  allowedOrigins: Array.from(new Set([...configuredOrigins, ...localOrigins])),
 };

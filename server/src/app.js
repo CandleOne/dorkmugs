@@ -10,6 +10,9 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
+// Codespaces and many hosts run behind a reverse proxy.
+app.set('trust proxy', config.trustProxy);
+
 // ─── Security headers ─────────────────────────────────────────────────────────
 app.use(
   helmet({
@@ -25,6 +28,9 @@ app.use(
     origin: (origin, cb) => {
       // Allow no-origin requests (same-origin, Postman in dev)
       if (!origin) return cb(null, true);
+      if (config.env !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
+        return cb(null, true);
+      }
       if (config.allowedOrigins.length === 0 || config.allowedOrigins.includes(origin)) {
         return cb(null, true);
       }

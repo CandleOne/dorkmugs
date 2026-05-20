@@ -143,9 +143,14 @@ var Cart = (function () {
       body: JSON.stringify({ items: payload }),
     })
     .then(function (r) {
-      return r.json().then(function (d) {
-        if (!r.ok) throw new Error(d.error || 'Checkout failed.');
-        return d;
+      return r.text().then(function (raw) {
+        var data;
+        try { data = raw ? JSON.parse(raw) : {}; }
+        catch (_e) {
+          throw new Error('Checkout endpoint returned an unexpected response.');
+        }
+        if (!r.ok) throw new Error(data.error || 'Checkout failed.');
+        return data;
       });
     })
     .then(function (data) {

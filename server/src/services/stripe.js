@@ -4,6 +4,17 @@ const config = require('../config');
 
 const stripe = Stripe(config.stripe.secretKey);
 
+function toStripeImage(image) {
+  if (!image) return null;
+  try {
+    const url = new URL(String(image));
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.toString();
+  } catch (_err) {
+    // Ignore invalid/relative image URLs; Stripe requires absolute URLs.
+  }
+  return null;
+}
+
 /**
  * Create a Stripe Checkout Session.
  *
@@ -16,17 +27,20 @@ const stripe = Stripe(config.stripe.secretKey);
  * @returns {Promise<{id:string, url:string}>}
  */
 async function createCheckoutSession(items, metadata, successUrl, cancelUrl, customerEmail) {
-  const lineItems = items.map((item) => ({
-    price_data: {
-      currency: 'usd',
-      product_data: {
-        name: item.name,
-        ...(item.image ? { images: [item.image] } : {}),
+  const lineItems = items.map((item) => {
+    const imageUrl = toStripeImage(item.image);
+    return {
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: item.name,
+          ...(imageUrl ? { images: [imageUrl] } : {}),
+        },
+        unit_amount: Math.round(item.price), // already in cents
       },
-      unit_amount: Math.round(item.price), // already in cents
-    },
-    quantity: item.qty,
-  }));
+      quantity: item.qty,
+    };
+  });
 
   const sessionParams = {
     payment_method_types: ['card'],
