@@ -1258,6 +1258,12 @@ function pmCreate() {
   if (!designUrl) {
     errEl.textContent = 'Design image URL is required.'; errEl.style.display = 'block'; return;
   }
+  // Warn if the URL looks like an image host viewer page rather than a direct image
+  if (/^https?:\/\/(ibb\.co|imgur\.com\/(?!.*\.(png|jpe?g|gif|webp)))[^/]/.test(designUrl) &&
+      !/\.(png|jpe?g|gif|webp)(\?|$)/i.test(designUrl)) {
+    errEl.textContent = 'That looks like a viewer page URL, not a direct image URL. On imgbb choose "Direct links" in the Embed codes dropdown to get a URL ending in .png/.jpg.';
+    errEl.style.display = 'block'; return;
+  }
   var title = document.getElementById('pm-title').value.trim() || document.getElementById('sm-pname').value.trim() || 'Mug';
   var priceCents = parseInt(document.getElementById('pm-price-cents').value, 10) || 1999;
   var position = document.getElementById('pm-print-pos').value;
