@@ -171,7 +171,7 @@
           '<span class="collection-badge ' + esc(badge) + '">' + esc(label) + '</span>' +
           '<h1>' + esc(product.pname) + '</h1>' +
           '<p class="item-price" id="item-price">$' + product.price.toFixed(2) + '</p>' +
-          '<p class="item-desc">' + esc(product.description) + ' Printed on a premium 11oz ceramic mug.</p>' +
+          '<p class="item-desc">' + esc(product.description || 'Printed on a premium 11oz ceramic mug.') + '</p>' +
           '<span class="rating item-rating" data-default-rating="' + esc(product.rating) + '"></span>' +
           '<form class="pform item-form">' +
             '<div class="placement-selector">' +
