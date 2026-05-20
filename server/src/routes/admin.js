@@ -29,4 +29,6 @@ router.post('/shop-products', ctrl.createShopProduct);
 router.patch('/shop-products/:id', ctrl.updateShopProduct);
 router.delete('/shop-products/:id', ctrl.deleteShopProduct);
 
+router.get('/image-assets', ctrl.listImageAssets);
+
 module.exports = router;

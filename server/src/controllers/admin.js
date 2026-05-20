@@ -1,4 +1,6 @@
 // src/controllers/admin.js — admin-only operations
+const path = require('path');
+const fs   = require('fs').promises;
 const { PrismaClient } = require('@prisma/client');
 const printify = require('../services/printify');
 const emailSvc = require('../services/email');
@@ -267,6 +269,23 @@ async function deleteShopProduct(req, res) {
   return res.json({ ok: true });
 }
 
+// ─── Image Assets ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/image-assets  — lists image files in Assets/productpreviews
+async function listImageAssets(req, res) {
+  const dir = path.resolve(__dirname, '../../../../Assets/productpreviews');
+  try {
+    const files = await fs.readdir(dir);
+    const images = files
+      .filter(f => /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(f))
+      .sort()
+      .map(f => './Assets/productpreviews/' + f);
+    return res.json({ images });
+  } catch {
+    return res.json({ images: [] });
+  }
+}
+
 module.exports = {
   getStats,
   listUsers,
@@ -282,4 +301,5 @@ module.exports = {
   createShopProduct,
   updateShopProduct,
   deleteShopProduct,
+  listImageAssets,
 };

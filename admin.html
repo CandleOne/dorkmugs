@@ -106,6 +106,26 @@
   .pub-yes { background: #d4edda; color: #155724; }
   .pub-no  { background: #e2e3e5; color: #555; }
 
+  /* Image picker */
+  .sm-img-picker { display: flex; gap: 12px; align-items: flex-start; }
+  .sm-img-picker-preview { flex-shrink: 0; width: 110px; height: 110px; border-radius: 8px;
+    border: 2px solid #d1dae6; background: #f7f9fc; display: flex; align-items: center;
+    justify-content: center; overflow: hidden; position: relative; }
+  .sm-img-picker-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .sm-img-picker-preview img.visible { display: block; }
+  .sm-img-picker-preview-label { font-size: .72rem; color: #aaa; text-align: center; padding: 4px; pointer-events: none; }
+  .sm-img-picker-grid { flex: 1; max-height: 110px; overflow-y: auto; display: flex;
+    flex-wrap: wrap; gap: 6px; padding: 4px; border: 1.5px solid #d1dae6; border-radius: 8px;
+    background: #f7f9fc; }
+  .sm-picker-thumb { width: 48px; height: 48px; border-radius: 5px; border: 2px solid transparent;
+    cursor: pointer; object-fit: cover; flex-shrink: 0; transition: border-color .15s, transform .1s;
+    background: #eee; }
+  .sm-picker-thumb:hover { border-color: #8ab4e8; transform: scale(1.08); }
+  .sm-picker-thumb.selected { border-color: #1a6fc4; box-shadow: 0 0 0 2px #c5d8f5; }
+  .sm-picker-grid-empty { font-size: .78rem; color: #aaa; padding: 8px; align-self: center; }
+  .sm-img-picker-url { margin-top: 6px; }
+  .sm-img-picker-url input { font-size: .8rem; padding: 5px 9px; }
+
   @media (max-width: 700px) {
     .admin-layout { flex-direction: column; }
     .admin-sidebar { width: 100%; padding: 12px 0; }
@@ -277,9 +297,17 @@
       <!-- Left placement -->
       <div class="sm-section-title"><i class="fas fa-align-left"></i> Left Placement</div>
       <div class="sm-form-group">
-        <label for="sm-img-left">Image Path / URL</label>
-        <input type="text" id="sm-img-left" placeholder="./Assets/productpreviews/mug-left.png" oninput="smPreview('left')" />
-        <img class="sm-img-preview" id="sm-prev-left" alt="Left preview" />
+        <label>Image</label>
+        <div class="sm-img-picker">
+          <div class="sm-img-picker-preview" id="sm-prev-left">
+            <img id="sm-prev-left-img" alt="Left preview" />
+            <span class="sm-img-picker-preview-label" id="sm-prev-left-label">No image</span>
+          </div>
+          <div class="sm-img-picker-grid" id="sm-picker-grid-left"><span class="sm-picker-grid-empty">Loading…</span></div>
+        </div>
+        <div class="sm-img-picker-url sm-form-group" style="margin-bottom:0">
+          <input type="text" id="sm-img-left" placeholder="Or paste an external URL…" oninput="smPickUrlInput('left')" />
+        </div>
       </div>
       <div class="sm-form-row">
         <div class="sm-form-group">
@@ -295,9 +323,17 @@
       <!-- Center placement -->
       <div class="sm-section-title"><i class="fas fa-align-center"></i> Center Placement</div>
       <div class="sm-form-group">
-        <label for="sm-img-center">Image Path / URL</label>
-        <input type="text" id="sm-img-center" placeholder="./Assets/productpreviews/mug-center.png" oninput="smPreview('center')" />
-        <img class="sm-img-preview" id="sm-prev-center" alt="Center preview" />
+        <label>Image</label>
+        <div class="sm-img-picker">
+          <div class="sm-img-picker-preview" id="sm-prev-center">
+            <img id="sm-prev-center-img" alt="Center preview" />
+            <span class="sm-img-picker-preview-label" id="sm-prev-center-label">No image</span>
+          </div>
+          <div class="sm-img-picker-grid" id="sm-picker-grid-center"><span class="sm-picker-grid-empty">Loading…</span></div>
+        </div>
+        <div class="sm-img-picker-url sm-form-group" style="margin-bottom:0">
+          <input type="text" id="sm-img-center" placeholder="Or paste an external URL…" oninput="smPickUrlInput('center')" />
+        </div>
       </div>
       <div class="sm-form-row">
         <div class="sm-form-group">
@@ -313,9 +349,17 @@
       <!-- Right placement -->
       <div class="sm-section-title"><i class="fas fa-align-right"></i> Right Placement</div>
       <div class="sm-form-group">
-        <label for="sm-img-right">Image Path / URL</label>
-        <input type="text" id="sm-img-right" placeholder="./Assets/productpreviews/mug-right.png" oninput="smPreview('right')" />
-        <img class="sm-img-preview" id="sm-prev-right" alt="Right preview" />
+        <label>Image</label>
+        <div class="sm-img-picker">
+          <div class="sm-img-picker-preview" id="sm-prev-right">
+            <img id="sm-prev-right-img" alt="Right preview" />
+            <span class="sm-img-picker-preview-label" id="sm-prev-right-label">No image</span>
+          </div>
+          <div class="sm-img-picker-grid" id="sm-picker-grid-right"><span class="sm-picker-grid-empty">Loading…</span></div>
+        </div>
+        <div class="sm-img-picker-url sm-form-group" style="margin-bottom:0">
+          <input type="text" id="sm-img-right" placeholder="Or paste an external URL…" oninput="smPickUrlInput('right')" />
+        </div>
       </div>
       <div class="sm-form-row">
         <div class="sm-form-group">
@@ -680,6 +724,7 @@ function smOpenDrawer(product) {
   document.getElementById('sm-vid-right').value    = f.variantIdRight   || '';
 
   ['left','center','right'].forEach(smPreview);
+  loadPickerImages();
 
   document.getElementById('sm-overlay').classList.add('open');
   document.getElementById('sm-drawer').classList.add('open');
@@ -695,9 +740,76 @@ function smCloseDrawer() {
 
 function smPreview(side) {
   var val = document.getElementById('sm-img-' + side).value.trim();
-  var img = document.getElementById('sm-prev-' + side);
-  if (val) { img.src = val; img.classList.add('visible'); }
-  else { img.src = ''; img.classList.remove('visible'); }
+  var img = document.getElementById('sm-prev-' + side + '-img');
+  var lbl = document.getElementById('sm-prev-' + side + '-label');
+  if (val) {
+    img.src = val;
+    img.style.display = 'block';
+    lbl.style.display = 'none';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    lbl.style.display = '';
+  }
+  // Sync selected state in the grid
+  var grid = document.getElementById('sm-picker-grid-' + side);
+  if (grid) {
+    grid.querySelectorAll('.sm-picker-thumb').forEach(function(t) {
+      t.classList.toggle('selected', t.dataset.path === val);
+    });
+  }
+}
+
+// Picker image cache
+var smPickerCache = null;
+
+function loadPickerImages() {
+  // If already cached, just build grids
+  if (smPickerCache) { smBuildGrids(smPickerCache); return; }
+  apiFetch('/admin/image-assets').then(function(data) {
+    smPickerCache = data.images || [];
+    smBuildGrids(smPickerCache);
+  }).catch(function() {
+    ['left','center','right'].forEach(function(s) {
+      var g = document.getElementById('sm-picker-grid-' + s);
+      if (g) g.innerHTML = '<span class="sm-picker-grid-empty">Could not load images.</span>';
+    });
+  });
+}
+
+function smBuildGrids(images) {
+  ['left','center','right'].forEach(function(side) {
+    var grid = document.getElementById('sm-picker-grid-' + side);
+    if (!grid) return;
+    if (!images.length) {
+      grid.innerHTML = '<span class="sm-picker-grid-empty">No images found.</span>';
+      return;
+    }
+    grid.innerHTML = images.map(function(path) {
+      return '<img class="sm-picker-thumb" src="' + esc(path) + '" alt="" data-side="' + side + '" data-path="' + esc(path) + '" title="' + esc(path.replace('./Assets/productpreviews/','')) + '" />';
+    }).join('');
+    grid.querySelectorAll('.sm-picker-thumb').forEach(function(thumb) {
+      thumb.addEventListener('click', function() {
+        smPickImage(thumb.dataset.side, thumb.dataset.path);
+      });
+    });
+    // Mark currently selected
+    var current = document.getElementById('sm-img-' + side).value.trim();
+    if (current) {
+      grid.querySelectorAll('.sm-picker-thumb').forEach(function(t) {
+        t.classList.toggle('selected', t.dataset.path === current);
+      });
+    }
+  });
+}
+
+function smPickImage(side, path) {
+  document.getElementById('sm-img-' + side).value = path;
+  smPreview(side);
+}
+
+function smPickUrlInput(side) {
+  smPreview(side);
 }
 
 document.getElementById('sm-add-btn').addEventListener('click', function () { smOpenDrawer(null); });
