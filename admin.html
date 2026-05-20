@@ -1238,6 +1238,22 @@ function pmSelectProvider(id, title) {
     ['pm-var-left','pm-var-center','pm-var-right'].forEach(function(sid) {
       document.getElementById(sid).innerHTML = opts;
     });
+    // Populate print position dropdown from print_details if available
+    var posSel = document.getElementById('pm-print-pos');
+    var printDetails = (data && data.print_details) ? data.print_details : [];
+    // Extract position names: print_details items have a "name" or are position strings
+    var positions = [];
+    printDetails.forEach(function(pd) {
+      if (pd.name) positions.push(pd.name);
+    });
+    if (positions.length) {
+      posSel.innerHTML = positions.map(function(p) {
+        return '<option value="' + esc(p) + '">' + esc(p) + '</option>';
+      }).join('');
+    } else {
+      // Fallback sensible defaults for mugs
+      posSel.innerHTML = '<option value="front">front</option><option value="back">back</option><option value="wrap">wrap</option>';
+    }
     document.getElementById('pm-step4').style.display = 'block';
     document.getElementById('pm-action').style.display = 'block';
   }).catch(function() {

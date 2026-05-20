@@ -363,7 +363,10 @@ async function printifyCatalogProviders(req, res) {
 async function printifyCatalogVariants(req, res) {
   try {
     const data = await printify.getBlueprintVariants(req.params.bid, req.params.pid);
-    return res.json(data);
+    // Normalise: return { variants, print_details } regardless of API shape
+    const variants = data.variants || (Array.isArray(data) ? data : []);
+    const printDetails = data.print_details || [];
+    return res.json({ variants, print_details: printDetails });
   } catch (err) {
     return res.status(502).json({ error: 'Could not fetch variants.' });
   }
@@ -416,7 +419,10 @@ async function printifyCreateMug(req, res) {
       }],
     });
   } catch (err) {
-    return res.status(502).json({ error: 'Could not create Printify product: ' + err.message });
+    const detail = err.response && err.response.data
+      ? JSON.stringify(err.response.data)
+      : err.message;
+    return res.status(502).json({ error: 'Could not create Printify product: ' + detail });
   }
 
   // 3. Build role → variantId map so the frontend can fill the form
