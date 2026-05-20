@@ -4,9 +4,246 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Order Confirmed – Dork Mugs</title>
+<script src="./include/prodbs.js"></script>
 <link href="style.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
 <style>
+  /* ── Page layout ── */
+  .success-page {
+    padding: 48px 20px 72px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* ── Hero card ── */
+  .success-hero {
+    background: #fff;
+    border: 1px solid #dde4f0;
+    border-radius: 16px;
+    box-shadow: 0 6px 32px rgba(26,111,196,0.10);
+    padding: 48px 40px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .success-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #1a6fc4, #4ab3f4, #1a6fc4);
+    background-size: 200% 100%;
+    animation: shimmer 2.4s linear infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Animated check icon ── */
+  .check-circle {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 4px 20px rgba(39,174,96,0.35);
+    animation: pop-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  }
+  .check-circle i { font-size: 42px; color: #fff; }
+  @keyframes pop-in {
+    0%   { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .success-hero h1 {
+    font-size: 2rem;
+    color: #1a2540;
+    margin-bottom: 10px;
+    padding: 0;
+  }
+  .success-hero .lead {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  /* ── Reference chip ── */
+  .order-ref-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    background: #f0f4fb;
+    border: 1px solid #c9d8f0;
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    color: #1a2540;
+  }
+  .order-ref-wrap i { color: #1a6fc4; }
+  .order-ref-wrap .ref-code {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #1a6fc4;
+    font-family: 'Courier New', monospace;
+  }
+  #order-ref { display: none; }
+
+  /* ── CTA buttons ── */
+  .btn-row {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-row a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 26px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.92rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-row a:hover { transform: translateY(-2px); text-decoration: none; }
+  .btn-solid {
+    background: #1a2540;
+    color: #fff !important;
+    box-shadow: 0 3px 12px rgba(26,37,64,0.25);
+  }
+  .btn-solid:hover { box-shadow: 0 6px 18px rgba(26,37,64,0.3); }
+  .btn-ghost {
+    border: 2px solid #1a2540;
+    color: #1a2540 !important;
+  }
+  .btn-ghost:hover { background: #f5f7fc; }
+
+  /* ── Downloads section ── */
+  #downloads-section { margin-top: 28px; }
+  .downloads-card {
+    background: #fff;
+    border: 1px solid #dde4f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(26,111,196,0.08);
+    overflow: hidden;
+  }
+  .downloads-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #eef1f8;
+    background: #f8faff;
+  }
+  .downloads-card-header i { font-size: 1.1rem; color: #1a6fc4; }
+  .downloads-card-header span {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1a2540;
+  }
+  #downloads-list { padding: 8px 0; }
+  .dl-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f3fa;
+  }
+  .dl-row:last-child { border-bottom: none; }
+  .dl-thumb {
+    width: 76px;
+    height: 76px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #eef1f8;
+    border: 1px solid #e0e6f2;
+  }
+  .dl-body { flex: 1; min-width: 0; }
+  .dl-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1a2540;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dl-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: #7a8499;
+    margin-bottom: 10px;
+  }
+  .dl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .badge-placement { background: #e8f0fe; color: #1a6fc4; border: 1px solid #c5d8fc; }
+  .badge-qty       { background: #f0f4fb; color: #4a5568; border: 1px solid #dde4f0; }
+  .btn-dl {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #1a6fc4, #2196f3);
+    color: #fff !important;
+    border-radius: 8px;
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(26,111,196,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-dl:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(26,111,196,0.38);
+    text-decoration: none;
+  }
+
+  /* ── Confetti ── */
+  .confetti-wrap {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 9999; overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute; top: -10px;
+    width: 8px; height: 14px;
+    border-radius: 2px;
+    animation: confetti-fall linear forwards;
+    opacity: 0;
+  }
+  @keyframes confetti-fall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    85%  { opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
   .success-wrap {
     max-width: 560px;
     margin: 80px auto 60px;
@@ -116,43 +353,199 @@
 </style>
 </head>
 <body>
-<div class="container">
-
-  <div class="success-wrap">
-    <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-    <h1>Order Confirmed!</h1>
-    <p>Thanks for your purchase. We've received your order and sent a confirmation to your email.</p>
-    <p id="order-note">Your order is being prepared for production by Printify and will ship soon.</p>
-
-    <div id="downloads-section" style="display:none">
-      <h2><i class="fas fa-download"></i> Your Downloads</h2>
-      <div id="downloads-list"></div>
-    </div>
-
-    <div class="btn-row">
-      <a href="account.html" class="btn btn-outline">View My Orders</a>
-      <a href="index.html" class="btn btn-primary">Keep Shopping</a>
-    </div>
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
   </div>
+
+  <!-- Search Bar -->
+  <div class="srcbar-wrap">
+  <form class="srcbartn" action="search.html">
+    <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
+           onclick="listFunction()" onkeyup="searchFunction()" autocomplete="off" />
+    <button type="submit"><i class="fa fa-search"></i></button>
+    <ul id="productline"></ul>
+  </form>
+  <script>
+    function listFunction() {
+      var prdlin = document.getElementById("productline");
+      var allist = "";
+      for (var i = 0; i < prodb.length; i++) {
+        allist += "<li id='liid" + i + "'><a href='product.html'>" + prodb[i].pname + "</a></li>";
+      }
+      prdlin.innerHTML = allist;
+      document.getElementById("srch001").removeAttribute("onclick");
+    }
+    function searchFunction() {
+      var filter = document.getElementById("srch001").value.toUpperCase();
+      for (var i = 0; i < prodb.length; i++) {
+        var el = document.getElementById("liid" + i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  </script>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button">Log In</button>
+      <button id="btn001" type="button">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" class="fas fa-shopping-cart fa-lg" title="View cart" aria-label="View cart"></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page content -->
+  <div class="success-page">
+
+    <!-- Hero card -->
+    <div class="success-hero">
+      <div class="check-circle"><i class="fas fa-check"></i></div>
+      <h1>Order Confirmed!</h1>
+      <p class="lead">Thanks for your purchase. We’ve received your order and will send a confirmation to your email shortly.</p>
+
+      <div id="order-ref" class="order-ref-wrap">
+        <i class="fas fa-receipt"></i>
+        Order reference: <span class="ref-code" id="ref-code"></span>
+      </div>
+
+      <div class="btn-row">
+        <a href="account.html" class="btn-ghost"><i class="fas fa-box-open"></i> View My Orders</a>
+        <a href="index.html" class="btn-solid"><i class="fas fa-store"></i> Keep Shopping</a>
+      </div>
+    </div>
+
+    <!-- Downloads (shown only when items have images) -->
+    <div id="downloads-section" style="display:none">
+      <div class="downloads-card">
+        <div class="downloads-card-header">
+          <i class="fas fa-cloud-download-alt"></i>
+          <span>Your Downloads</span>
+        </div>
+        <div id="downloads-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Info</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Shipping</a></li>
+          <li><a href="#">Returns</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
 
 </div>
 
+<!-- Cart Overlay -->
+<div id="cart-overlay" class="cart-overlay"></div>
+
+<!-- Cart Drawer -->
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div id="cart-toast" class="cart-toast"></div>
+
+<!-- Confetti container -->
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script>
-  // Clear the cart after a successful order
+  // Clear cart immediately
   try { localStorage.removeItem('dorkmugs_cart'); } catch (e) {}
 
+  // ── Confetti burst ──────────────────────────────────────────────────────────────────
   (function () {
-    var params = new URLSearchParams(window.location.search);
+    var colors = ['#1a6fc4','#2ecc71','#f39c12','#e74c3c','#9b59b6','#4ab3f4','#f1c40f'];
+    var wrap = document.getElementById('confetti-wrap');
+    if (!wrap) return;
+    for (var i = 0; i < 72; i++) {
+      var p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.cssText = 'left:' + (Math.random() * 100) + '%;' +
+        'background:' + colors[Math.floor(Math.random() * colors.length)] + ';' +
+        'animation-duration:' + (2.0 + Math.random() * 1.8) + 's;' +
+        'animation-delay:' + (Math.random() * 1.2) + 's;' +
+        (Math.random() > 0.5 ? 'transform:scaleX(-1);' : '');
+      wrap.appendChild(p);
+    }
+    setTimeout(function () { wrap.innerHTML = ''; }, 4500);
+  })();
+
+  // ── Session data + downloads ────────────────────────────────────────────────────────
+  (function () {
+    function _esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    var params    = new URLSearchParams(window.location.search);
     var sessionId = params.get('session_id');
     if (!sessionId) return;
 
-    var note = document.getElementById('order-note');
-    if (note) {
-      note.textContent = 'Your order is being prepared for production. Reference: ' + sessionId.slice(-8).toUpperCase();
-    }
+    var refWrap = document.getElementById('order-ref');
+    var refCode = document.getElementById('ref-code');
+    if (refCode) refCode.textContent = sessionId.slice(-8).toUpperCase();
+    if (refWrap) refWrap.style.display = 'inline-flex';
 
-    // Resolve API base (same logic as cart.js)
     function resolveApiBase() {
       if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
       if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
@@ -177,39 +570,42 @@
           if (!item.image) return;
           hasDownloadable = true;
 
-          var card = document.createElement('div');
-          card.className = 'download-card';
+          var placement = item.placement || 'left';
+          var iconClass = placement === 'center' ? 'fa-align-center' :
+                          placement === 'right'  ? 'fa-align-right' : 'fa-align-left';
+
+          var row = document.createElement('div');
+          row.className = 'dl-row';
 
           var img = document.createElement('img');
+          img.className = 'dl-thumb';
           img.src = item.image;
           img.alt = item.name || 'Product image';
-          img.onerror = function () { this.style.display = 'none'; };
+          img.onerror = function () { this.style.opacity = '0.25'; };
 
-          var info = document.createElement('div');
-          info.className = 'download-info';
-          info.innerHTML =
-            '<strong>' + _esc(item.name || 'Product') + '</strong>' +
-            '<div class="download-meta">Qty: ' + (item.qty || 1) +
-            ' &nbsp;|&nbsp; Placement: <span class="placement-badge">' + _esc(item.placement || 'left') + '</span></div>';
+          var body = document.createElement('div');
+          body.className = 'dl-body';
+          body.innerHTML =
+            '<div class="dl-name">' + _esc(item.name || 'Product') + '</div>' +
+            '<div class="dl-meta">' +
+              '<span class="dl-badge badge-placement"><i class="fas ' + iconClass + '"></i>&nbsp;' + _esc(placement) + '</span>' +
+              '<span class="dl-badge badge-qty">qty: ' + (item.qty || 1) + '</span>' +
+            '</div>';
 
-          var link = document.createElement('a');
-          link.className = 'btn-download';
-          link.href = API + '/checkout/download/' + encodeURIComponent(sessionId) + '/' + idx;
-          link.innerHTML = '<i class="fas fa-download"></i> Download';
+          var dlLink = document.createElement('a');
+          dlLink.className = 'btn-dl';
+          dlLink.href = API + '/checkout/download/' + encodeURIComponent(sessionId) + '/' + idx;
+          dlLink.innerHTML = '<i class="fas fa-download"></i> Download';
 
-          card.appendChild(img);
-          info.appendChild(link);
-          card.appendChild(info);
-          list.appendChild(card);
+          row.appendChild(img);
+          body.appendChild(dlLink);
+          row.appendChild(body);
+          list.appendChild(row);
         });
 
         if (hasDownloadable) section.style.display = 'block';
       })
-      .catch(function () { /* silently ignore — downloads are a bonus */ });
-
-    function _esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+      .catch(function () { /* downloads are a bonus — fail silently */ });
   })();
 </script>
 </body>
