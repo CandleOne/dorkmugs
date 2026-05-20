@@ -4,7 +4,7 @@ var prodb = [
 		id: "gc01",
 		pname: "Genetically Cursed! Mug",
 		price: 18.99,
-		image: "./Assets/finaldesigns/BPcollection/geneticallycursed design.png",
+		image: "./Assets/productpreviews/gencursedleft.png",
 		rating: 4.8,
 		collection: "bp",
 		description: "Own your genetic misfortune in style. Bold, bubbly, and brutally honest.",

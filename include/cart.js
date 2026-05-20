@@ -50,8 +50,9 @@ var Cart = (function () {
    * @param {number} qty
    * @param {string} [printifyProductId]    Printify product ID (required for fulfillment)
    * @param {string} [variantId]            Printify variant ID (required for fulfillment)
+   * @param {string} [placement]             Design placement: 'left' | 'center' | 'right'
    */
-  function add(id, name, price, image, qty, printifyProductId, variantId) {
+  function add(id, name, price, image, qty, printifyProductId, variantId, placement) {
     qty = parseInt(qty, 10) || 1;
     var items = load();
     var found = false;
@@ -60,6 +61,7 @@ var Cart = (function () {
         items[x].qty += qty;
         if (printifyProductId) items[x].printifyProductId = printifyProductId;
         if (variantId) items[x].variantId = variantId;
+        if (placement) items[x].placement = placement;
         found = true; break;
       }
     }
@@ -68,6 +70,7 @@ var Cart = (function () {
         id: id, name: name, price: parseFloat(price), image: image, qty: qty,
         printifyProductId: printifyProductId || null,
         variantId: variantId || null,
+        placement: placement || 'left',
       });
     }
     save(items);
@@ -189,6 +192,7 @@ var Cart = (function () {
           '<img class="cart-item-img" src="' + _esc(item.image) + '" alt="' + _esc(item.name) + '" />',
           '<div class="cart-item-info">',
             '<p class="cart-item-name">' + _esc(item.name) + '</p>',
+            (item.placement ? '<p class="cart-item-placement"><i class="fas fa-align-' + _esc(item.placement) + '"></i> ' + _esc(item.placement.charAt(0).toUpperCase() + item.placement.slice(1)) + ' placement</p>' : ''),
             '<p class="cart-item-price">$' + (item.price * item.qty).toFixed(2) + '</p>',
             '<div class="cart-item-qty">',
               '<button type="button" aria-label="Decrease" onclick="Cart.setQty(\'' + _esc(item.id) + '\',' + (item.qty - 1) + ')">&#8722;</button>',

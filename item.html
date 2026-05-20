@@ -160,6 +160,14 @@
           '<p class="item-desc">' + esc(product.description) + ' Printed on a premium 11oz ceramic mug.</p>' +
           '<span class="rating item-rating" data-default-rating="' + esc(product.rating) + '"></span>' +
           '<form class="pform item-form">' +
+            '<div class="placement-selector">' +
+              '<label>Design Placement:</label>' +
+              '<div class="placement-options">' +
+                '<button type="button" class="placement-btn active" data-placement="left"><i class="fas fa-align-left"></i>Left</button>' +
+                '<button type="button" class="placement-btn" data-placement="center"><i class="fas fa-align-center"></i>Center</button>' +
+                '<button type="button" class="placement-btn" data-placement="right"><i class="fas fa-align-right"></i>Right</button>' +
+              '</div>' +
+            '</div>' +
             '<label for="item-qty">Quantity:</label>' +
             '<input type="number" id="item-qty" name="quantity" min="1" max="10" value="1" />' +
             '<button class="pbutton" type="button" id="item-add-btn">Add to Cart</button>' +
@@ -172,6 +180,15 @@
         '</div>' +
       '</div>';
 
+    // Wire up placement toggle
+    var placementBtns = document.querySelectorAll(".placement-btn");
+    placementBtns.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        placementBtns.forEach(function(b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+      });
+    });
+
     // Wire up quantity → price update
     var qtyEl = document.getElementById("item-qty");
     var priceEl = document.getElementById("item-price");
@@ -183,7 +200,9 @@
     // Wire up Add to Cart
     document.getElementById("item-add-btn").addEventListener("click", function() {
       var qty = parseInt(qtyEl.value) || 1;
-      Cart.add(product.id, product.pname, product.price, product.image, qty, product.printifyProductId || '', product.variantId || '');
+      var activeBtn = document.querySelector(".placement-btn.active");
+      var placement = activeBtn ? activeBtn.getAttribute("data-placement") : "left";
+      Cart.add(product.id, product.pname, product.price, product.image, qty, product.printifyProductId || '', product.variantId || '', placement);
     });
 
     // Init star rating
