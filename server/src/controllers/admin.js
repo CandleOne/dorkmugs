@@ -187,11 +187,16 @@ function validateShopProduct(body, requireId = false) {
 
 // GET /api/shop-products  (public)
 async function listShopProducts(req, res) {
-  const products = await prisma.shopProduct.findMany({
-    where: { published: true },
-    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-  });
-  return res.json({ products });
+  const [products, collections] = await Promise.all([
+    prisma.shopProduct.findMany({
+      where: { published: true },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    }),
+    prisma.collection.findMany(),
+  ]);
+  const collMap = {};
+  collections.forEach(c => { collMap[c.slug] = c.name; });
+  return res.json({ products: products.map(p => ({ ...p, collectionName: collMap[p.collection] || null })) });
 }
 
 // GET /api/admin/shop-products
@@ -269,6 +274,53 @@ async function deleteShopProduct(req, res) {
   return res.json({ ok: true });
 }
 
+// ─── Collections ──────────────────────────────────────────────────────────────
+
+// GET /api/collections  (public — used by storefront pages)
+async function getPublicCollections(req, res) {
+  const cols = await prisma.collection.findMany({ orderBy: { slug: 'asc' } });
+  return res.json(cols);
+}
+
+// GET /api/admin/collections
+async function adminListCollections(req, res) {
+  const [cols, counts] = await Promise.all([
+    prisma.collection.findMany({ orderBy: { slug: 'asc' } }),
+    prisma.shopProduct.groupBy({ by: ['collection'], _count: { id: true } }),
+  ]);
+  const countMap = {};
+  counts.forEach(c => { countMap[c.collection] = c._count.id; });
+  return res.json(cols.map(c => ({ ...c, productCount: countMap[c.slug] || 0 })));
+}
+
+// POST /api/admin/collections
+async function createAdminCollection(req, res) {
+  const { slug, name } = req.body || {};
+  if (!slug || !name) return res.status(400).json({ error: 'slug and name are required' });
+  const s = String(slug).toLowerCase().trim().replace(/[^a-z0-9-]/g, '-');
+  const existing = await prisma.collection.findUnique({ where: { slug: s } });
+  if (existing) return res.status(409).json({ error: `Collection "${s}" already exists.` });
+  const col = await prisma.collection.create({ data: { slug: s, name: String(name).trim() } });
+  return res.json(col);
+}
+
+// PATCH /api/admin/collections/:slug
+async function updateAdminCollection(req, res) {
+  const { name } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name is required' });
+  const col = await prisma.collection.update({
+    where: { slug: req.params.slug },
+    data: { name: String(name).trim() },
+  });
+  return res.json(col);
+}
+
+// DELETE /api/admin/collections/:slug
+async function deleteAdminCollection(req, res) {
+  await prisma.collection.delete({ where: { slug: req.params.slug } });
+  return res.json({ ok: true });
+}
+
 // ─── Image Assets ─────────────────────────────────────────────────────────────
 
 // GET /api/admin/image-assets  — lists image files in Assets/productpreviews
@@ -301,5 +353,10 @@ module.exports = {
   createShopProduct,
   updateShopProduct,
   deleteShopProduct,
+  getPublicCollections,
+  adminListCollections,
+  createAdminCollection,
+  updateAdminCollection,
+  deleteAdminCollection,
   listImageAssets,
 };

@@ -161,6 +161,7 @@
         <a href="#" data-section="orders"><i class="fas fa-box"></i> Orders</a>
         <a href="#" data-section="users"><i class="fas fa-users"></i> Users</a>
         <a href="#" data-section="shop-manager"><i class="fas fa-store-alt"></i> Shop Manager</a>
+        <a href="#" data-section="collections"><i class="fas fa-layer-group"></i> Collections</a>
         <a href="#" data-section="products"><i class="fas fa-sync-alt"></i> Printify Sync</a>
         <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
       </nav>
@@ -221,6 +222,28 @@
         </div>
         <div id="sm-table-wrap"></div>
       </div>
+
+      <!-- Collections -->
+      <div id="section-collections" class="admin-section section-inactive">
+        <h1 style="margin:0 0 8px">Collections</h1>
+        <p style="color:#5a6a80;margin:0 0 24px;font-size:.9rem">Edit the display name of each collection shown across the store.</p>
+        <div id="col-table-wrap"><p style="color:#888">Loading…</p></div>
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #eee">
+          <h4 style="margin:0 0 14px;font-size:.95rem">Add New Collection</h4>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:0 0 150px">
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Slug (e.g. &ldquo;bp&rdquo;)</label>
+              <input type="text" id="col-new-slug" placeholder="my-col" style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div style="flex:1;min-width:180px">
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Display Name</label>
+              <input type="text" id="col-new-name" placeholder="My Collection" style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <button class="btn-sm btn-primary" id="col-add-btn">Add Collection</button>
+          </div>
+          <p id="col-error" style="color:#b00020;font-size:.85rem;margin:8px 0 0;display:none"></p>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -244,9 +267,6 @@
         <div class="sm-form-group">
           <label for="sm-collection">Collection</label>
           <select id="sm-collection">
-            <option value="bp">BP Collection</option>
-            <option value="fame">Fame &amp; Infamy</option>
-            <option value="stem">STEM Collection</option>
             <option value="__new__" style="color:#1a6fc4">＋ Create new collection…</option>
           </select>
           <div id="sm-new-collection-wrap" style="display:none;margin-top:8px;background:#f4f8ff;border:1px solid #c5d8f5;border-radius:6px;padding:10px;gap:8px" class="sm-form-row">
@@ -455,6 +475,7 @@ function showSection(name) {
   if (name === 'dashboard') loadDashboard();
   else if (name === 'orders') loadOrders();
   else if (name === 'users') loadUsers();
+  else if (name === 'collections') loadCollections();
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
   else if (name === 'shop-manager') loadShopManager();
 }
@@ -600,7 +621,26 @@ function loadUsers() {
 // ─── Shop Manager ────────────────────────────────────────────────────────────
 
 var smEditingId = null;
-var collectionNames = { bp: 'BP Collection', fame: 'Fame & Infamy', stem: 'STEM Collection' };
+var collectionNames = {};
+
+// Rebuild the collection dropdown from the collectionNames map
+function populateCollectionDropdown() {
+  var sel = document.getElementById('sm-collection');
+  var current = sel.value;
+  var sentinel = sel.querySelector('option[value="__new__"]');
+  // Remove all options except __new__
+  Array.from(sel.options).forEach(function(o) { if (o.value !== '__new__') o.remove(); });
+  // Re-add from collectionNames
+  Object.keys(collectionNames).sort().forEach(function(slug) {
+    if (sel.querySelector('option[value="' + slug + '"]')) return;
+    var opt = document.createElement('option');
+    opt.value = slug;
+    opt.textContent = collectionNames[slug];
+    sel.insertBefore(opt, sentinel);
+  });
+  // Restore selected value if still present
+  if (sel.querySelector('option[value="' + current + '"]')) sel.value = current;
+}
 
 document.getElementById('sm-collection').addEventListener('change', function () {
   var wrap = document.getElementById('sm-new-collection-wrap');
@@ -898,19 +938,110 @@ function renderPagination(id, current, total, onPage) {
   });
 }
 
+// ─── Collections Editor ───────────────────────────────────────────────────────
+
+function loadCollections() {
+  apiFetch('/admin/collections').then(function(data) {
+    var rows = (data || []).map(function(c) {
+      var safeName = esc(c.name).replace(/'/g, "&#39;");
+      return '<tr id="col-row-' + esc(c.slug) + '">' +
+        '<td><code style="font-size:.85rem;background:#f4f4f4;padding:2px 6px;border-radius:3px">' + esc(c.slug) + '</code></td>' +
+        '<td id="col-cell-' + esc(c.slug) + '">' + esc(c.name) + '</td>' +
+        '<td style="color:#888">' + (c.productCount || 0) + '</td>' +
+        '<td>' +
+          '<button class="btn-sm" onclick="colStartEdit(\'' + esc(c.slug) + '\',\'' + safeName + '\')">Edit</button>' +
+          ' <button class="btn-sm btn-danger" onclick="colDelete(\'' + esc(c.slug) + '\')">Delete</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('col-table-wrap').innerHTML =
+      '<table class="admin-table"><thead><tr>' +
+        '<th>Slug</th><th>Display Name</th><th>Products</th><th>Actions</th>' +
+      '</tr></thead><tbody>' +
+      (rows || '<tr><td colspan="4" style="color:#aaa;text-align:center;padding:20px">No collections yet.</td></tr>') +
+      '</tbody></table>';
+  }).catch(function(e) {
+    document.getElementById('col-table-wrap').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+function colStartEdit(slug, currentName) {
+  var td = document.getElementById('col-cell-' + slug);
+  td.innerHTML =
+    '<input type="text" value="' + currentName + '" id="col-edit-' + esc(slug) + '" style="padding:5px 9px;border:1.5px solid #1a6fc4;border-radius:5px;font-size:.9rem" />' +
+    ' <button class="btn-sm btn-primary" onclick="colSaveEdit(\'' + esc(slug) + '\')">Save</button>' +
+    ' <button class="btn-sm" onclick="loadCollections()">Cancel</button>';
+  document.getElementById('col-edit-' + slug).focus();
+}
+
+function colSaveEdit(slug) {
+  var input = document.getElementById('col-edit-' + slug);
+  var name = input.value.trim();
+  if (!name) return;
+  input.disabled = true;
+  apiFetch('/admin/collections/' + encodeURIComponent(slug), {
+    method: 'PATCH', body: JSON.stringify({ name: name })
+  }).then(function() {
+    collectionNames[slug] = name;
+    populateCollectionDropdown();
+    loadCollections();
+  }).catch(function(e) { alert('Error: ' + e.message); input.disabled = false; });
+}
+
+function colDelete(slug) {
+  if (!confirm('Delete collection "' + slug + '"? Products that use this slug will keep it, but the display name will be removed.')) return;
+  apiFetch('/admin/collections/' + encodeURIComponent(slug), { method: 'DELETE' })
+    .then(function() {
+      delete collectionNames[slug];
+      populateCollectionDropdown();
+      loadCollections();
+    }).catch(function(e) { alert('Error: ' + e.message); });
+}
+
+document.getElementById('col-add-btn').addEventListener('click', function() {
+  var errEl = document.getElementById('col-error');
+  var rawSlug = document.getElementById('col-new-slug').value.trim();
+  var slug = rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/, '');
+  var name = document.getElementById('col-new-name').value.trim();
+  errEl.style.display = 'none';
+  if (!slug || !name) { errEl.textContent = 'Both slug and display name are required.'; errEl.style.display = ''; return; }
+  apiFetch('/admin/collections', { method: 'POST', body: JSON.stringify({ slug: slug, name: name }) })
+    .then(function(res) {
+      if (res.error) { errEl.textContent = res.error; errEl.style.display = ''; return; }
+      collectionNames[slug] = name;
+      document.getElementById('col-new-slug').value = '';
+      document.getElementById('col-new-name').value = '';
+      populateCollectionDropdown();
+      loadCollections();
+    }).catch(function(e) { errEl.textContent = e.message; errEl.style.display = ''; });
+});
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
+
+function initAdmin() {
+  // Load collection names first so the shop manager dropdown is populated
+  apiFetch('/admin/collections')
+    .then(function(cols) {
+      (cols || []).forEach(function(c) { collectionNames[c.slug] = c.name; });
+      populateCollectionDropdown();
+    })
+    .catch(function() {})
+    .then(function() {
+      document.getElementById('section-loading').style.display = 'none';
+      showSection('dashboard');
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function () {
   apiFetch('/auth/me').then(function (data) {
     if (data.user.role !== 'ADMIN') {
       window.location.href = 'account.html'; return;
     }
-    document.getElementById('section-loading').style.display = 'none';
-    showSection('dashboard');
+    initAdmin();
   }).catch(function () {
     Auth.refreshSession().then(function (u) {
       if (!u || u.role !== 'ADMIN') { window.location.href = 'login.html'; }
-      else { document.getElementById('section-loading').style.display = 'none'; showSection('dashboard'); }
+      else { initAdmin(); }
     });
   });
 });

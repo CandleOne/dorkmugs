@@ -120,7 +120,6 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script>
-  var collectionLabels = { bp: "BP Collection", fame: "Fame & Infamy", stem: "STEM Collection" };
   var collectionBadges = { bp: "badge-bp", fame: "badge-fame", stem: "badge-stem" };
 
   function esc(str) {
@@ -145,7 +144,7 @@
     document.title = "Dork Mugs \u2013 " + product.pname;
 
     var badge = collectionBadges[product.collection] || "";
-    var label = collectionLabels[product.collection] || product.collection;
+    var label = product.collectionName || product.collection;
 
     // Determine which placements have images/IDs available
     var hasLeft   = !!(product.imageLeft   || product.printifyIdLeft);

@@ -124,6 +124,11 @@ model Address {
 // (left / center / right) each pointing to a separate Printify product.
 // ─────────────────────────────────────────────────────────────────────────────
 
+model Collection {
+  slug String @id
+  name String
+}
+
 model ShopProduct {
   id          String   @id            // human slug, e.g. "gc01"
   pname       String

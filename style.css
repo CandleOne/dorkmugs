@@ -379,6 +379,8 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 	border-radius: 20px;
 	display: inline-block;
 	margin-bottom: 8px;
+	background: #e8eaed;
+	color: #555;
 }
 .badge-bp   { background: #dde8ff; color: #2255aa; }
 .badge-fame { background: #d0eaff; color: #1a6fc4; }

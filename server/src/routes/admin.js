@@ -31,4 +31,10 @@ router.delete('/shop-products/:id', ctrl.deleteShopProduct);
 
 router.get('/image-assets', ctrl.listImageAssets);
 
+// Collections (admin CRUD)
+router.get('/collections', ctrl.adminListCollections);
+router.post('/collections', ctrl.createAdminCollection);
+router.patch('/collections/:slug', ctrl.updateAdminCollection);
+router.delete('/collections/:slug', ctrl.deleteAdminCollection);
+
 module.exports = router;

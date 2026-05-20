@@ -142,7 +142,6 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script>
-  var collectionLabels = { bp: 'BP Collection', fame: 'Fame &amp; Infamy', stem: 'STEM Collection' };
   var collectionBadges = { bp: 'badge-bp', fame: 'badge-fame', stem: 'badge-stem' };
 
   function escHtml(s) {
@@ -154,7 +153,7 @@
     if (!grid || !prodb.length) return;
     grid.innerHTML = prodb.map(function(p) {
       var badge = collectionBadges[p.collection] || '';
-      var label = collectionLabels[p.collection] || escHtml(p.collection);
+      var label = p.collectionName || escHtml(p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
       return '<a href="item.html?id=' + escHtml(p.id) + '" class="shop-card">' +
         '<div class="shop-card-img"><img src="' + escHtml(p.image || p.imageLeft || '') + '" alt="' + escHtml(p.pname) + '" /></div>' +
         '<span class="collection-badge ' + escHtml(badge) + '">' + label + '</span>' +

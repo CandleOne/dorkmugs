@@ -107,11 +107,14 @@
 
   <script src="./src/SimpleStarRating.js"></script>
   <script>
-    var collectionLabels = { bp: 'BP Collection', fame: 'Fame &amp; Infamy', stem: 'STEM Collection' };
     var collectionBadges = { bp: 'badge-bp', fame: 'badge-fame', stem: 'badge-stem' };
 
     function escH(s) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function colLabel(p) {
+      return p.collectionName || (p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
     }
 
     function filterFunc() {
@@ -140,7 +143,7 @@
     function cardHTML(p) {
       var img = p.image || p.imageLeft || p.imageCenter || p.imageRight || '';
       var badge = collectionBadges[p.collection] || '';
-      var label = collectionLabels[p.collection] || escH(p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
+      var label = colLabel(p);
       var pid = p.printifyIdLeft || p.printifyProductId || '';
       var vid = p.variantIdLeft  || p.variantId        || '';
       return '<div class="product-card" id="' + escH(p.id) + '" data-collection="' + escH(p.collection) + '" data-price="' + p.price + '" data-sort="' + p.sortOrder + '">' +
@@ -178,11 +181,10 @@
         if (!groups[p.collection]) {
           groups[p.collection] = [];
           order.push(p.collection);
-          // Add to filter dropdown
-          var label = collectionLabels[p.collection] || (p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
+          var label = colLabel(p);
           var opt = document.createElement('option');
           opt.value = p.collection;
-          opt.textContent = label.replace(/&amp;/g, '&');
+          opt.textContent = label;
           sel.appendChild(opt);
         }
         groups[p.collection].push(p);
@@ -190,9 +192,9 @@
 
       // Render each collection as a labelled group
       section.innerHTML = order.map(function(col) {
-        var label = (collectionLabels[col] || (col.charAt(0).toUpperCase() + col.slice(1))).replace(/&amp;/g, '&');
+        var label = escH(colLabel(groups[col][0]));
         return '<div class="collection-group" data-collection="' + escH(col) + '">' +
-          '<p class="collection-group-heading">' + escH(label) + '</p>' +
+          '<p class="collection-group-heading">' + label + '</p>' +
           '<div class="collection-group-grid">' + groups[col].map(cardHTML).join('') + '</div>' +
         '</div>';
       }).join('');
