@@ -441,7 +441,7 @@ async function printifyCreateMug(req, res) {
 
 // GET /api/admin/image-assets  — lists image files in Assets/productpreviews
 async function listImageAssets(req, res) {
-  const dir = path.resolve(__dirname, '../../../../Assets/productpreviews');
+  const dir = path.resolve(__dirname, '../../../Assets/productpreviews');
   try {
     const files = await fs.readdir(dir);
     const images = files
