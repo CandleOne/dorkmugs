@@ -80,53 +80,8 @@
     <h2>Shop All Mugs</h2>
   </div>
 
-  <section class="products" style="padding: 0 24px 40px;">
-
-    <a href="item.html?id=gc01" class="shop-card">
-      <div class="shop-card-img">
-        <img src="./Assets/productpreviews/gencursedleft.png" alt="Genetically Cursed! Mug" />
-      </div>
-      <span class="collection-badge badge-bp">BP Collection</span>
-      <p class="shop-card-name">Genetically Cursed! Mug</p>
-      <p class="shop-card-price">$18.99</p>
-    </a>
-
-    <a href="item.html?id=hy01" class="shop-card">
-      <div class="shop-card-img">
-        <img src="./Assets/finaldesigns/BPcollection/hypergamyfinal.png" alt="Hypergamy Mug" />
-      </div>
-      <span class="collection-badge badge-bp">BP Collection</span>
-      <p class="shop-card-name">Hypergamy Mug</p>
-      <p class="shop-card-price">$18.99</p>
-    </a>
-
-    <a href="item.html?id=bp01" class="shop-card">
-      <div class="shop-card-img">
-        <img src="./Assets/finaldesigns/BPcollection/bpbrutal.png" alt="BP Brutal Mug" />
-      </div>
-      <span class="collection-badge badge-bp">BP Collection</span>
-      <p class="shop-card-name">BP Brutal Mug</p>
-      <p class="shop-card-price">$18.99</p>
-    </a>
-
-    <a href="item.html?id=bi01" class="shop-card">
-      <div class="shop-card-img">
-        <img src="./Assets/finaldesigns/Fame&InfamyCollection/bigep.png" alt="Big EP Mug" />
-      </div>
-      <span class="collection-badge badge-fame">Fame &amp; Infamy</span>
-      <p class="shop-card-name">Big EP Mug</p>
-      <p class="shop-card-price">$21.99</p>
-    </a>
-
-    <a href="item.html?id=sg01" class="shop-card">
-      <div class="shop-card-img">
-        <img src="./Assets/finaldesigns/StemCollection/spontaneousgeneration.png" alt="Made Via Spontaneous Generation Mug" />
-      </div>
-      <span class="collection-badge badge-stem">STEM Collection</span>
-      <p class="shop-card-name">Made Via Spontaneous Generation Mug</p>
-      <p class="shop-card-price">$19.99</p>
-    </a>
-
+  <section id="shop-grid" class="products" style="padding: 0 24px 40px;">
+    <!-- Products are rendered dynamically from prodb / API -->
   </section>
 
   <!-- Footer -->
@@ -186,5 +141,30 @@
 
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
+<script>
+  var collectionLabels = { bp: 'BP Collection', fame: 'Fame &amp; Infamy', stem: 'STEM Collection' };
+  var collectionBadges = { bp: 'badge-bp', fame: 'badge-fame', stem: 'badge-stem' };
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderShopGrid() {
+    var grid = document.getElementById('shop-grid');
+    if (!grid || !prodb.length) return;
+    grid.innerHTML = prodb.map(function(p) {
+      var badge = collectionBadges[p.collection] || '';
+      var label = collectionLabels[p.collection] || escHtml(p.collection);
+      return '<a href="item.html?id=' + escHtml(p.id) + '" class="shop-card">' +
+        '<div class="shop-card-img"><img src="' + escHtml(p.image || p.imageLeft || '') + '" alt="' + escHtml(p.pname) + '" /></div>' +
+        '<span class="collection-badge ' + escHtml(badge) + '">' + label + '</span>' +
+        '<p class="shop-card-name">' + escHtml(p.pname) + '</p>' +
+        '<p class="shop-card-price">$' + parseFloat(p.price).toFixed(2) + '</p>' +
+        '</a>';
+    }).join('');
+  }
+
+  prodbReady.then(renderShopGrid);
+</script>
 </body>
 </html>

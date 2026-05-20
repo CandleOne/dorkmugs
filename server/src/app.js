@@ -70,13 +70,14 @@ if (config.env !== 'test') {
 app.use('/api', apiLimiter);
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth',      require('./routes/auth'));
-app.use('/api/users',     require('./routes/users'));
-app.use('/api/products',  require('./routes/products'));
-app.use('/api/checkout',  require('./routes/checkout'));
-app.use('/api/orders',    require('./routes/orders'));
-app.use('/api/admin',     require('./routes/admin'));
-app.use('/api/webhooks',  require('./routes/webhooks'));
+app.use('/api/auth',          require('./routes/auth'));
+app.use('/api/users',         require('./routes/users'));
+app.use('/api/products',      require('./routes/products'));
+app.use('/api/shop-products', require('./routes/shopProducts'));
+app.use('/api/checkout',      require('./routes/checkout'));
+app.use('/api/orders',        require('./routes/orders'));
+app.use('/api/admin',         require('./routes/admin'));
+app.use('/api/webhooks',      require('./routes/webhooks'));
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

@@ -71,10 +71,47 @@
   .empty-state { text-align: center; padding: 40px; color: #888; }
   .section-inactive { display: none; }
 
+  /* ── Shop Manager Drawer ── */
+  .sm-drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 900; }
+  .sm-drawer-overlay.open { display: block; }
+  .sm-drawer { position: fixed; top: 0; right: -600px; width: 580px; max-width: 100vw; height: 100vh;
+    background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,.15); z-index: 950;
+    display: flex; flex-direction: column; transition: right .28s ease; }
+  .sm-drawer.open { right: 0; }
+  .sm-drawer-head { display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+  .sm-drawer-head h3 { margin: 0; font-size: 1.1rem; }
+  .sm-drawer-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #666; line-height: 1; }
+  .sm-drawer-body { flex: 1; overflow-y: auto; padding: 24px; }
+  .sm-drawer-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+
+  .sm-form-group { margin-bottom: 16px; }
+  .sm-form-group label { display: block; font-weight: 600; font-size: .85rem; color: #333; margin-bottom: 5px; }
+  .sm-form-group input, .sm-form-group select, .sm-form-group textarea {
+    width: 100%; padding: 8px 11px; border: 1.5px solid #d1dae6; border-radius: 6px;
+    font-size: .9rem; box-sizing: border-box; background: #fff; }
+  .sm-form-group input:focus, .sm-form-group select:focus, .sm-form-group textarea:focus {
+    border-color: #1a6fc4; outline: none; }
+  .sm-form-group textarea { resize: vertical; min-height: 72px; }
+  .sm-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sm-section-title { font-size: .8rem; font-weight: 700; text-transform: uppercase;
+    color: #1a6fc4; letter-spacing: .06em; margin: 22px 0 12px; padding-bottom: 6px;
+    border-bottom: 2px solid #eef4fd; display: flex; align-items: center; gap: 8px; }
+  .sm-img-preview { width: 64px; height: 64px; object-fit: cover; border-radius: 6px;
+    border: 1px solid #ddd; display: none; margin-top: 6px; }
+  .sm-img-preview.visible { display: block; }
+  .sm-error { color: #b00020; font-size: .85rem; margin-bottom: 12px; display: none; }
+  .sm-product-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+  .pub-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .72rem; font-weight: 700; }
+  .pub-yes { background: #d4edda; color: #155724; }
+  .pub-no  { background: #e2e3e5; color: #555; }
+
   @media (max-width: 700px) {
     .admin-layout { flex-direction: column; }
     .admin-sidebar { width: 100%; padding: 12px 0; }
     .admin-main { padding: 16px; }
+    .sm-drawer { width: 100vw; }
+    .sm-form-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -103,7 +140,8 @@
         <a href="#" class="active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="#" data-section="orders"><i class="fas fa-box"></i> Orders</a>
         <a href="#" data-section="users"><i class="fas fa-users"></i> Users</a>
-        <a href="#" data-section="products"><i class="fas fa-store"></i> Printify Products</a>
+        <a href="#" data-section="shop-manager"><i class="fas fa-store-alt"></i> Shop Manager</a>
+        <a href="#" data-section="products"><i class="fas fa-sync-alt"></i> Printify Sync</a>
         <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
       </nav>
     </aside>
@@ -148,14 +186,139 @@
 
       <!-- Printify Products -->
       <div id="section-products" class="section-inactive">
-        <h1>Printify Products</h1>
+        <h1>Printify Sync</h1>
         <button class="btn-sm btn-primary" id="sync-products-btn" style="margin-bottom:16px">
           <i class="fas fa-sync-alt"></i> Fetch from Printify
         </button>
         <div id="products-table"></div>
       </div>
+
+      <!-- Shop Manager -->
+      <div id="section-shop-manager" class="section-inactive">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <h1 style="margin:0">Shop Manager</h1>
+          <button class="btn-sm btn-primary" id="sm-add-btn"><i class="fas fa-plus"></i> Add Product</button>
+        </div>
+        <div id="sm-table-wrap"></div>
+      </div>
     </main>
   </div>
+
+  <!-- Shop Manager Drawer -->
+  <div class="sm-drawer-overlay" id="sm-overlay"></div>
+  <aside class="sm-drawer" id="sm-drawer" aria-label="Product editor">
+    <div class="sm-drawer-head">
+      <h3 id="sm-drawer-title">Add Product</h3>
+      <button class="sm-drawer-close" id="sm-drawer-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="sm-drawer-body">
+      <div class="sm-error" id="sm-error"></div>
+
+      <!-- Basic info -->
+      <div class="sm-section-title"><i class="fas fa-info-circle"></i> Basic Info</div>
+      <div class="sm-form-row">
+        <div class="sm-form-group">
+          <label for="sm-id">Product ID (slug) <span style="color:#888;font-weight:400">e.g. gc01</span></label>
+          <input type="text" id="sm-id" placeholder="gc01" pattern="[a-zA-Z0-9_-]+" />
+        </div>
+        <div class="sm-form-group">
+          <label for="sm-collection">Collection</label>
+          <select id="sm-collection">
+            <option value="bp">BP Collection</option>
+            <option value="fame">Fame &amp; Infamy</option>
+            <option value="stem">STEM Collection</option>
+          </select>
+        </div>
+      </div>
+      <div class="sm-form-group">
+        <label for="sm-pname">Product Name</label>
+        <input type="text" id="sm-pname" placeholder="Genetically Cursed! Mug" />
+      </div>
+      <div class="sm-form-row">
+        <div class="sm-form-group">
+          <label for="sm-price">Price ($)</label>
+          <input type="number" id="sm-price" min="0" step="0.01" placeholder="18.99" />
+        </div>
+        <div class="sm-form-group">
+          <label for="sm-rating">Rating (0–5)</label>
+          <input type="number" id="sm-rating" min="0" max="5" step="0.1" placeholder="4.8" />
+        </div>
+      </div>
+      <div class="sm-form-group">
+        <label for="sm-description">Description</label>
+        <textarea id="sm-description" placeholder="A short product description…"></textarea>
+      </div>
+      <div class="sm-form-row">
+        <div class="sm-form-group">
+          <label for="sm-sort">Sort Order</label>
+          <input type="number" id="sm-sort" min="0" value="0" />
+        </div>
+        <div class="sm-form-group" style="display:flex;align-items:flex-end;gap:10px;padding-bottom:2px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:.85rem">
+            <input type="checkbox" id="sm-published" checked style="width:auto" /> Published
+          </label>
+        </div>
+      </div>
+
+      <!-- Left placement -->
+      <div class="sm-section-title"><i class="fas fa-align-left"></i> Left Placement</div>
+      <div class="sm-form-group">
+        <label for="sm-img-left">Image Path / URL</label>
+        <input type="text" id="sm-img-left" placeholder="./Assets/productpreviews/mug-left.png" oninput="smPreview('left')" />
+        <img class="sm-img-preview" id="sm-prev-left" alt="Left preview" />
+      </div>
+      <div class="sm-form-row">
+        <div class="sm-form-group">
+          <label for="sm-pid-left">Printify Product ID</label>
+          <input type="text" id="sm-pid-left" placeholder="6a0d441cf34bf3e7a90b8942" />
+        </div>
+        <div class="sm-form-group">
+          <label for="sm-vid-left">Variant ID</label>
+          <input type="text" id="sm-vid-left" placeholder="65216" />
+        </div>
+      </div>
+
+      <!-- Center placement -->
+      <div class="sm-section-title"><i class="fas fa-align-center"></i> Center Placement</div>
+      <div class="sm-form-group">
+        <label for="sm-img-center">Image Path / URL</label>
+        <input type="text" id="sm-img-center" placeholder="./Assets/productpreviews/mug-center.png" oninput="smPreview('center')" />
+        <img class="sm-img-preview" id="sm-prev-center" alt="Center preview" />
+      </div>
+      <div class="sm-form-row">
+        <div class="sm-form-group">
+          <label for="sm-pid-center">Printify Product ID</label>
+          <input type="text" id="sm-pid-center" placeholder="6a0d441cf34bf3e7…" />
+        </div>
+        <div class="sm-form-group">
+          <label for="sm-vid-center">Variant ID</label>
+          <input type="text" id="sm-vid-center" placeholder="65216" />
+        </div>
+      </div>
+
+      <!-- Right placement -->
+      <div class="sm-section-title"><i class="fas fa-align-right"></i> Right Placement</div>
+      <div class="sm-form-group">
+        <label for="sm-img-right">Image Path / URL</label>
+        <input type="text" id="sm-img-right" placeholder="./Assets/productpreviews/mug-right.png" oninput="smPreview('right')" />
+        <img class="sm-img-preview" id="sm-prev-right" alt="Right preview" />
+      </div>
+      <div class="sm-form-row">
+        <div class="sm-form-group">
+          <label for="sm-pid-right">Printify Product ID</label>
+          <input type="text" id="sm-pid-right" placeholder="6a0d441cf34bf3e7…" />
+        </div>
+        <div class="sm-form-group">
+          <label for="sm-vid-right">Variant ID</label>
+          <input type="text" id="sm-vid-right" placeholder="65216" />
+        </div>
+      </div>
+    </div>
+    <div class="sm-drawer-footer">
+      <button class="btn-sm" id="sm-cancel-btn">Cancel</button>
+      <button class="btn-sm btn-primary" id="sm-save-btn">Save Product</button>
+    </div>
+  </aside>
 
   <!-- Order Status Modal -->
   <div class="modal-overlay" id="status-modal">
@@ -235,6 +398,7 @@ function showSection(name) {
   else if (name === 'orders') loadOrders();
   else if (name === 'users') loadUsers();
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
+  else if (name === 'shop-manager') loadShopManager();
 }
 
 document.querySelectorAll('.admin-sidebar nav a[data-section]').forEach(function (a) {
@@ -374,6 +538,149 @@ function loadUsers() {
     document.getElementById('users-table').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
   });
 }
+
+// ─── Shop Manager ────────────────────────────────────────────────────────────
+
+var smEditingId = null;
+var collectionNames = { bp: 'BP Collection', fame: 'Fame & Infamy', stem: 'STEM Collection' };
+
+function loadShopManager() {
+  document.getElementById('sm-table-wrap').innerHTML = '<p style="color:#888">Loading…</p>';
+  apiFetch('/admin/shop-products').then(function (data) {
+    var products = data.products || [];
+    if (!products.length) {
+      document.getElementById('sm-table-wrap').innerHTML = '<div class="empty-state"><i class="fas fa-store-alt" style="font-size:2rem;margin-bottom:10px"></i><br>No products yet. Click "Add Product" to create your first listing.</div>';
+      return;
+    }
+    var rows = products.map(function (p) {
+      var img = p.imageLeft || p.imageCenter || p.imageRight || '';
+      return '<tr>' +
+        '<td>' + (img ? '<img class="sm-product-img" src="' + esc(img) + '" alt="" />' : '<span style="color:#ccc">—</span>') + '</td>' +
+        '<td><strong>' + esc(p.pname) + '</strong><br><small style="color:#888">' + esc(p.id) + '</small></td>' +
+        '<td>$' + parseFloat(p.price).toFixed(2) + '</td>' +
+        '<td>' + esc(collectionNames[p.collection] || p.collection) + '</td>' +
+        '<td>' + (p.published ? '<span class="pub-badge pub-yes">Published</span>' : '<span class="pub-badge pub-no">Draft</span>') + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn-sm sm-edit-btn" data-id="' + esc(p.id) + '" style="margin-right:4px"><i class="fas fa-pencil-alt"></i> Edit</button>' +
+          '<button class="btn-sm btn-danger sm-del-btn" data-id="' + esc(p.id) + '" data-name="' + esc(p.pname) + '"><i class="fas fa-trash"></i></button>' +
+        '</td></tr>';
+    }).join('');
+    document.getElementById('sm-table-wrap').innerHTML =
+      '<table class="data-table"><thead><tr><th>Image</th><th>Product</th><th>Price</th><th>Collection</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+    document.querySelectorAll('.sm-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var p = products.find(function (x) { return x.id === btn.dataset.id; });
+        if (p) smOpenDrawer(p);
+      });
+    });
+    document.querySelectorAll('.sm-del-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('Delete "' + btn.dataset.name + '"? This cannot be undone.')) return;
+        apiFetch('/admin/shop-products/' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' })
+          .then(function () { loadShopManager(); })
+          .catch(function (e) { alert(e.message); });
+      });
+    });
+  }).catch(function (e) {
+    document.getElementById('sm-table-wrap').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+function smOpenDrawer(product) {
+  smEditingId = product ? product.id : null;
+  document.getElementById('sm-drawer-title').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('sm-error').style.display = 'none';
+
+  var f = product || {};
+  document.getElementById('sm-id').value          = f.id          || '';
+  document.getElementById('sm-id').readOnly        = !!product;
+  document.getElementById('sm-id').style.background = product ? '#f4f4f4' : '';
+  document.getElementById('sm-pname').value        = f.pname        || '';
+  document.getElementById('sm-price').value        = f.price        != null ? f.price : '';
+  document.getElementById('sm-rating').value       = f.rating       != null ? f.rating : '';
+  document.getElementById('sm-collection').value   = f.collection   || 'bp';
+  document.getElementById('sm-description').value  = f.description  || '';
+  document.getElementById('sm-sort').value         = f.sortOrder    != null ? f.sortOrder : 0;
+  document.getElementById('sm-published').checked  = f.published    !== false;
+
+  document.getElementById('sm-img-left').value     = f.imageLeft        || '';
+  document.getElementById('sm-pid-left').value     = f.printifyIdLeft   || '';
+  document.getElementById('sm-vid-left').value     = f.variantIdLeft    || '';
+  document.getElementById('sm-img-center').value   = f.imageCenter      || '';
+  document.getElementById('sm-pid-center').value   = f.printifyIdCenter || '';
+  document.getElementById('sm-vid-center').value   = f.variantIdCenter  || '';
+  document.getElementById('sm-img-right').value    = f.imageRight       || '';
+  document.getElementById('sm-pid-right').value    = f.printifyIdRight  || '';
+  document.getElementById('sm-vid-right').value    = f.variantIdRight   || '';
+
+  ['left','center','right'].forEach(smPreview);
+
+  document.getElementById('sm-overlay').classList.add('open');
+  document.getElementById('sm-drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function smCloseDrawer() {
+  document.getElementById('sm-overlay').classList.remove('open');
+  document.getElementById('sm-drawer').classList.remove('open');
+  document.body.style.overflow = '';
+  smEditingId = null;
+}
+
+function smPreview(side) {
+  var val = document.getElementById('sm-img-' + side).value.trim();
+  var img = document.getElementById('sm-prev-' + side);
+  if (val) { img.src = val; img.classList.add('visible'); }
+  else { img.src = ''; img.classList.remove('visible'); }
+}
+
+document.getElementById('sm-add-btn').addEventListener('click', function () { smOpenDrawer(null); });
+document.getElementById('sm-drawer-close').addEventListener('click', smCloseDrawer);
+document.getElementById('sm-cancel-btn').addEventListener('click', smCloseDrawer);
+document.getElementById('sm-overlay').addEventListener('click', smCloseDrawer);
+
+document.getElementById('sm-save-btn').addEventListener('click', function () {
+  var errEl = document.getElementById('sm-error');
+  errEl.style.display = 'none';
+
+  var body = {
+    id:               document.getElementById('sm-id').value.trim(),
+    pname:            document.getElementById('sm-pname').value.trim(),
+    price:            document.getElementById('sm-price').value,
+    rating:           document.getElementById('sm-rating').value,
+    collection:       document.getElementById('sm-collection').value,
+    description:      document.getElementById('sm-description').value.trim(),
+    sortOrder:        document.getElementById('sm-sort').value,
+    published:        document.getElementById('sm-published').checked,
+    imageLeft:        document.getElementById('sm-img-left').value.trim(),
+    printifyIdLeft:   document.getElementById('sm-pid-left').value.trim(),
+    variantIdLeft:    document.getElementById('sm-vid-left').value.trim(),
+    imageCenter:      document.getElementById('sm-img-center').value.trim(),
+    printifyIdCenter: document.getElementById('sm-pid-center').value.trim(),
+    variantIdCenter:  document.getElementById('sm-vid-center').value.trim(),
+    imageRight:       document.getElementById('sm-img-right').value.trim(),
+    printifyIdRight:  document.getElementById('sm-pid-right').value.trim(),
+    variantIdRight:   document.getElementById('sm-vid-right').value.trim(),
+  };
+
+  var saveBtn = document.getElementById('sm-save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+  var req = smEditingId
+    ? apiFetch('/admin/shop-products/' + encodeURIComponent(smEditingId), { method: 'PATCH', body: JSON.stringify(body) })
+    : apiFetch('/admin/shop-products', { method: 'POST', body: JSON.stringify(body) });
+
+  req.then(function () {
+    smCloseDrawer();
+    loadShopManager();
+  }).catch(function (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }).finally(function () {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save Product';
+  });
+});
 
 // ─── Printify Products ────────────────────────────────────────────────────────
 

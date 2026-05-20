@@ -170,6 +170,105 @@ async function sendPrintifyOrderToProduction(req, res) {
   }
 }
 
+// ─── Shop Products (catalog management) ──────────────────────────────────────
+
+const VALID_COLLECTIONS = ['bp', 'fame', 'stem'];
+
+function validateShopProduct(body, requireId = false) {
+  const errors = [];
+  if (requireId) {
+    if (!body.id || !/^[a-z0-9_-]+$/i.test(body.id)) errors.push('id must be a non-empty alphanumeric slug.');
+  }
+  if (!body.pname || !String(body.pname).trim()) errors.push('pname is required.');
+  if (body.price === undefined || isNaN(parseFloat(body.price)) || parseFloat(body.price) < 0) errors.push('price must be a non-negative number.');
+  if (!VALID_COLLECTIONS.includes(body.collection)) errors.push('collection must be one of: bp, fame, stem.');
+  return errors;
+}
+
+// GET /api/shop-products  (public)
+async function listShopProducts(req, res) {
+  const products = await prisma.shopProduct.findMany({
+    where: { published: true },
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+  return res.json({ products });
+}
+
+// GET /api/admin/shop-products
+async function adminListShopProducts(req, res) {
+  const products = await prisma.shopProduct.findMany({
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+  return res.json({ products });
+}
+
+// POST /api/admin/shop-products
+async function createShopProduct(req, res) {
+  const errors = validateShopProduct(req.body, true);
+  if (errors.length) return res.status(422).json({ error: errors.join(' ') });
+
+  const existing = await prisma.shopProduct.findUnique({ where: { id: req.body.id } });
+  if (existing) return res.status(409).json({ error: `A product with id "${req.body.id}" already exists.` });
+
+  const product = await prisma.shopProduct.create({
+    data: {
+      id:               String(req.body.id).trim(),
+      pname:            String(req.body.pname).trim(),
+      price:            parseFloat(req.body.price),
+      rating:           parseFloat(req.body.rating) || 0,
+      collection:       req.body.collection,
+      description:      String(req.body.description || '').trim(),
+      published:        req.body.published !== false,
+      sortOrder:        parseInt(req.body.sortOrder, 10) || 0,
+      imageLeft:        String(req.body.imageLeft || '').trim(),
+      printifyIdLeft:   String(req.body.printifyIdLeft || '').trim(),
+      variantIdLeft:    String(req.body.variantIdLeft || '').trim(),
+      imageCenter:      String(req.body.imageCenter || '').trim(),
+      printifyIdCenter: String(req.body.printifyIdCenter || '').trim(),
+      variantIdCenter:  String(req.body.variantIdCenter || '').trim(),
+      imageRight:       String(req.body.imageRight || '').trim(),
+      printifyIdRight:  String(req.body.printifyIdRight || '').trim(),
+      variantIdRight:   String(req.body.variantIdRight || '').trim(),
+    },
+  });
+  return res.status(201).json({ product });
+}
+
+// PATCH /api/admin/shop-products/:id
+async function updateShopProduct(req, res) {
+  const errors = validateShopProduct(req.body, false);
+  if (errors.length) return res.status(422).json({ error: errors.join(' ') });
+
+  const product = await prisma.shopProduct.update({
+    where: { id: req.params.id },
+    data: {
+      pname:            String(req.body.pname).trim(),
+      price:            parseFloat(req.body.price),
+      rating:           parseFloat(req.body.rating) || 0,
+      collection:       req.body.collection,
+      description:      String(req.body.description || '').trim(),
+      published:        req.body.published !== false,
+      sortOrder:        parseInt(req.body.sortOrder, 10) || 0,
+      imageLeft:        String(req.body.imageLeft || '').trim(),
+      printifyIdLeft:   String(req.body.printifyIdLeft || '').trim(),
+      variantIdLeft:    String(req.body.variantIdLeft || '').trim(),
+      imageCenter:      String(req.body.imageCenter || '').trim(),
+      printifyIdCenter: String(req.body.printifyIdCenter || '').trim(),
+      variantIdCenter:  String(req.body.variantIdCenter || '').trim(),
+      imageRight:       String(req.body.imageRight || '').trim(),
+      printifyIdRight:  String(req.body.printifyIdRight || '').trim(),
+      variantIdRight:   String(req.body.variantIdRight || '').trim(),
+    },
+  });
+  return res.json({ product });
+}
+
+// DELETE /api/admin/shop-products/:id
+async function deleteShopProduct(req, res) {
+  await prisma.shopProduct.delete({ where: { id: req.params.id } });
+  return res.json({ ok: true });
+}
+
 module.exports = {
   getStats,
   listUsers,
@@ -180,4 +279,9 @@ module.exports = {
   updateOrderStatus,
   listPrintifyProducts,
   sendPrintifyOrderToProduction,
+  listShopProducts,
+  adminListShopProducts,
+  createShopProduct,
+  updateShopProduct,
+  deleteShopProduct,
 };

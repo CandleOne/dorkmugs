@@ -117,3 +117,38 @@ model Address {
   country   String  @default("US")
   isDefault Boolean @default(false)
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shop Products
+// Stores the storefront catalog. Each product has three placement variants
+// (left / center / right) each pointing to a separate Printify product.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ShopProduct {
+  id          String   @id            // human slug, e.g. "gc01"
+  pname       String
+  price       Float
+  rating      Float    @default(0)
+  collection  String                  // "bp" | "fame" | "stem"
+  description String   @default("")
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  // Left placement
+  imageLeft        String  @default("")
+  printifyIdLeft   String  @default("")
+  variantIdLeft    String  @default("")
+
+  // Center placement
+  imageCenter      String  @default("")
+  printifyIdCenter String  @default("")
+  variantIdCenter  String  @default("")
+
+  // Right placement
+  imageRight       String  @default("")
+  printifyIdRight  String  @default("")
+  variantIdRight   String  @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

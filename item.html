@@ -147,10 +147,24 @@
     var badge = collectionBadges[product.collection] || "";
     var label = collectionLabels[product.collection] || product.collection;
 
+    // Determine which placements have images/IDs available
+    var hasLeft   = !!(product.imageLeft   || product.printifyIdLeft);
+    var hasCenter = !!(product.imageCenter || product.printifyIdCenter);
+    var hasRight  = !!(product.imageRight  || product.printifyIdRight);
+    // If no per-placement data set, default all to the single image/id
+    if (!hasLeft && !hasCenter && !hasRight) {
+      product.imageLeft = product.image || '';
+      product.printifyIdLeft = product.printifyProductId || '';
+      product.variantIdLeft  = product.variantId || '';
+      hasLeft = true;
+    }
+
+    var defaultImg = product.imageLeft || product.imageCenter || product.imageRight || product.image || '';
+
     el.innerHTML =
       '<div class="item-detail-wrap">' +
         '<div class="item-detail-img">' +
-          '<img src="' + esc(product.image) + '" alt="' + esc(product.pname) + '" />' +
+          '<img id="item-main-img" src="' + esc(defaultImg) + '" alt="' + esc(product.pname) + '" />' +
         '</div>' +
         '<div class="item-detail-info">' +
           '<a href="product.html" class="item-back-link"><i class="fas fa-arrow-left"></i> Back to Shop</a>' +
@@ -163,9 +177,9 @@
             '<div class="placement-selector">' +
               '<label>Design Placement:</label>' +
               '<div class="placement-options">' +
-                '<button type="button" class="placement-btn active" data-placement="left"><i class="fas fa-align-left"></i>Left</button>' +
+                '<button type="button" class="placement-btn' + (hasLeft   ? ' active' : '') + '" data-placement="left"  ><i class="fas fa-align-left"  ></i>Left</button>'   +
                 '<button type="button" class="placement-btn" data-placement="center"><i class="fas fa-align-center"></i>Center</button>' +
-                '<button type="button" class="placement-btn" data-placement="right"><i class="fas fa-align-right"></i>Right</button>' +
+                '<button type="button" class="placement-btn" data-placement="right" ><i class="fas fa-align-right" ></i>Right</button>'  +
               '</div>' +
             '</div>' +
             '<label for="item-qty">Quantity:</label>' +
@@ -180,12 +194,24 @@
         '</div>' +
       '</div>';
 
+    // Map placement key → product data
+    var placementData = {
+      left:   { image: product.imageLeft   || defaultImg, pid: product.printifyIdLeft   || '', vid: product.variantIdLeft   || '' },
+      center: { image: product.imageCenter || defaultImg, pid: product.printifyIdCenter || '', vid: product.variantIdCenter || '' },
+      right:  { image: product.imageRight  || defaultImg, pid: product.printifyIdRight  || '', vid: product.variantIdRight  || '' },
+    };
+    var currentPlacement = 'left';
+
     // Wire up placement toggle
     var placementBtns = document.querySelectorAll(".placement-btn");
+    var mainImg = document.getElementById("item-main-img");
     placementBtns.forEach(function(btn) {
       btn.addEventListener("click", function() {
         placementBtns.forEach(function(b) { b.classList.remove("active"); });
         btn.classList.add("active");
+        currentPlacement = btn.getAttribute("data-placement");
+        var pd = placementData[currentPlacement];
+        if (pd && pd.image) mainImg.src = pd.image;
       });
     });
 
@@ -200,9 +226,8 @@
     // Wire up Add to Cart
     document.getElementById("item-add-btn").addEventListener("click", function() {
       var qty = parseInt(qtyEl.value) || 1;
-      var activeBtn = document.querySelector(".placement-btn.active");
-      var placement = activeBtn ? activeBtn.getAttribute("data-placement") : "left";
-      Cart.add(product.id, product.pname, product.price, product.image, qty, product.printifyProductId || '', product.variantId || '', placement);
+      var pd = placementData[currentPlacement] || placementData.left;
+      Cart.add(product.id, product.pname, product.price, pd.image || defaultImg, qty, pd.pid, pd.vid, currentPlacement);
     });
 
     // Init star rating
@@ -212,7 +237,7 @@
     }
   }
 
-  renderItem();
+  prodbReady.then(renderItem);
 </script>
 </body>
 </html>
