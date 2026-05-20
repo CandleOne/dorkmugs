@@ -290,7 +290,21 @@ async function adminListCollections(req, res) {
   ]);
   const countMap = {};
   counts.forEach(c => { countMap[c.collection] = c._count.id; });
-  return res.json(cols.map(c => ({ ...c, productCount: countMap[c.slug] || 0 })));
+  const knownSlugs = new Set(cols.map(c => c.slug));
+  const result = cols.map(c => ({ ...c, productCount: countMap[c.slug] || 0 }));
+  // Include slugs used by products but not yet in the Collection table
+  counts.forEach(c => {
+    if (!knownSlugs.has(c.collection)) {
+      const slug = c.collection;
+      result.push({
+        slug,
+        name: slug.charAt(0).toUpperCase() + slug.slice(1),
+        productCount: c._count.id,
+      });
+    }
+  });
+  result.sort((a, b) => a.slug.localeCompare(b.slug));
+  return res.json(result);
 }
 
 // POST /api/admin/collections
@@ -308,9 +322,11 @@ async function createAdminCollection(req, res) {
 async function updateAdminCollection(req, res) {
   const { name } = req.body || {};
   if (!name) return res.status(400).json({ error: 'name is required' });
-  const col = await prisma.collection.update({
-    where: { slug: req.params.slug },
-    data: { name: String(name).trim() },
+  const slug = req.params.slug;
+  const col = await prisma.collection.upsert({
+    where: { slug },
+    update: { name: String(name).trim() },
+    create: { slug, name: String(name).trim() },
   });
   return res.json(col);
 }
