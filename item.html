@@ -164,7 +164,7 @@
     el.innerHTML =
       '<div class="item-detail-wrap">' +
         '<div class="item-detail-img">' +
-          '<img id="item-main-img" src="' + esc(defaultImg) + '" alt="' + esc(product.pname) + '" />' +
+          '<img id="item-main-img" src="' + esc(defaultImg) + '" alt="' + esc(product.pname) + '" onerror="this.style.opacity=\'0.25\';this.title=\'Image not available\'" />' +
         '</div>' +
         '<div class="item-detail-info">' +
           '<a href="product.html" class="item-back-link"><i class="fas fa-arrow-left"></i> Back to Shop</a>' +
