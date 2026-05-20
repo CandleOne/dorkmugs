@@ -1,0 +1,9 @@
+.git
+node_modules
+server/node_modules
+server/.env
+server/dev.db
+
+# Large source/design files — not needed at runtime
+Assets/gimpprojectfiles/
+*.xcf
