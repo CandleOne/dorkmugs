@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Account – Dork Mugs</title>
+<link href="style.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+<style>
+  .account-page { padding: 40px 16px; max-width: 860px; margin: 0 auto; }
+  .account-page h1 { font-size: 1.8rem; margin-bottom: 8px; }
+  .account-page .subtitle { color: #666; margin-bottom: 32px; }
+  .account-tabs { display: flex; gap: 8px; border-bottom: 2px solid #eee; margin-bottom: 28px; }
+  .tab-btn { background: none; border: none; padding: 10px 20px; font-size: .95rem; font-weight: 600;
+             cursor: pointer; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px;
+             transition: color .2s, border-color .2s; }
+  .tab-btn.active { color: #222; border-bottom-color: #222; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Orders table */
+  .orders-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .orders-table th { text-align: left; padding: 10px 12px; background: #f4f4f4; border-bottom: 2px solid #eee; }
+  .orders-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: .78rem; font-weight: 700; text-transform: uppercase; }
+  .status-PENDING    { background: #fff3cd; color: #856404; }
+  .status-PROCESSING { background: #cce5ff; color: #004085; }
+  .status-SHIPPED    { background: #d4edda; color: #155724; }
+  .status-DELIVERED  { background: #d1ecf1; color: #0c5460; }
+  .status-CANCELLED  { background: #f8d7da; color: #721c24; }
+  .status-REFUNDED   { background: #e2e3e5; color: #383d41; }
+
+  /* Profile form */
+  .profile-form { max-width: 440px; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: .9rem; }
+  .form-group input { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 6px;
+                      font-size: 1rem; box-sizing: border-box; }
+  .form-group input:focus { outline: none; border-color: #222; }
+  .btn-save { padding: 10px 24px; background: #222; color: #fff; border: none; border-radius: 6px;
+              font-weight: 700; cursor: pointer; font-size: .95rem; }
+  .btn-save:disabled { background: #999; cursor: not-allowed; }
+  .form-divider { border: none; border-top: 1px solid #eee; margin: 28px 0; }
+  .success-msg { color: #155724; background: #d4edda; border-radius: 6px; padding: 10px 14px;
+                 margin-bottom: 14px; font-size: .9rem; display: none; }
+  .error-msg { color: #b00020; background: #fff0f0; border-radius: 6px; padding: 10px 14px;
+               margin-bottom: 14px; font-size: .9rem; display: none; }
+  .empty-state { text-align: center; padding: 40px; color: #888; }
+  .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+
+  /* Addresses */
+  .address-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .address-card { border: 1.5px solid #eee; border-radius: 8px; padding: 14px; position: relative; font-size: .88rem; line-height: 1.6; }
+  .address-card.default-addr { border-color: #222; }
+  .address-card .default-tag { font-size: .72rem; font-weight: 700; background: #222; color: #fff;
+                                padding: 1px 7px; border-radius: 10px; margin-bottom: 6px; display: inline-block; }
+  .address-del { position: absolute; top: 10px; right: 10px; background: none; border: none;
+                 cursor: pointer; color: #999; font-size: .85rem; }
+  .address-del:hover { color: #b00020; }
+  .btn-add-addr { padding: 9px 18px; background: #fff; border: 1.5px solid #222; border-radius: 6px;
+                  font-weight: 600; cursor: pointer; font-size: .88rem; }
+  .add-addr-form { background: #f9f9f9; border-radius: 8px; padding: 20px; margin-top: 16px; display: none; max-width: 480px; }
+  .addr-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .add-addr-form .form-group { margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off
+  </div>
+
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button" style="display:none">Log In</button>
+      <button id="btn001" type="button" style="display:none">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" class="fas fa-shopping-cart fa-lg" title="View cart" aria-label="View cart"></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="account-page" id="account-page">
+    <div style="text-align:center;padding:60px 0;color:#888" id="loading-state">
+      <i class="fas fa-spinner fa-spin" style="font-size:2rem"></i><br>Loading your account…
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+</div>
+
+<div id="cart-overlay" class="cart-overlay"></div>
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cart-total">$0.00</span></div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+<div id="cart-toast" class="cart-toast"></div>
+
+<script src="./include/cart.js"></script>
+<script src="./include/auth.js"></script>
+<script>
+var API = (function () {
+  if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+  if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return window.location.protocol + '//' + window.location.hostname + ':5000/api';
+  }
+  return window.location.origin.replace(/\/+$/, '') + '/api';
+})();
+
+function apiFetch(path, opts) {
+  return fetch(API + path, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts))
+    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Error'); return d; }); });
+}
+
+function statusBadge(s) {
+  return '<span class="status-badge status-' + s + '">' + s + '</span>';
+}
+
+function renderOrders(orders) {
+  if (!orders || orders.length === 0) {
+    return '<div class="empty-state"><i class="fas fa-box-open"></i><p>No orders yet. <a href="product.html">Start shopping!</a></p></div>';
+  }
+  var rows = orders.map(function (o) {
+    var date = new Date(o.createdAt).toLocaleDateString();
+    var items = o.items.map(function (i) { return i.name + ' x' + i.qty; }).join(', ');
+    return '<tr><td>#' + o.id.slice(-8).toUpperCase() + '</td><td>' + date + '</td>' +
+           '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + items + '</td>' +
+           '<td>$' + o.total.toFixed(2) + '</td><td>' + statusBadge(o.status) + '</td>' +
+           (o.trackingUrl ? '<td><a href="' + o.trackingUrl + '" target="_blank" rel="noopener">Track</a></td>' : '<td>—</td>') +
+           '</tr>';
+  }).join('');
+  return '<table class="orders-table"><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th>Tracking</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function renderAddresses(addresses) {
+  if (!addresses || addresses.length === 0) return '';
+  return addresses.map(function (a) {
+    return '<div class="address-card' + (a.isDefault ? ' default-addr' : '') + '">' +
+           (a.isDefault ? '<span class="default-tag">Default</span><br>' : '') +
+           '<strong>' + esc(a.name) + '</strong><br>' +
+           esc(a.line1) + (a.line2 ? '<br>' + esc(a.line2) : '') + '<br>' +
+           esc(a.city) + ', ' + esc(a.state) + ' ' + esc(a.zip) + '<br>' + esc(a.country) +
+           '<button class="address-del" data-id="' + a.id + '" title="Delete"><i class="fas fa-trash"></i></button>' +
+           '</div>';
+  }).join('');
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderPage(user, orders, addresses) {
+  var page = document.getElementById('account-page');
+  page.innerHTML =
+    '<h1>My Account</h1>' +
+    '<p class="subtitle">Welcome back, <strong>' + esc(user.name) + '</strong></p>' +
+    '<div class="account-tabs">' +
+      '<button class="tab-btn active" data-tab="orders">Orders</button>' +
+      '<button class="tab-btn" data-tab="addresses">Addresses</button>' +
+      '<button class="tab-btn" data-tab="profile">Profile</button>' +
+    '</div>' +
+
+    // Orders tab
+    '<div id="tab-orders" class="tab-pane active">' + renderOrders(orders) + '</div>' +
+
+    // Addresses tab
+    '<div id="tab-addresses" class="tab-pane">' +
+      '<div class="address-grid" id="addr-grid">' + renderAddresses(addresses) + '</div>' +
+      '<button class="btn-add-addr" id="btn-add-addr"><i class="fas fa-plus"></i> Add Address</button>' +
+      '<div class="add-addr-form" id="add-addr-form">' +
+        '<div class="form-group"><label>Full Name</label><input id="a-name" placeholder="Jane Dork" /></div>' +
+        '<div class="form-group"><label>Address Line 1</label><input id="a-line1" placeholder="123 Main St" /></div>' +
+        '<div class="form-group"><label>Address Line 2 (optional)</label><input id="a-line2" placeholder="Apt 4" /></div>' +
+        '<div class="addr-grid-2">' +
+          '<div class="form-group"><label>City</label><input id="a-city" /></div>' +
+          '<div class="form-group"><label>State</label><input id="a-state" maxlength="2" /></div>' +
+        '</div>' +
+        '<div class="addr-grid-2">' +
+          '<div class="form-group"><label>ZIP</label><input id="a-zip" maxlength="10" /></div>' +
+          '<div class="form-group"><label>Country</label><input id="a-country" value="US" maxlength="2" /></div>' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin-bottom:14px">' +
+          '<input type="checkbox" id="a-default" /> Set as default' +
+        '</label>' +
+        '<div id="addr-error" class="error-msg"></div>' +
+        '<button class="btn-save" id="save-addr-btn">Save Address</button>' +
+        '<button style="margin-left:8px;background:none;border:none;cursor:pointer;color:#666" id="cancel-addr-btn">Cancel</button>' +
+      '</div>' +
+    '</div>' +
+
+    // Profile tab
+    '<div id="tab-profile" class="tab-pane">' +
+      '<div class="profile-form">' +
+        '<div id="prof-success" class="success-msg"></div>' +
+        '<div id="prof-error" class="error-msg"></div>' +
+        '<div class="form-group"><label>Full Name</label><input id="p-name" value="' + esc(user.name) + '" /></div>' +
+        '<div class="form-group"><label>Email</label><input id="p-email" value="' + esc(user.email) + '" disabled style="background:#f4f4f4" /></div>' +
+        '<button class="btn-save" id="save-profile-btn">Save Changes</button>' +
+        '<hr class="form-divider" />' +
+        '<h3 style="font-size:1.1rem;margin-bottom:16px">Change Password</h3>' +
+        '<div class="form-group"><label>Current Password</label><input type="password" id="p-cur-pw" autocomplete="current-password" /></div>' +
+        '<div class="form-group"><label>New Password</label><input type="password" id="p-new-pw" autocomplete="new-password" /></div>' +
+        '<div class="form-group"><label>Confirm New Password</label><input type="password" id="p-confirm-pw" autocomplete="new-password" /></div>' +
+        '<button class="btn-save" id="save-pw-btn">Update Password</button>' +
+      '</div>' +
+    '</div>';
+
+  // Tab switching
+  page.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      page.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      page.querySelectorAll('.tab-pane').forEach(function (p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Add address toggle
+  document.getElementById('btn-add-addr').addEventListener('click', function () {
+    document.getElementById('add-addr-form').style.display = 'block';
+    this.style.display = 'none';
+  });
+  document.getElementById('cancel-addr-btn').addEventListener('click', function () {
+    document.getElementById('add-addr-form').style.display = 'none';
+    document.getElementById('btn-add-addr').style.display = '';
+  });
+
+  // Save address
+  document.getElementById('save-addr-btn').addEventListener('click', function () {
+    var errEl = document.getElementById('addr-error');
+    errEl.style.display = 'none';
+    var body = {
+      name: document.getElementById('a-name').value.trim(),
+      line1: document.getElementById('a-line1').value.trim(),
+      line2: document.getElementById('a-line2').value.trim() || undefined,
+      city: document.getElementById('a-city').value.trim(),
+      state: document.getElementById('a-state').value.trim().toUpperCase(),
+      zip: document.getElementById('a-zip').value.trim(),
+      country: document.getElementById('a-country').value.trim().toUpperCase() || 'US',
+      isDefault: document.getElementById('a-default').checked,
+    };
+    if (!body.name || !body.line1 || !body.city || !body.state || !body.zip) {
+      errEl.textContent = 'Please fill in all required fields.'; errEl.style.display = 'block'; return;
+    }
+    apiFetch('/users/me/addresses', { method: 'POST', body: JSON.stringify(body) })
+      .then(function () { window.location.reload(); })
+      .catch(function (e) { errEl.textContent = e.message; errEl.style.display = 'block'; });
+  });
+
+  // Delete address
+  page.querySelectorAll('.address-del').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!confirm('Delete this address?')) return;
+      apiFetch('/users/me/addresses/' + btn.dataset.id, { method: 'DELETE' })
+        .then(function () { window.location.reload(); })
+        .catch(function (e) { alert(e.message); });
+    });
+  });
+
+  // Save profile
+  document.getElementById('save-profile-btn').addEventListener('click', function () {
+    var sucEl = document.getElementById('prof-success');
+    var errEl = document.getElementById('prof-error');
+    sucEl.style.display = 'none'; errEl.style.display = 'none';
+    var name = document.getElementById('p-name').value.trim();
+    if (!name) { errEl.textContent = 'Name cannot be empty.'; errEl.style.display = 'block'; return; }
+    apiFetch('/users/me', { method: 'PUT', body: JSON.stringify({ name: name }) })
+      .then(function (d) {
+        Auth.getUser && sessionStorage.setItem('dm_user', JSON.stringify(d.user));
+        sucEl.textContent = 'Profile updated!'; sucEl.style.display = 'block';
+      })
+      .catch(function (e) { errEl.textContent = e.message; errEl.style.display = 'block'; });
+  });
+
+  // Change password
+  document.getElementById('save-pw-btn').addEventListener('click', function () {
+    var sucEl = document.getElementById('prof-success');
+    var errEl = document.getElementById('prof-error');
+    sucEl.style.display = 'none'; errEl.style.display = 'none';
+    var cur = document.getElementById('p-cur-pw').value;
+    var nw = document.getElementById('p-new-pw').value;
+    var conf = document.getElementById('p-confirm-pw').value;
+    if (!cur || !nw) { errEl.textContent = 'Fill in current and new password.'; errEl.style.display = 'block'; return; }
+    if (nw !== conf) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = 'block'; return; }
+    if (nw.length < 8 || !/[A-Z]/.test(nw) || !/[0-9]/.test(nw)) {
+      errEl.textContent = 'New password: min 8 chars, 1 uppercase, 1 number.'; errEl.style.display = 'block'; return;
+    }
+    apiFetch('/users/me', { method: 'PUT', body: JSON.stringify({ currentPassword: cur, newPassword: nw }) })
+      .then(function () {
+        sucEl.textContent = 'Password updated!'; sucEl.style.display = 'block';
+        document.getElementById('p-cur-pw').value = '';
+        document.getElementById('p-new-pw').value = '';
+        document.getElementById('p-confirm-pw').value = '';
+      })
+      .catch(function (e) { errEl.textContent = e.message; errEl.style.display = 'block'; });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Require auth
+  Promise.all([
+    apiFetch('/auth/me').catch(function () {
+      return Auth.refreshSession().then(function (u) {
+        if (!u) { window.location.href = 'login.html'; throw new Error('Not authenticated'); }
+        return { user: u };
+      });
+    }),
+    apiFetch('/users/me/orders').catch(function () { return { orders: [] }; }),
+    apiFetch('/users/me/addresses').catch(function () { return { addresses: [] }; }),
+  ]).then(function (results) {
+    var user = results[0].user;
+    var orders = results[1].orders || [];
+    var addresses = results[2].addresses || [];
+    document.getElementById('loading-state') && (document.getElementById('loading-state').remove());
+    renderPage(user, orders, addresses);
+  }).catch(function (err) {
+    if (err.message !== 'Not authenticated') {
+      document.getElementById('account-page').innerHTML = '<p style="color:#b00020;padding:40px">Failed to load account. Please refresh.</p>';
+    }
+  });
+});
+</script>
+</body>
+</html>

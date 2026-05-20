@@ -1,0 +1,119 @@
+// This is your Prisma schema file.
+// Datasource uses SQLite for development. Switch provider to "postgresql"
+// and update DATABASE_URL in .env for production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Note: SQLite does not support native enums. Role and OrderStatus are stored
+// as plain String fields. Valid values are enforced at the application layer.
+// Valid Role values:        CUSTOMER | ADMIN
+// Valid OrderStatus values: PENDING | PROCESSING | SHIPPED | DELIVERED | CANCELLED | REFUNDED
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("CUSTOMER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders         Order[]
+  addresses      Address[]
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth tokens
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Orders
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  stripeSessionId String?     @unique
+  printifyOrderId String?
+  status          String      @default("PENDING")
+  total           Float
+  shippingName    String
+  shippingLine1   String
+  shippingLine2   String?
+  shippingCity    String
+  shippingState   String
+  shippingZip     String
+  shippingCountry String      @default("US")
+  email           String
+  trackingNumber  String?
+  trackingUrl     String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  variantId   String?
+  name        String
+  price       Float
+  qty         Int
+  image       String?
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Addresses
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  zip       String
+  country   String  @default("US")
+  isDefault Boolean @default(false)
+}

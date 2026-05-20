@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin – Dork Mugs</title>
+<link href="style.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+<style>
+  .admin-layout { display: flex; min-height: 80vh; }
+  .admin-sidebar { width: 220px; flex-shrink: 0; background: #1a1a1a; color: #fff; padding: 24px 0; }
+  .admin-sidebar h2 { font-size: 1rem; padding: 0 20px 16px; border-bottom: 1px solid #333; margin: 0; }
+  .admin-sidebar nav a { display: flex; align-items: center; gap: 10px; padding: 12px 20px;
+    color: #ccc; text-decoration: none; font-size: .9rem; transition: background .15s, color .15s; }
+  .admin-sidebar nav a:hover, .admin-sidebar nav a.active { background: #333; color: #fff; }
+  .admin-sidebar nav a i { width: 16px; text-align: center; }
+  .admin-main { flex: 1; padding: 28px 32px; min-width: 0; }
+  .admin-main h1 { font-size: 1.5rem; margin: 0 0 24px; }
+
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 20px; }
+  .stat-card .stat-label { font-size: .8rem; color: #888; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+  .stat-card .stat-val { font-size: 1.8rem; font-weight: 700; color: #1a1a1a; }
+
+  /* Generic table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: .88rem; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .data-table th { text-align: left; padding: 11px 14px; background: #f4f4f4; border-bottom: 2px solid #eee; font-size: .8rem; text-transform: uppercase; color: #666; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #fafafa; }
+
+  .status-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+  .status-PENDING    { background: #fff3cd; color: #856404; }
+  .status-PROCESSING { background: #cce5ff; color: #004085; }
+  .status-SHIPPED    { background: #d4edda; color: #155724; }
+  .status-DELIVERED  { background: #d1ecf1; color: #0c5460; }
+  .status-CANCELLED  { background: #f8d7da; color: #721c24; }
+  .status-REFUNDED   { background: #e2e3e5; color: #383d41; }
+  .role-ADMIN    { background: #fce8d3; color: #7c3d07; }
+  .role-CUSTOMER { background: #e8e8e8; color: #444; }
+
+  .btn-sm { padding: 4px 10px; border-radius: 4px; border: 1px solid #ddd; background: #fff;
+            cursor: pointer; font-size: .8rem; font-weight: 600; }
+  .btn-sm:hover { background: #f4f4f4; }
+  .btn-danger { color: #b00020; border-color: #f5c6cb; }
+  .btn-danger:hover { background: #fff0f0; }
+  .btn-primary { background: #222; color: #fff; border-color: #222; }
+  .btn-primary:hover { background: #444; }
+
+  .panel-section { margin-bottom: 32px; }
+  .panel-section h2 { font-size: 1.1rem; margin: 0 0 14px; color: #333; }
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .filter-bar select, .filter-bar input { padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: .88rem; }
+
+  /* Status update modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 28px; width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,.18); }
+  .modal h3 { margin: 0 0 20px; }
+  .modal .form-group { margin-bottom: 14px; }
+  .modal label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: 5px; }
+  .modal select, .modal input { width: 100%; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 6px; font-size: .9rem; box-sizing: border-box; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  .pagination { display: flex; gap: 6px; margin-top: 14px; justify-content: flex-end; }
+  .pagination button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: .85rem; }
+  .pagination button.active { background: #222; color: #fff; border-color: #222; }
+  .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .empty-state { text-align: center; padding: 40px; color: #888; }
+  .section-inactive { display: none; }
+
+  @media (max-width: 700px) {
+    .admin-layout { flex-direction: column; }
+    .admin-sidebar { width: 100%; padding: 12px 0; }
+    .admin-main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="announcement-bar">Dork Mugs Admin Panel</div>
+
+  <header class="header">
+    <div class="header-brand">
+      <a href="index.html"><img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" /></a>
+    </div>
+    <div class="header-actions">
+      <button id="btn-login" style="display:none">Log In</button>
+      <button id="btn001" style="display:none">Sign Up</button>
+      <button id="btn-account" style="display:none"></button>
+      <button id="btn-logout" style="display:none">Log Out</button>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <h2><i class="fas fa-mug-hot" style="margin-right:6px"></i> Admin</h2>
+      <nav>
+        <a href="#" class="active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="#" data-section="orders"><i class="fas fa-box"></i> Orders</a>
+        <a href="#" data-section="users"><i class="fas fa-users"></i> Users</a>
+        <a href="#" data-section="products"><i class="fas fa-store"></i> Printify Products</a>
+        <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="admin-main">
+      <div id="section-loading" style="text-align:center;padding:60px;color:#888">
+        <i class="fas fa-spinner fa-spin" style="font-size:2rem"></i><br>Loading…
+      </div>
+
+      <!-- Dashboard -->
+      <div id="section-dashboard" class="section-inactive">
+        <h1>Dashboard</h1>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="panel-section">
+          <h2>Recent Orders</h2>
+          <div id="recent-orders-table"></div>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div id="section-orders" class="section-inactive">
+        <h1>Orders</h1>
+        <div class="filter-bar">
+          <select id="order-status-filter">
+            <option value="">All Statuses</option>
+            <option>PENDING</option><option>PROCESSING</option><option>SHIPPED</option>
+            <option>DELIVERED</option><option>CANCELLED</option><option>REFUNDED</option>
+          </select>
+          <button class="btn-sm btn-primary" id="reload-orders-btn">Refresh</button>
+        </div>
+        <div id="orders-table"></div>
+        <div class="pagination" id="orders-pagination"></div>
+      </div>
+
+      <!-- Users -->
+      <div id="section-users" class="section-inactive">
+        <h1>Users</h1>
+        <div id="users-table"></div>
+        <div class="pagination" id="users-pagination"></div>
+      </div>
+
+      <!-- Printify Products -->
+      <div id="section-products" class="section-inactive">
+        <h1>Printify Products</h1>
+        <button class="btn-sm btn-primary" id="sync-products-btn" style="margin-bottom:16px">
+          <i class="fas fa-sync-alt"></i> Fetch from Printify
+        </button>
+        <div id="products-table"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Order Status Modal -->
+  <div class="modal-overlay" id="status-modal">
+    <div class="modal">
+      <h3>Update Order Status</h3>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="modal-status">
+          <option>PENDING</option><option>PROCESSING</option><option>SHIPPED</option>
+          <option>DELIVERED</option><option>CANCELLED</option><option>REFUNDED</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tracking Number (optional)</label>
+        <input type="text" id="modal-tracking" placeholder="1Z999AA10123456784" />
+      </div>
+      <div class="form-group">
+        <label>Tracking URL (optional)</label>
+        <input type="url" id="modal-tracking-url" placeholder="https://track.ups.com/…" />
+      </div>
+      <div id="modal-error" style="color:#b00020;font-size:.85rem;margin-bottom:8px;display:none"></div>
+      <div class="modal-actions">
+        <button class="btn-sm" id="modal-cancel">Cancel</button>
+        <button class="btn-sm btn-primary" id="modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-copy">&copy; 2026 Dork Mugs — Admin Panel</div>
+  </footer>
+</div>
+
+<script src="./include/auth.js"></script>
+<script>
+var API = (function () {
+  if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+  if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return window.location.protocol + '//' + window.location.hostname + ':5000/api';
+  }
+  return window.location.origin.replace(/\/+$/, '') + '/api';
+})();
+var currentOrderId = null;
+var ordersPage = 1, usersPage = 1;
+
+function apiFetch(path, opts) {
+  return fetch(API + path, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts))
+    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Error'); return d; }); });
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function statusBadge(s) {
+  return '<span class="status-badge status-' + s + '">' + s + '</span>';
+}
+
+function roleBadge(r) {
+  return '<span class="status-badge role-' + r + '">' + r + '</span>';
+}
+
+// ─── Section navigation ────────────────────────────────────────────────────
+
+function showSection(name) {
+  document.querySelectorAll('.section-inactive, #section-loading').forEach(function (el) {
+    el.classList.add('section-inactive'); el.style.display = '';
+  });
+  document.querySelectorAll('.admin-sidebar nav a').forEach(function (a) { a.classList.remove('active'); });
+  var section = document.getElementById('section-' + name);
+  if (section) { section.classList.remove('section-inactive'); section.style.display = 'block'; }
+  var link = document.querySelector('.admin-sidebar nav a[data-section="' + name + '"]');
+  if (link) link.classList.add('active');
+
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'orders') loadOrders();
+  else if (name === 'users') loadUsers();
+  else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
+}
+
+document.querySelectorAll('.admin-sidebar nav a[data-section]').forEach(function (a) {
+  a.addEventListener('click', function (e) { e.preventDefault(); showSection(a.dataset.section); });
+});
+
+// ─── Dashboard ──────────────────────────────────────────────────────────────
+
+function loadDashboard() {
+  apiFetch('/admin/stats').then(function (data) {
+    document.getElementById('stats-grid').innerHTML =
+      stat('Total Orders', data.totalOrders) +
+      stat('Pending', data.pendingOrders) +
+      stat('Revenue', '$' + (data.totalRevenue || 0).toFixed(2)) +
+      stat('Customers', data.totalUsers);
+    document.getElementById('recent-orders-table').innerHTML = renderOrdersTable(data.recentOrders || []);
+    bindOrderActions();
+  }).catch(function (e) {
+    document.getElementById('stats-grid').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+function stat(label, val) {
+  return '<div class="stat-card"><div class="stat-label">' + esc(label) + '</div><div class="stat-val">' + esc(String(val)) + '</div></div>';
+}
+
+// ─── Orders ─────────────────────────────────────────────────────────────────
+
+function loadOrders() {
+  var status = document.getElementById('order-status-filter').value;
+  var url = '/admin/orders?page=' + ordersPage + '&limit=20' + (status ? '&status=' + status : '');
+  apiFetch(url).then(function (data) {
+    document.getElementById('orders-table').innerHTML = renderOrdersTable(data.orders || []);
+    renderPagination('orders', ordersPage, data.pages || 1, function (p) { ordersPage = p; loadOrders(); });
+    bindOrderActions();
+  }).catch(function (e) {
+    document.getElementById('orders-table').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+function renderOrdersTable(orders) {
+  if (!orders.length) return '<div class="empty-state">No orders found.</div>';
+  var rows = orders.map(function (o) {
+    var date = new Date(o.createdAt).toLocaleDateString();
+    return '<tr>' +
+      '<td>#' + esc(o.id.slice(-8).toUpperCase()) + '</td>' +
+      '<td>' + esc(o.email) + '</td>' +
+      '<td>' + date + '</td>' +
+      '<td>$' + o.total.toFixed(2) + '</td>' +
+      '<td>' + statusBadge(o.status) + '</td>' +
+      '<td><button class="btn-sm btn-update-status" data-id="' + esc(o.id) + '" data-status="' + esc(o.status) + '" data-tracking="' + esc(o.trackingNumber||'') + '" data-tracking-url="' + esc(o.trackingUrl||'') + '">Update</button></td>' +
+      '</tr>';
+  }).join('');
+  return '<table class="data-table"><thead><tr><th>Order</th><th>Email</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function bindOrderActions() {
+  document.querySelectorAll('.btn-update-status').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      currentOrderId = btn.dataset.id;
+      document.getElementById('modal-status').value = btn.dataset.status;
+      document.getElementById('modal-tracking').value = btn.dataset.tracking || '';
+      document.getElementById('modal-tracking-url').value = btn.dataset.trackingUrl || '';
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('status-modal').classList.add('open');
+    });
+  });
+}
+
+document.getElementById('modal-cancel').addEventListener('click', function () {
+  document.getElementById('status-modal').classList.remove('open');
+});
+
+document.getElementById('modal-save').addEventListener('click', function () {
+  var errEl = document.getElementById('modal-error');
+  errEl.style.display = 'none';
+  var body = {
+    status: document.getElementById('modal-status').value,
+    trackingNumber: document.getElementById('modal-tracking').value || undefined,
+    trackingUrl: document.getElementById('modal-tracking-url').value || undefined,
+  };
+  apiFetch('/admin/orders/' + currentOrderId + '/status', { method: 'PATCH', body: JSON.stringify(body) })
+    .then(function () {
+      document.getElementById('status-modal').classList.remove('open');
+      var active = document.querySelector('.admin-sidebar nav a.active');
+      if (active && active.dataset.section === 'orders') loadOrders();
+      else loadDashboard();
+    })
+    .catch(function (e) { errEl.textContent = e.message; errEl.style.display = 'block'; });
+});
+
+document.getElementById('order-status-filter').addEventListener('change', function () { ordersPage = 1; loadOrders(); });
+document.getElementById('reload-orders-btn').addEventListener('click', function () { loadOrders(); });
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+function loadUsers() {
+  apiFetch('/admin/users?page=' + usersPage + '&limit=20').then(function (data) {
+    var rows = (data.users || []).map(function (u) {
+      return '<tr>' +
+        '<td>' + esc(u.name) + '</td>' +
+        '<td>' + esc(u.email) + '</td>' +
+        '<td>' + roleBadge(u.role) + '</td>' +
+        '<td>' + new Date(u.createdAt).toLocaleDateString() + '</td>' +
+        '<td style="display:flex;gap:6px">' +
+          '<button class="btn-sm btn-toggle-role" data-id="' + esc(u.id) + '" data-role="' + esc(u.role) + '">' +
+            (u.role === 'ADMIN' ? 'Make Customer' : 'Make Admin') +
+          '</button>' +
+          '<button class="btn-sm btn-danger btn-del-user" data-id="' + esc(u.id) + '" data-name="' + esc(u.name) + '">Delete</button>' +
+        '</td></tr>';
+    }).join('');
+    document.getElementById('users-table').innerHTML =
+      '<table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    renderPagination('users', usersPage, data.pages || 1, function (p) { usersPage = p; loadUsers(); });
+
+    // Toggle role
+    document.querySelectorAll('.btn-toggle-role').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var newRole = btn.dataset.role === 'ADMIN' ? 'CUSTOMER' : 'ADMIN';
+        if (!confirm('Change role to ' + newRole + '?')) return;
+        apiFetch('/admin/users/' + btn.dataset.id + '/role', { method: 'PATCH', body: JSON.stringify({ role: newRole }) })
+          .then(function () { loadUsers(); })
+          .catch(function (e) { alert(e.message); });
+      });
+    });
+
+    // Delete user
+    document.querySelectorAll('.btn-del-user').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('Permanently delete user "' + btn.dataset.name + '"?')) return;
+        apiFetch('/admin/users/' + btn.dataset.id, { method: 'DELETE' })
+          .then(function () { loadUsers(); })
+          .catch(function (e) { alert(e.message); });
+      });
+    });
+  }).catch(function (e) {
+    document.getElementById('users-table').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+// ─── Printify Products ────────────────────────────────────────────────────────
+
+document.getElementById('sync-products-btn').addEventListener('click', function () {
+  document.getElementById('products-table').innerHTML = '<p>Loading…</p>';
+  apiFetch('/admin/printify/products').then(function (data) {
+    var products = data.data || [];
+    if (!products.length) { document.getElementById('products-table').innerHTML = '<div class="empty-state">No products found in Printify.</div>'; return; }
+    var rows = products.map(function (p) {
+      return '<tr>' +
+        '<td><img src="' + esc(p.images && p.images[0] && p.images[0].src || '') + '" style="width:48px;height:48px;object-fit:cover;border-radius:4px" /></td>' +
+        '<td>' + esc(p.title) + '</td>' +
+        '<td>' + esc(p.variants && p.variants.length || 0) + ' variants</td>' +
+        '<td>' + (p.visible ? '<span style="color:green">Published</span>' : '<span style="color:#888">Draft</span>') + '</td>' +
+        '</tr>';
+    }).join('');
+    document.getElementById('products-table').innerHTML =
+      '<table class="data-table"><thead><tr><th>Image</th><th>Title</th><th>Variants</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }).catch(function (e) {
+    document.getElementById('products-table').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+});
+
+// ─── Pagination helper ────────────────────────────────────────────────────────
+
+function renderPagination(id, current, total, onPage) {
+  var el = document.getElementById(id + '-pagination');
+  if (!el || total <= 1) { if (el) el.innerHTML = ''; return; }
+  var html = '';
+  html += '<button ' + (current <= 1 ? 'disabled' : '') + ' data-p="' + (current - 1) + '">&lsaquo; Prev</button>';
+  for (var p = Math.max(1, current - 2); p <= Math.min(total, current + 2); p++) {
+    html += '<button class="' + (p === current ? 'active' : '') + '" data-p="' + p + '">' + p + '</button>';
+  }
+  html += '<button ' + (current >= total ? 'disabled' : '') + ' data-p="' + (current + 1) + '">Next &rsaquo;</button>';
+  el.innerHTML = html;
+  el.querySelectorAll('button[data-p]').forEach(function (btn) {
+    if (!btn.disabled) btn.addEventListener('click', function () { onPage(parseInt(btn.dataset.p)); });
+  });
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', function () {
+  apiFetch('/auth/me').then(function (data) {
+    if (data.user.role !== 'ADMIN') {
+      window.location.href = 'account.html'; return;
+    }
+    document.getElementById('section-loading').style.display = 'none';
+    showSection('dashboard');
+  }).catch(function () {
+    Auth.refreshSession().then(function (u) {
+      if (!u || u.role !== 'ADMIN') { window.location.href = 'login.html'; }
+      else { document.getElementById('section-loading').style.display = 'none'; showSection('dashboard'); }
+    });
+  });
+});
+</script>
+</body>
+</html>
