@@ -172,8 +172,6 @@ async function sendPrintifyOrderToProduction(req, res) {
 
 // ─── Shop Products (catalog management) ──────────────────────────────────────
 
-const VALID_COLLECTIONS = ['bp', 'fame', 'stem'];
-
 function validateShopProduct(body, requireId = false) {
   const errors = [];
   if (requireId) {
@@ -181,7 +179,7 @@ function validateShopProduct(body, requireId = false) {
   }
   if (!body.pname || !String(body.pname).trim()) errors.push('pname is required.');
   if (body.price === undefined || isNaN(parseFloat(body.price)) || parseFloat(body.price) < 0) errors.push('price must be a non-negative number.');
-  if (!VALID_COLLECTIONS.includes(body.collection)) errors.push('collection must be one of: bp, fame, stem.');
+  if (!body.collection || !/^[a-z0-9_-]+$/i.test(body.collection)) errors.push('collection must be a non-empty alphanumeric slug.');
   return errors;
 }
 

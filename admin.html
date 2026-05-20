@@ -227,7 +227,21 @@
             <option value="bp">BP Collection</option>
             <option value="fame">Fame &amp; Infamy</option>
             <option value="stem">STEM Collection</option>
+            <option value="__new__" style="color:#1a6fc4">＋ Create new collection…</option>
           </select>
+          <div id="sm-new-collection-wrap" style="display:none;margin-top:8px;background:#f4f8ff;border:1px solid #c5d8f5;border-radius:6px;padding:10px;gap:8px" class="sm-form-row">
+            <div class="sm-form-group" style="flex:1">
+              <label for="sm-new-col-slug" style="font-size:.78rem">Slug <span style="color:#888;font-weight:400">e.g. retro</span></label>
+              <input type="text" id="sm-new-col-slug" placeholder="retro" pattern="[a-z0-9_-]+" style="font-size:.85rem" />
+            </div>
+            <div class="sm-form-group" style="flex:1.5">
+              <label for="sm-new-col-name" style="font-size:.78rem">Display Name</label>
+              <input type="text" id="sm-new-col-name" placeholder="Retro Collection" style="font-size:.85rem" />
+            </div>
+            <div class="sm-form-group" style="display:flex;align-items:flex-end;padding-bottom:2px">
+              <button type="button" id="sm-new-col-add" class="btn-sm btn-primary" style="white-space:nowrap">Add</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="sm-form-group">
@@ -544,6 +558,46 @@ function loadUsers() {
 var smEditingId = null;
 var collectionNames = { bp: 'BP Collection', fame: 'Fame & Infamy', stem: 'STEM Collection' };
 
+document.getElementById('sm-collection').addEventListener('change', function () {
+  var wrap = document.getElementById('sm-new-collection-wrap');
+  if (this.value === '__new__') {
+    wrap.style.display = 'flex';
+    document.getElementById('sm-new-col-slug').focus();
+  } else {
+    wrap.style.display = 'none';
+  }
+});
+
+document.getElementById('sm-new-col-add').addEventListener('click', function () {
+  var slugEl = document.getElementById('sm-new-col-slug');
+  var nameEl = document.getElementById('sm-new-col-name');
+  var slug = slugEl.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  var name = nameEl.value.trim();
+  if (!slug) { slugEl.focus(); return; }
+  if (!name) name = slug.charAt(0).toUpperCase() + slug.slice(1) + ' Collection';
+  var sel = document.getElementById('sm-collection');
+  // Add option if it doesn't already exist
+  if (!sel.querySelector('option[value="' + slug + '"]')) {
+    var opt = document.createElement('option');
+    opt.value = slug;
+    opt.textContent = name;
+    // Insert before the __new__ sentinel
+    sel.insertBefore(opt, sel.querySelector('option[value="__new__"]'));
+    collectionNames[slug] = name;
+  }
+  sel.value = slug;
+  document.getElementById('sm-new-collection-wrap').style.display = 'none';
+  slugEl.value = '';
+  nameEl.value = '';
+});
+
+// Allow pressing Enter in the slug/name fields to trigger Add
+['sm-new-col-slug', 'sm-new-col-name'].forEach(function (id) {
+  document.getElementById(id).addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('sm-new-col-add').click(); }
+  });
+});
+
 function loadShopManager() {
   document.getElementById('sm-table-wrap').innerHTML = '<p style="color:#888">Loading…</p>';
   apiFetch('/admin/shop-products').then(function (data) {
@@ -599,7 +653,18 @@ function smOpenDrawer(product) {
   document.getElementById('sm-pname').value        = f.pname        || '';
   document.getElementById('sm-price').value        = f.price        != null ? f.price : '';
   document.getElementById('sm-rating').value       = f.rating       != null ? f.rating : '';
-  document.getElementById('sm-collection').value   = f.collection   || 'bp';
+  // Ensure the product's collection exists as an option before setting value
+  var colSel = document.getElementById('sm-collection');
+  var colVal = f.collection || 'bp';
+  if (colVal && !colSel.querySelector('option[value="' + colVal + '"]')) {
+    var colOpt = document.createElement('option');
+    colOpt.value = colVal;
+    colOpt.textContent = collectionNames[colVal] || (colVal.charAt(0).toUpperCase() + colVal.slice(1));
+    colSel.insertBefore(colOpt, colSel.querySelector('option[value="__new__"]'));
+    collectionNames[colVal] = colOpt.textContent;
+  }
+  colSel.value = colVal;
+  document.getElementById('sm-new-collection-wrap').style.display = 'none';
   document.getElementById('sm-description').value  = f.description  || '';
   document.getElementById('sm-sort').value         = f.sortOrder    != null ? f.sortOrder : 0;
   document.getElementById('sm-published').checked  = f.published    !== false;
