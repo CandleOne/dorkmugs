@@ -324,10 +324,13 @@
         <div id="pm-step1">
           <div class="sm-form-group" style="margin-bottom:8px">
             <label style="font-weight:600">Step 1 — Choose mug type</label>
-            <input type="text" id="pm-bp-search" placeholder="Search blueprints e.g. mug…" oninput="pmFilterBlueprints()" style="margin-top:6px" />
+            <input type="text" id="pm-bp-search" placeholder="Search blueprints e.g. mug…" oninput="pmFilterBlueprints()" style="margin-top:6px;display:none" />
           </div>
-          <div id="pm-bp-list" style="max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;background:#fff"></div>
-          <div id="pm-bp-selected" style="display:none;margin-top:8px;font-size:.82rem;color:#2255aa;font-weight:600"></div>
+          <div id="pm-bp-list" style="max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;background:#fff;display:none"></div>
+          <div id="pm-bp-selected" style="display:none;margin-top:4px;font-size:.82rem;color:#2255aa;font-weight:600">
+            <span id="pm-bp-selected-text"></span>
+            &nbsp;<a href="#" onclick="pmChangeBlueprintClick();return false" style="font-size:.75rem;color:#888;font-weight:400">change</a>
+          </div>
         </div>
         <!-- Step 2: Provider -->
         <div id="pm-step2" style="display:none;margin-top:12px">
@@ -526,8 +529,22 @@ var currentOrderId = null;
 var ordersPage = 1, usersPage = 1;
 
 function apiFetch(path, opts) {
-  return fetch(API + path, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts))
-    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Error'); return d; }); });
+  var reqOpts = Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts);
+  return fetch(API + path, reqOpts).then(function (r) {
+    return r.json().then(function (d) {
+      if (r.status === 401) {
+        // Token may have expired — attempt a silent refresh then retry once
+        return Auth.refreshSession().then(function (u) {
+          if (!u) { window.location.href = 'login.html'; throw new Error('Session expired. Please log in again.'); }
+          return fetch(API + path, reqOpts).then(function (r2) {
+            return r2.json().then(function (d2) { if (!r2.ok) throw new Error(d2.error || 'Error'); return d2; });
+          });
+        });
+      }
+      if (!r.ok) throw new Error(d.error || 'Error');
+      return d;
+    });
+  });
 }
 
 function esc(s) {
@@ -1140,10 +1157,13 @@ function pmToggle() {
   if (w.style.display === 'none') {
     w.style.display = 'block';
     btn.textContent = 'Collapse';
-    if (!pmBlueprintsAll.length) pmLoadBlueprints();
     // Pre-fill title from product name
     var pname = document.getElementById('sm-pname').value;
     if (pname) document.getElementById('pm-title').value = pname;
+    // Auto-select default blueprint (478 = Ceramic Mug 11oz/15oz) and load providers
+    if (!pmSelectedBlueprint) {
+      pmSelectBlueprint(478, 'Ceramic Mug (11oz, 15oz)');
+    }
   } else {
     w.style.display = 'none';
     btn.textContent = 'Expand';
@@ -1183,7 +1203,7 @@ function pmSelectBlueprint(id, title) {
   pmSelectedBlueprint = { id: id, title: title };
   pmSelectedProvider = null;
   document.getElementById('pm-bp-selected').style.display = 'block';
-  document.getElementById('pm-bp-selected').textContent = '✓ ' + title;
+  document.getElementById('pm-bp-selected-text').textContent = '✓ ' + title;
   document.getElementById('pm-bp-list').style.display = 'none';
   document.getElementById('pm-bp-search').style.display = 'none';
   // Load providers
@@ -1209,6 +1229,20 @@ function pmSelectBlueprint(id, title) {
   }).catch(function() {
     provList.innerHTML = '<div style="padding:8px;color:#b00;font-size:.82rem">Failed to load providers.</div>';
   });
+}
+
+function pmChangeBlueprintClick() {
+  pmSelectedBlueprint = null;
+  pmSelectedProvider = null;
+  document.getElementById('pm-bp-selected').style.display = 'none';
+  document.getElementById('pm-bp-search').style.display = 'block';
+  document.getElementById('pm-bp-list').style.display = 'block';
+  document.getElementById('pm-step2').style.display = 'none';
+  document.getElementById('pm-step3').style.display = 'none';
+  document.getElementById('pm-step4').style.display = 'none';
+  document.getElementById('pm-action').style.display = 'none';
+  if (!pmBlueprintsAll.length) pmLoadBlueprints();
+  else pmFilterBlueprints();
 }
 
 function pmSelectProvider(id, title) {
