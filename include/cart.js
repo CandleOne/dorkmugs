@@ -125,6 +125,13 @@ var Cart = (function () {
     var items = load();
     if (!items.length) return;
 
+    // Guard: Stripe requires a non-zero charge
+    var total = items.reduce(function (s, i) { return s + i.price * i.qty; }, 0);
+    if (total <= 0) {
+      alert('Your cart total is $0.00. Please add a priced item before checking out.');
+      return;
+    }
+
     var btn = document.getElementById('checkout-btn') || document.querySelector('.cart-checkout-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Redirecting…'; }
 
@@ -136,6 +143,7 @@ var Cart = (function () {
         image: i.image || undefined,
         printifyProductId: i.printifyProductId || undefined,
         variantId: i.variantId || undefined,
+        placement: i.placement || 'left',
       };
     });
 
@@ -152,7 +160,12 @@ var Cart = (function () {
         catch (_e) {
           throw new Error('Checkout endpoint returned an unexpected response.');
         }
-        if (!r.ok) throw new Error(data.error || 'Checkout failed.');
+        if (!r.ok) {
+          var msg = data.error ||
+            (Array.isArray(data.errors) && data.errors.length && data.errors[0].msg) ||
+            'Checkout failed.';
+          throw new Error(msg);
+        }
         return data;
       });
     })

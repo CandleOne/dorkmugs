@@ -44,6 +44,75 @@
   }
   .btn-primary { background: #222; color: #fff; }
   .btn-outline { border: 2px solid #222; color: #222; }
+
+  /* Digital downloads section */
+  #downloads-section {
+    margin-top: 36px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 28px;
+    text-align: left;
+  }
+  #downloads-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .download-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .download-card img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #eee;
+  }
+  .download-card img.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .download-info { flex: 1; min-width: 0; }
+  .download-info strong { display: block; margin-bottom: 4px; font-size: 0.95rem; }
+  .download-meta {
+    font-size: 0.82rem;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: capitalize;
+  }
+  .placement-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #222;
+    color: #fff;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #1565c0;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-download:hover { background: #0d47a1; }
 </style>
 </head>
 <body>
@@ -54,6 +123,11 @@
     <h1>Order Confirmed!</h1>
     <p>Thanks for your purchase. We've received your order and sent a confirmation to your email.</p>
     <p id="order-note">Your order is being prepared for production by Printify and will ship soon.</p>
+
+    <div id="downloads-section" style="display:none">
+      <h2><i class="fas fa-download"></i> Your Downloads</h2>
+      <div id="downloads-list"></div>
+    </div>
 
     <div class="btn-row">
       <a href="account.html" class="btn btn-outline">View My Orders</a>
@@ -68,16 +142,73 @@
   // Clear the cart after a successful order
   try { localStorage.removeItem('dorkmugs_cart'); } catch (e) {}
 
-  // Optionally fetch the session from the backend to show order details
   (function () {
     var params = new URLSearchParams(window.location.search);
     var sessionId = params.get('session_id');
     if (!sessionId) return;
 
-    // Update note with session ID so customer can reference it
     var note = document.getElementById('order-note');
     if (note) {
       note.textContent = 'Your order is being prepared for production. Reference: ' + sessionId.slice(-8).toUpperCase();
+    }
+
+    // Resolve API base (same logic as cart.js)
+    function resolveApiBase() {
+      if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+      if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        return window.location.protocol + '//' + window.location.hostname + ':5000/api';
+      return window.location.origin.replace(/\/+$/, '') + '/api';
+    }
+    var API = resolveApiBase();
+
+    fetch(API + '/checkout/session/' + encodeURIComponent(sessionId), { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.items) || !data.items.length) return;
+
+        var section = document.getElementById('downloads-section');
+        var list    = document.getElementById('downloads-list');
+        if (!section || !list) return;
+
+        var hasDownloadable = false;
+
+        data.items.forEach(function (item, idx) {
+          if (!item.image) return;
+          hasDownloadable = true;
+
+          var card = document.createElement('div');
+          card.className = 'download-card';
+
+          var img = document.createElement('img');
+          img.src = item.image;
+          img.alt = item.name || 'Product image';
+          img.onerror = function () { this.style.display = 'none'; };
+
+          var info = document.createElement('div');
+          info.className = 'download-info';
+          info.innerHTML =
+            '<strong>' + _esc(item.name || 'Product') + '</strong>' +
+            '<div class="download-meta">Qty: ' + (item.qty || 1) +
+            ' &nbsp;|&nbsp; Placement: <span class="placement-badge">' + _esc(item.placement || 'left') + '</span></div>';
+
+          var link = document.createElement('a');
+          link.className = 'btn-download';
+          link.href = API + '/checkout/download/' + encodeURIComponent(sessionId) + '/' + idx;
+          link.innerHTML = '<i class="fas fa-download"></i> Download';
+
+          card.appendChild(img);
+          info.appendChild(link);
+          card.appendChild(info);
+          list.appendChild(card);
+        });
+
+        if (hasDownloadable) section.style.display = 'block';
+      })
+      .catch(function () { /* silently ignore — downloads are a bonus */ });
+
+    function _esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
   })();
 </script>

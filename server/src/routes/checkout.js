@@ -14,4 +14,10 @@ router.post(
   ctrl.createCheckout
 );
 
+// Returns item details (image, placement) for a completed session — used by order-success page
+router.get('/session/:sessionId', ctrl.getSession);
+
+// Proxies the product image as a file download
+router.get('/download/:sessionId/:itemIndex', ctrl.downloadImage);
+
 module.exports = router;
