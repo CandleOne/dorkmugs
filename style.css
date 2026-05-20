@@ -278,31 +278,32 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 .collection-card {
 	flex: 1;
 	min-width: 190px;
-	padding: 24px 20px;
-	border-radius: 5px;
-	text-align: center;
+	padding: 28px 24px;
+	border-top: 2px solid #1a2540;
+	text-align: left;
 	cursor: pointer;
-	transition: transform 0.2s, box-shadow 0.2s;
+	transition: border-color 0.2s, background 0.2s;
 	text-decoration: none;
 	display: block;
+	background: transparent;
+	color: #1a2540;
 }
 .collection-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 8px 20px rgba(26,111,196,0.2);
+	border-color: #1a6fc4;
+	background: #f7f9fc;
 	text-decoration: none;
 }
 .collection-card h3 {
-	margin: 0 0 8px 0;
+	margin: 0 0 10px 0;
 	padding: 0;
-	font-size: 1.05rem;
-	font-weight: 800;
+	font-size: 1rem;
+	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.07em;
+	letter-spacing: 0.1em;
+	color: #1a2540;
 }
-.collection-card p { margin: 0; padding: 0; font-size: 0.85rem; opacity: 0.85; }
-.bp-card   { background: linear-gradient(135deg, #eef3ff, #dde8ff); border: 1px solid #7aa8e8; color: #2255aa; }
-.fame-card { background: linear-gradient(135deg, #e8f4ff, #d0eaff); border: 1px solid #4a9fd6; color: #1a6fc4; }
-.stem-card { background: linear-gradient(135deg, #e5f8fb, #c8f0f5); border: 1px solid #3ab8cc; color: #0d7a8a; }
+.collection-card p { margin: 0; padding: 0; font-size: 0.85rem; color: #4a5568; line-height: 1.5; }
+.bp-card, .fame-card, .stem-card { background: transparent; border-color: #1a2540; color: #1a2540; }
 
 /* ===== Product Cards (featured grid) ===== */
 .products {
