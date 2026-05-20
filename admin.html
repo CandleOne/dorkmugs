@@ -153,7 +153,7 @@
       </div>
 
       <!-- Dashboard -->
-      <div id="section-dashboard" class="section-inactive">
+      <div id="section-dashboard" class="admin-section section-inactive">
         <h1>Dashboard</h1>
         <div class="stats-grid" id="stats-grid"></div>
         <div class="panel-section">
@@ -163,7 +163,7 @@
       </div>
 
       <!-- Orders -->
-      <div id="section-orders" class="section-inactive">
+      <div id="section-orders" class="admin-section section-inactive">
         <h1>Orders</h1>
         <div class="filter-bar">
           <select id="order-status-filter">
@@ -178,14 +178,14 @@
       </div>
 
       <!-- Users -->
-      <div id="section-users" class="section-inactive">
+      <div id="section-users" class="admin-section section-inactive">
         <h1>Users</h1>
         <div id="users-table"></div>
         <div class="pagination" id="users-pagination"></div>
       </div>
 
       <!-- Printify Products -->
-      <div id="section-products" class="section-inactive">
+      <div id="section-products" class="admin-section section-inactive">
         <h1>Printify Sync</h1>
         <button class="btn-sm btn-primary" id="sync-products-btn" style="margin-bottom:16px">
           <i class="fas fa-sync-alt"></i> Fetch from Printify
@@ -194,7 +194,7 @@
       </div>
 
       <!-- Shop Manager -->
-      <div id="section-shop-manager" class="section-inactive">
+      <div id="section-shop-manager" class="admin-section section-inactive">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
           <h1 style="margin:0">Shop Manager</h1>
           <button class="btn-sm btn-primary" id="sm-add-btn"><i class="fas fa-plus"></i> Add Product</button>
@@ -385,7 +385,7 @@ function roleBadge(r) {
 // ─── Section navigation ────────────────────────────────────────────────────
 
 function showSection(name) {
-  document.querySelectorAll('.section-inactive, #section-loading').forEach(function (el) {
+  document.querySelectorAll('.admin-section, #section-loading').forEach(function (el) {
     el.classList.add('section-inactive'); el.style.display = '';
   });
   document.querySelectorAll('.admin-sidebar nav a').forEach(function (a) { a.classList.remove('active'); });
