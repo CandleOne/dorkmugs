@@ -21,9 +21,9 @@ body::after {
 	width: 100%;
 	height: 480px;
 	background-image: url('./Assets/designassets/jazzcupwave.png');
-	background-repeat: no-repeat;
+	background-repeat: repeat-x;
 	background-position: bottom center;
-	background-size: 100% auto;
+	background-size: auto 100%;
 	z-index: -1;
 	pointer-events: none;
 	mix-blend-mode: multiply;
@@ -820,6 +820,15 @@ body.sexy-mode .placement-btn:hover:not(.active) { border-color: #c8941a; backgr
 
 /* Header hamburger */
 body.sexy-mode .nav-hamburger { color: #ffb3e6; }
+body.sexy-mode .announcement-bar {
+	background-image: url('./Assets/designassets/rainbow.gif');
+	background-size: cover;
+	background-position: center;
+	color: #ffffff;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+	border-bottom-color: transparent;
+}
+body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
 
 /* ===== Compatibility shims ===== */
 .button { display: none; }
@@ -1185,18 +1194,15 @@ body.sexy-mode .nav-hamburger { color: #ffb3e6; }
 
 /* ── Announcement bar ── */
 .announcement-bar {
-	background-image: url('./Assets/designassets/rainbow.gif');
-	background-size: cover;
-	background-position: center;
-	color: #ffffff;
+	background: #edf1f6;
+	color: #5a6a80;
 	text-align: center;
 	padding: 9px 20px;
 	font-size: 0.83rem;
 	letter-spacing: 0.02em;
 	border-bottom: 1px solid #d0d8e4;
-	text-shadow: 0 1px 3px rgba(0,0,0,0.6);
 }
-.announcement-bar strong { color: #ffffff; font-weight: 900; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
+.announcement-bar strong { color: #1a6fc4; }
 
 /* ── Active nav link ── */
 .header-nav a.active {
