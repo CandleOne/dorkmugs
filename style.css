@@ -631,7 +631,32 @@ hr { border: none; border-top: 1px solid #c8ddf5; margin: 0; }
 	text-align: center;
 }
 
-/* ===== Sexy Mode Toggle Button ===== */
+/* ===== Sexy Mode — Green remaining white sections ===== */
+body.sexy-mode .container {
+	background-color: #0d2b0d;
+}
+body.sexy-mode h2,
+body.sexy-mode .content > h2,
+body.sexy-mode .search-page > h2 { color: #7ddc7d; }
+body.sexy-mode #productline {
+	background: #0d2b0d;
+	border-color: #2a6a2a;
+}
+body.sexy-mode #productline li a { color: #c8f0c8; }
+body.sexy-mode #productline li a:hover { background: #1a4a1a; color: #ffffff; }
+body.sexy-mode .sort-bar,
+body.sexy-mode .filters-wrap,
+body.sexy-mode .filter-section { background: #0d2b0d; border-color: #2a6a2a; }
+body.sexy-mode .pform,
+body.sexy-mode .product-form { background: #0d2b0d; }
+body.sexy-mode .item-img-wrap,
+body.sexy-mode .item-img-box { background: #0d2b0d; }
+body.sexy-mode .order-success-page .order-card,
+body.sexy-mode .order-card { background: #0d2b0d; border-color: #2a6a2a; color: #c8f0c8; }
+body.sexy-mode .account-section,
+body.sexy-mode .account-card { background: #0d2b0d; border-color: #2a6a2a; color: #c8f0c8; }
+body.sexy-mode .admin-sidebar { background: #0d2b0d; border-color: #2a6a2a; }
+body.sexy-mode .admin-content { background: #111f11; }
 .sexy-mode-btn {
 	background: transparent;
 	border: 2px solid #c8941a;
