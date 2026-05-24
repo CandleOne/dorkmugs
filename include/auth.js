@@ -114,8 +114,15 @@
     var btnAccount = document.getElementById('btn-account');
     var btnLogout = document.getElementById('btn-logout');
 
+    // Mobile nav dropdown auth items
+    var navLiLogin   = document.getElementById('nav-li-login');
+    var navLiSignup  = document.getElementById('nav-li-signup');
+    var navLiAccount = document.getElementById('nav-li-account');
+    var navLiLogout  = document.getElementById('nav-li-logout');
+    var navLogoutLink = document.getElementById('nav-logout-link');
+
     if (user) {
-      // Logged in state
+      // Logged in state — header buttons
       if (btnLogin) { btnLogin.style.display = 'none'; }
       if (btnSignup) { btnSignup.style.display = 'none'; }
       if (btnAccount) {
@@ -129,8 +136,21 @@
         btnLogout.style.display = '';
         btnLogout.onclick = function () { Auth.logout(); };
       }
+      // Logged in state — nav dropdown
+      if (navLiLogin)  { navLiLogin.style.display  = 'none'; }
+      if (navLiSignup) { navLiSignup.style.display = 'none'; }
+      if (navLiAccount) {
+        navLiAccount.style.display = '';
+        var acctLink = navLiAccount.querySelector('a');
+        if (acctLink) {
+          acctLink.textContent = user.name.split(' ')[0] + "'s Account";
+          acctLink.href = user.role === 'ADMIN' ? 'admin.html' : 'account.html';
+        }
+      }
+      if (navLiLogout)  { navLiLogout.style.display = ''; }
+      if (navLogoutLink) { navLogoutLink.onclick = function (e) { e.preventDefault(); Auth.logout(); }; }
     } else {
-      // Logged out state
+      // Logged out state — header buttons
       if (btnLogin) {
         btnLogin.style.display = '';
         btnLogin.onclick = function () { window.location.href = 'login.html'; };
@@ -140,7 +160,12 @@
         btnSignup.onclick = function () { window.location.href = 'register.html'; };
       }
       if (btnAccount) { btnAccount.style.display = 'none'; }
-      if (btnLogout) { btnLogout.style.display = 'none'; }
+      if (btnLogout)  { btnLogout.style.display  = 'none'; }
+      // Logged out state — nav dropdown
+      if (navLiLogin)   { navLiLogin.style.display   = ''; }
+      if (navLiSignup)  { navLiSignup.style.display  = ''; }
+      if (navLiAccount) { navLiAccount.style.display = 'none'; }
+      if (navLiLogout)  { navLiLogout.style.display  = 'none'; }
     }
   }
 

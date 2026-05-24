@@ -1213,7 +1213,7 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 @media (max-width: 720px) {
 	.item-detail-wrap { flex-direction: column; padding: 24px 16px; gap: 24px; }
 	.item-detail-img { flex: none; max-width: 100%; }
-	.shop-card { width: calc(50% - 10px); }
+	.shop-card { width: calc(33.333% - 10px); }
 }
 
 /* ===== Responsive ===== */
@@ -1572,6 +1572,9 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 	padding: 0;
 }
 
+/* Auth nav items: shown in mobile dropdown only */
+.nav-auth-item { display: none; }
+
 /* ── Hamburger / Mobile nav ── */
 .nav-hamburger {
 	display: none;
@@ -1671,9 +1674,26 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 	.card-view-link { font-size: 0.88rem; }
 	.announcement-bar { font-size: 0.78rem; }
 
-	/* Products: single column on narrow screens */
-	.products { flex-direction: column; align-items: center; padding: 10px 16px 32px; }
-	.card { width: 90%; max-width: 320px; }
+	/* Products: 3 columns on mobile */
+	.products { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; padding: 10px 8px 32px; gap: 8px; }
+	.card { width: calc(33.333% - 6px); max-width: none; padding: 10px 6px; }
+	.primg0 { max-width: 80px; max-height: 80px; }
+	.card h2, .card h1 { font-size: 0.72rem; margin: 6px 0 4px; padding: 0 2px; }
+	.price-tag { font-size: 0.85rem; margin-bottom: 6px; }
+	.card-add-btn { padding: 7px 4px; font-size: 0.7rem; min-height: 36px; }
+	.card-view-link { font-size: 0.7rem; }
+
+	/* Search page: 3 columns on mobile */
+	.collection-group { padding: 20px 8px 16px; }
+	.collection-group-grid { gap: 8px; }
+	.product-card { width: calc(33.333% - 6px); padding: 10px 6px; }
+	.product-card .product-image img { max-width: 75px; max-height: 75px; }
+	.product-card .product-info h5 { font-size: 0.68rem; margin: 6px 0 3px; }
+	.product-card .product-info h6 { font-size: 0.82rem; }
+
+	/* Hide auth buttons from header on mobile; shown in nav dropdown */
+	#btn-login, #btn001, #btn-account, #btn-logout { display: none !important; }
+	.nav-auth-item { display: block !important; }
 
 	/* Brand story: stack cols */
 	.brand-story { padding: 32px 20px; }
