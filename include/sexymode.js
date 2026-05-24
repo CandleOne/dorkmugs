@@ -14,8 +14,15 @@
     return audio;
   }
 
+  var PLEASURE_NORMAL = './Assets/designassets/pleasure.png';
+  var PLEASURE_SEXY   = './Assets/designassets/pleasuresexymode.png';
+
   function applyMode(enabled) {
     document.body.classList.toggle('sexy-mode', enabled);
+    var img = document.querySelector('.inline-pleasure-img');
+    if (img) {
+      img.src = enabled ? PLEASURE_SEXY : PLEASURE_NORMAL;
+    }
     if (enabled) {
       getAudio().play().catch(function () { /* autoplay blocked — user must interact first */ });
     } else {
@@ -36,6 +43,10 @@
     btn.addEventListener('click', function () {
       var isOn = document.body.classList.toggle('sexy-mode');
       localStorage.setItem(STORAGE_KEY, isOn ? '1' : '0');
+      var img = document.querySelector('.inline-pleasure-img');
+      if (img) {
+        img.src = isOn ? PLEASURE_SEXY : PLEASURE_NORMAL;
+      }
       if (isOn) {
         getAudio().play().catch(function () {});
       } else {
