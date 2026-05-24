@@ -653,8 +653,8 @@ body.sexy-mode .header {
 	background-repeat: repeat;
 	border-bottom-color: #8b5e1a;
 }
-body.sexy-mode .header-nav a { color: #3a1200; text-shadow: 0 0 4px rgba(255,220,100,0.7); }
-body.sexy-mode .header-nav a:hover { color: #ffffff; }
+body.sexy-mode .header-nav a { color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+body.sexy-mode .header-nav a:hover { color: #ffe066; }
 body.sexy-mode .hero {
 	background-image: url('./Assets/designassets/cheetahprint.png');
 	background-size: auto;
@@ -662,7 +662,7 @@ body.sexy-mode .hero {
 	background-color: #c8941a;
 	border-bottom-color: #8b5e1a;
 }
-body.sexy-mode .hero p { color: #1a0a00; font-weight: 600; }
+body.sexy-mode .hero p { color: #ffffff; font-weight: 600; text-shadow: 1px 1px 4px rgba(0,0,0,0.85); }
 body.sexy-mode .footer {
 	background-image: url('./Assets/designassets/cheetahprint.png');
 	background-size: auto;
