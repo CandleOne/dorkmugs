@@ -129,7 +129,8 @@
 
   function renderItem() {
     var params = new URLSearchParams(window.location.search);
-    var id = params.get("id");
+    // Support both /mugs/:id (SEO clean URL) and ?id=... (legacy)
+    var id = (typeof window._productId !== 'undefined' && window._productId) || params.get("id");
     var product = null;
     for (var i = 0; i < prodb.length; i++) {
       if (prodb[i].id === id) { product = prodb[i]; break; }

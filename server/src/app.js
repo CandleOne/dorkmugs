@@ -83,6 +83,40 @@ app.use('/api/webhooks',      require('./routes/webhooks'));
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
+// ─── SEO: server-rendered product pages ───────────────────────────────────────
+app.use('/mugs', require('./routes/seo'));
+
+// ─── Sitemap ──────────────────────────────────────────────────────────────────
+app.get('/sitemap.xml', async (_req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const _prisma = new PrismaClient();
+    const products = await _prisma.shopProduct.findMany({
+      where:   { published: true },
+      select:  { id: true },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+    await _prisma.$disconnect();
+
+    const siteUrl = (process.env.SITE_URL || 'https://dorkmugs.shop').replace(/\/+$/, '');
+    const staticPages = ['/', '/product.html', '/gallery.html', '/search.html'];
+    const productPages = products.map(p => `/mugs/${p.id}`);
+    const allUrls = [...staticPages, ...productPages];
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...allUrls.map(u => `  <url><loc>${siteUrl}${u}</loc><changefreq>weekly</changefreq></url>`),
+      '</urlset>',
+    ].join('\n');
+
+    res.type('application/xml').send(xml);
+  } catch (err) {
+    console.error('[sitemap] error', err.message);
+    res.status(500).send('');
+  }
+});
+
 // ─── Static frontend (repo root) ─────────────────────────────────────────────
 const frontendRoot = path.resolve(__dirname, '../../');
 app.use(express.static(frontendRoot));
