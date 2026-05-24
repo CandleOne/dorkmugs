@@ -364,6 +364,8 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 	text-align: center;
 	padding: 20px 15px;
 	transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+	display: flex;
+	flex-direction: column;
 }
 .card:hover {
 	transform: translateY(-4px);
@@ -380,6 +382,7 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 	color: #1a6fc4;
 	font-weight: 700;
 	font-size: 1.1rem;
+	margin-top: auto;
 	margin-bottom: 12px;
 	padding: 0;
 	display: block;
