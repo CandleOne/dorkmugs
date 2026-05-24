@@ -10,12 +10,13 @@ body {
 	margin: 0;
 	padding: 0;
 	color: #1a2540;
+	position: relative;
 }
 
 /* Jazz cup wave — sits in front of paper texture, behind all page content */
 body::after {
 	content: '';
-	position: fixed;
+	position: absolute;
 	bottom: 0;
 	left: 0;
 	width: 100%;
