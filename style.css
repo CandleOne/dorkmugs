@@ -14,6 +14,22 @@ body {
 }
 
 /* Jazz cup wave — sits in front of paper texture, behind all page content */
+body::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 480px;
+	background-image: url('./Assets/designassets/jazzcupwave.png');
+	background-repeat: repeat-x;
+	background-position: top center;
+	background-size: auto 100%;
+	z-index: -1;
+	pointer-events: none;
+	mix-blend-mode: multiply;
+	transform: scaleY(-1);
+}
 body::after {
 	content: '';
 	position: absolute;
