@@ -209,12 +209,10 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 
 /* ===== Hero ===== */
 .hero {
-	background-image: url('./Assets/designassets/cheetahprint.png');
-	background-size: auto;
-	background-repeat: repeat;
+	background-color: #edf1f6;
 	padding: 70px 30px;
 	text-align: center;
-	border-bottom: 1px solid #8b5e1a;
+	border-bottom: 1px solid #d0d8e4;
 }
 .hero h1 {
 	font-size: 3rem;
@@ -228,7 +226,7 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 .hero h1 span { color: #c8e6ff; }
 .hero p {
 	font-size: 1.1rem;
-	color: #1a0a00;
+	color: #5a6a80;
 	max-width: 520px;
 	margin: 0 auto 28px;
 	padding: 0;
@@ -631,6 +629,46 @@ hr { border: none; border-top: 1px solid #c8ddf5; margin: 0; }
 	color: #c8e6ff;
 	font-size: 0.82rem;
 	text-align: center;
+}
+
+/* ===== Sexy Mode Toggle Button ===== */
+.sexy-mode-btn {
+	background: transparent;
+	border: 2px solid #c8941a;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 1.1rem;
+	padding: 4px 8px;
+	line-height: 1;
+	transition: background 0.2s, transform 0.15s;
+	flex-shrink: 0;
+}
+.sexy-mode-btn:hover { background: rgba(200,148,26,0.15); transform: scale(1.1); }
+body.sexy-mode .sexy-mode-btn { background: #c8941a; border-color: #3a1200; }
+
+/* ===== Sexy Mode — Cheetah Print Areas ===== */
+body.sexy-mode .header {
+	background-image: url('./Assets/designassets/cheetahprint.png');
+	background-size: auto;
+	background-repeat: repeat;
+	border-bottom-color: #8b5e1a;
+}
+body.sexy-mode .header-nav a { color: #3a1200; text-shadow: 0 0 4px rgba(255,220,100,0.7); }
+body.sexy-mode .header-nav a:hover { color: #ffffff; }
+body.sexy-mode .hero {
+	background-image: url('./Assets/designassets/cheetahprint.png');
+	background-size: auto;
+	background-repeat: repeat;
+	background-color: #c8941a;
+	border-bottom-color: #8b5e1a;
+}
+body.sexy-mode .hero p { color: #1a0a00; font-weight: 600; }
+body.sexy-mode .footer {
+	background-image: url('./Assets/designassets/cheetahprint.png');
+	background-size: auto;
+	background-repeat: repeat;
+	background-color: #c8941a;
+	border-top-color: #8b5e1a;
 }
 
 /* ===== Compatibility shims ===== */
