@@ -13,6 +13,15 @@ const app = express();
 // Codespaces and many hosts run behind a reverse proxy.
 app.set('trust proxy', config.trustProxy);
 
+// ─── www → non-www canonical redirect ────────────────────────────────────────
+app.use((req, res, next) => {
+  if (req.hostname && req.hostname.startsWith('www.')) {
+    const canonical = `${req.protocol}://${req.hostname.slice(4)}${req.originalUrl}`;
+    return res.redirect(301, canonical);
+  }
+  next();
+});
+
 // ─── Security headers ─────────────────────────────────────────────────────────
 app.use(
   helmet({
@@ -126,7 +135,12 @@ app.get('/', (_req, res) => {
 });
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
-app.use((_req, res) => res.status(404).json({ error: 'Not found.' }));
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+  res.status(404).sendFile(path.join(frontendRoot, '404.html'));
+});
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars

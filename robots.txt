@@ -3,5 +3,12 @@ Allow: /
 
 Disallow: /api/
 Disallow: /admin.html
+Disallow: /login.html
+Disallow: /register.html
+Disallow: /account.html
+Disallow: /order-success.html
+Disallow: /forgot-password.html
+Disallow: /reset-password.html
+Disallow: /item.html
 
 Sitemap: https://dorkmugs.shop/sitemap.xml

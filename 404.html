@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Page Not Found – Dork Mugs</title>
+<meta name="robots" content="noindex, follow" />
+<link rel="canonical" href="https://dorkmugs.shop/" />
+<link rel="icon" type="image/png" href="./favicon.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<style>
+  .notfound-page {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px;
+  }
+  .notfound-code {
+    font-size: 6rem;
+    font-weight: 900;
+    color: #1a2540;
+    line-height: 1;
+    margin: 0 0 8px;
+  }
+  .notfound-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a2540;
+    margin: 0 0 12px;
+  }
+  .notfound-msg {
+    color: #5a6a80;
+    font-size: 1rem;
+    max-width: 420px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+  .notfound-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+  .notfound-links a {
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .notfound-links a.primary {
+    background: #1a6fc4;
+    color: #fff;
+  }
+  .notfound-links a.primary:hover { background: #1558a0; }
+  .notfound-links a.secondary {
+    background: #edf1f6;
+    color: #1a2540;
+    border: 1px solid #c8ddf5;
+  }
+  .notfound-links a.secondary:hover { background: #dde8f5; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- 404 Content -->
+  <div class="content">
+    <div class="notfound-page">
+      <div class="notfound-code">404</div>
+      <h1 class="notfound-title">Page Not Found</h1>
+      <p class="notfound-msg">This mug has left the building. The page you're looking for doesn't exist or may have been moved.</p>
+      <div class="notfound-links">
+        <a href="index.html" class="primary">Go Home</a>
+        <a href="product.html" class="secondary">Shop All Mugs</a>
+        <a href="search.html" class="secondary">Browse Collections</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+
+</div>
+
+</body>
+</html>
