@@ -359,8 +359,8 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 	padding: 10px 20px 40px;
 }
 .card {
-	background: #f4f9ff;
-	border: 1px solid #c8ddf5;
+	background: #ffffff;
+	border: 1px solid #1a1a1a;
 	border-radius: 6px;
 	width: 230px;
 	text-align: center;
@@ -369,8 +369,8 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 }
 .card:hover {
 	transform: translateY(-4px);
-	box-shadow: 0 8px 24px rgba(26,111,196,0.18);
-	border-color: #1a6fc4;
+	box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+	border-color: #000000;
 }
 .card h1 {
 	font-size: 0.95rem;
