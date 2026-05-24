@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shipping Information – Dork Mugs</title>
+<meta name="description" content="Free shipping on Dork Mugs orders over $40. Learn about our print-on-demand processing times, delivery estimates, and shipping carriers." />
+<link rel="canonical" href="https://dorkmugs.shop/shipping.html" />
+<meta property="og:title" content="Shipping Information – Dork Mugs" />
+<meta property="og:description" content="Free shipping on orders over $40. Processing takes 2–5 business days; delivery 5–10 business days." />
+<meta property="og:url" content="https://dorkmugs.shop/shipping.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Dork Mugs" />
+<link rel="icon" type="image/png" href="./favicon.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<script src="./include/prodbs.js"></script>
+<link href="style.css" rel="stylesheet" type="text/css" />
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" /></noscript>
+<style>
+  .info-page { max-width: 760px; margin: 0 auto; padding: 48px 24px 72px; }
+  .info-page h1 { font-size: 2rem; color: #1a2540; margin: 0 0 8px; }
+  .info-page .info-lead { color: #5a6a80; margin: 0 0 40px; font-size: 1.05rem; }
+  .info-page h2 { font-size: 1.1rem; font-weight: 700; color: #1a2540; margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #edf1f6; }
+  .info-page p { color: #3a4a5a; line-height: 1.75; font-size: 0.97rem; margin: 0 0 14px; }
+  .info-page ul { padding-left: 20px; margin: 8px 0 16px; }
+  .info-page ul li { color: #3a4a5a; line-height: 1.75; font-size: 0.97rem; margin-bottom: 6px; }
+  .info-page a { color: #1a6fc4; }
+  .info-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.93rem; }
+  .info-table th { text-align: left; background: #f0f4fa; color: #1a2540; padding: 10px 14px; font-weight: 700; border: 1px solid #dce8f5; }
+  .info-table td { padding: 10px 14px; border: 1px solid #dce8f5; color: #3a4a5a; vertical-align: top; }
+  .info-table tr:nth-child(even) td { background: #f8fafd; }
+  .info-highlight { background: #e8f5e9; border-left: 4px solid #43a047; padding: 14px 18px; border-radius: 4px; margin: 16px 0 24px; }
+  .info-highlight p { color: #1b5e20; margin: 0; font-weight: 600; font-size: 0.97rem; }
+  body.sexy-mode .info-page h1,
+  body.sexy-mode .info-page h2 { color: #fff; }
+  body.sexy-mode .info-page .info-lead,
+  body.sexy-mode .info-page p,
+  body.sexy-mode .info-page li { color: #f0d0ec; }
+  body.sexy-mode .info-page h2 { border-bottom-color: rgba(255,128,200,0.25); }
+  body.sexy-mode .info-table th { background: rgba(255,128,200,0.18); color: #fff; border-color: rgba(255,128,200,0.3); }
+  body.sexy-mode .info-table td { border-color: rgba(255,128,200,0.2); color: #f0d0ec; }
+  body.sexy-mode .info-table tr:nth-child(even) td { background: rgba(255,128,200,0.07); }
+  body.sexy-mode .info-highlight { background: rgba(255,128,200,0.12); border-left-color: #ff80c8; }
+  body.sexy-mode .info-highlight p { color: #ffd0ef; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
+  </div>
+
+  <!-- Search Bar -->
+  <div class="srcbar-wrap">
+  <form class="srcbartn" action="search.html">
+    <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
+           onclick="listFunction()" onkeyup="searchFunction()" autocomplete="off" />
+    <button type="submit"><i class="fa fa-search"></i></button>
+    <ul id="productline"></ul>
+  </form>
+  <script>
+    function listFunction() {
+      var prdlin = document.getElementById("productline");
+      var allist = "";
+      for (var i = 0; i < prodb.length; i++) {
+        allist += "<li id='liid" + i + "'><a href='product.html'>" + prodb[i].pname + "</a></li>";
+      }
+      prdlin.innerHTML = allist;
+      document.getElementById("srch001").removeAttribute("onclick");
+    }
+    function searchFunction() {
+      var filter = document.getElementById("srch001").value.toUpperCase();
+      for (var i = 0; i < prodb.length; i++) {
+        var el = document.getElementById("liid" + i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  </script>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button">Log In</button>
+      <button id="btn001" type="button">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" class="fas fa-shopping-cart fa-lg" title="View cart" aria-label="View cart"></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+      <button id="btn-sexy-mode" type="button" class="sexy-mode-btn" title="Sexy Mode: OFF" aria-label="Toggle Sexy Mode">🐾</button>
+    </div>
+  </header>
+
+  <!-- Mobile Nav -->
+  <nav id="mobile-nav" class="mobile-nav" aria-hidden="true">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="product.html">Shop</a></li>
+      <li><a href="search.html">Collections</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+    </ul>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="content">
+    <div class="info-page">
+
+      <h1>Shipping Information</h1>
+      <p class="info-lead">We ship via Printify's network of print providers. Here's what to expect.</p>
+
+      <div class="info-highlight">
+        <p><i class="fas fa-truck"></i>&nbsp; Free shipping on all orders over $40 — automatically applied at checkout.</p>
+      </div>
+
+      <h2>How It Works</h2>
+      <p>Every Dork Mugs order is print-on-demand. That means your mug is printed fresh after you order — it's not sitting in a warehouse. Once it rolls off the press, it ships directly to your door from the nearest Printify print provider.</p>
+
+      <h2>Processing Time</h2>
+      <p>After you place your order, allow <strong>2–5 business days</strong> for production. This is the time it takes to print and quality-check your mug before it ships. Orders placed on weekends or holidays begin production the next business day.</p>
+
+      <h2>Delivery Estimates</h2>
+      <table class="info-table">
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th>Estimated Delivery</th>
+            <th>Carrier</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>United States (Standard)</td>
+            <td>5–10 business days after production</td>
+            <td>USPS, UPS, or FedEx</td>
+          </tr>
+          <tr>
+            <td>United States (Express)</td>
+            <td>2–4 business days after production</td>
+            <td>UPS or FedEx</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Total time from order to delivery is typically <strong>7–15 business days</strong> for standard shipping within the US. Express options are available at checkout for faster delivery.</p>
+
+      <h2>Shipping Rates</h2>
+      <ul>
+        <li><strong>Orders over $40:</strong> Free standard shipping</li>
+        <li><strong>Orders under $40:</strong> Standard shipping rates calculated at checkout</li>
+        <li><strong>Express shipping:</strong> Available at an additional cost, calculated at checkout</li>
+      </ul>
+
+      <h2>Order Tracking</h2>
+      <p>You'll receive a shipping confirmation email with a tracking number as soon as your order ships. Use the link in the email to follow your mug's journey to your door.</p>
+
+      <h2>Questions About Your Order?</h2>
+      <p>If your order is delayed, lost, or arrives damaged, please <a href="contact.html">contact us</a> immediately and we'll sort it out. We stand behind every mug we ship.</p>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Info</h4>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="shipping.html">Shipping</a></li>
+          <li><a href="returns.html">Returns</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+
+</div>
+
+<!-- Cart Overlay -->
+<div id="cart-overlay" class="cart-overlay"></div>
+
+<!-- Cart Drawer -->
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div id="cart-toast" class="cart-toast"></div>
+
+<script src="./include/cart.js"></script>
+<script src="./include/auth.js"></script>
+<script src="./include/sexymode.js"></script>
+</body>
+</html>

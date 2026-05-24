@@ -92,6 +92,31 @@ app.use('/api/webhooks',      require('./routes/webhooks'));
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
+// ─── Contact form ─────────────────────────────────────────────────────────────
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body || {};
+  if (!name || !email || !message || typeof name !== 'string' || typeof email !== 'string' || typeof message !== 'string') {
+    return res.status(400).json({ error: 'name, email, and message are required.' });
+  }
+  // Basic email format check
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Invalid email address.' });
+  }
+  // Truncate fields to prevent abuse
+  const safeName    = name.trim().slice(0, 100);
+  const safeEmail   = email.trim().slice(0, 200);
+  const safeSubject = (subject || 'Contact form').toString().trim().slice(0, 200);
+  const safeMessage = message.trim().slice(0, 4000);
+  try {
+    const emailService = require('./services/email');
+    await emailService.sendContactMessage({ name: safeName, email: safeEmail, subject: safeSubject, message: safeMessage });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[contact] send error', err.message);
+    res.status(500).json({ error: 'Failed to send message. Please email us directly.' });
+  }
+});
+
 // ─── SEO: server-rendered product pages ───────────────────────────────────────
 app.use('/mugs', require('./routes/seo'));
 

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contact Us – Dork Mugs</title>
+<meta name="description" content="Get in touch with Dork Mugs. Questions about orders, shipping, returns, or custom designs — we're here to help." />
+<link rel="canonical" href="https://dorkmugs.shop/contact.html" />
+<meta property="og:title" content="Contact Us – Dork Mugs" />
+<meta property="og:description" content="Reach out to Dork Mugs for order support, shipping questions, returns, or anything else." />
+<meta property="og:url" content="https://dorkmugs.shop/contact.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Dork Mugs" />
+<link rel="icon" type="image/png" href="./favicon.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<script src="./include/prodbs.js"></script>
+<link href="style.css" rel="stylesheet" type="text/css" />
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" /></noscript>
+<style>
+  .info-page { max-width: 760px; margin: 0 auto; padding: 48px 24px 72px; }
+  .info-page h1 { font-size: 2rem; color: #1a2540; margin: 0 0 8px; }
+  .info-page .info-lead { color: #5a6a80; margin: 0 0 40px; font-size: 1.05rem; }
+  .info-page h2 { font-size: 1.1rem; font-weight: 700; color: #1a2540; margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #edf1f6; }
+  .info-page p { color: #3a4a5a; line-height: 1.75; font-size: 0.97rem; margin: 0 0 14px; }
+  .info-page a { color: #1a6fc4; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 32px; }
+  @media (max-width: 540px) { .contact-grid { grid-template-columns: 1fr; } }
+  .contact-method { display: flex; align-items: flex-start; gap: 14px; background: #f8fafd; border: 1px solid #e2eaf5; border-radius: 8px; padding: 18px; }
+  .contact-method-icon { font-size: 1.25rem; color: #1a6fc4; margin-top: 2px; flex-shrink: 0; }
+  .contact-method-body h3 { color: #1a2540; font-size: 0.95rem; font-weight: 700; margin: 0 0 4px; }
+  .contact-method-body p { color: #5a6a80; font-size: 0.88rem; margin: 0 0 8px; line-height: 1.5; }
+  .contact-method-body a { color: #1a6fc4; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+  .contact-method-body a:hover { text-decoration: underline; }
+  .contact-form-wrap { background: #f8fafd; border: 1px solid #e2eaf5; border-radius: 8px; padding: 28px 24px; margin: 16px 0; }
+  .contact-form-wrap label { display: block; font-size: 0.88rem; font-weight: 600; color: #1a2540; margin-bottom: 5px; }
+  .contact-form-wrap input,
+  .contact-form-wrap select,
+  .contact-form-wrap textarea { width: 100%; padding: 10px 13px; border: 1px solid #c8ddf5; border-radius: 4px; font-size: 0.95rem; color: #1a2540; background: #fff; box-sizing: border-box; margin-bottom: 18px; font-family: inherit; }
+  .contact-form-wrap textarea { min-height: 130px; resize: vertical; }
+  .contact-form-wrap input:focus,
+  .contact-form-wrap select:focus,
+  .contact-form-wrap textarea:focus { outline: none; border-color: #1a6fc4; box-shadow: 0 0 0 2px rgba(26,111,196,0.12); }
+  .contact-form-wrap .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 540px) { .contact-form-wrap .form-row { grid-template-columns: 1fr; } }
+  .contact-form-wrap .form-row > div { display: flex; flex-direction: column; }
+  .contact-form-wrap .form-row > div input { margin-bottom: 0; }
+  .contact-form-wrap button[type="submit"] { background: #1a6fc4; color: #fff; border: none; padding: 12px 30px; font-weight: 700; cursor: pointer; border-radius: 4px; font-size: 0.95rem; font-family: inherit; width: 100%; margin-top: 6px; }
+  .contact-form-wrap button[type="submit"]:hover { background: #1558a0; }
+  .contact-form-wrap .form-note { font-size: 0.85rem; color: #5a6a80; margin: 10px 0 0; text-align: center; }
+  #contact-success { display: none; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 6px; padding: 20px; text-align: center; margin-top: 8px; }
+  #contact-success p { color: #1b5e20; margin: 0; font-weight: 600; }
+  body.sexy-mode .info-page h1,
+  body.sexy-mode .info-page h2,
+  body.sexy-mode .contact-method-body h3,
+  body.sexy-mode .contact-form-wrap label { color: #fff; }
+  body.sexy-mode .info-page .info-lead,
+  body.sexy-mode .info-page p,
+  body.sexy-mode .contact-method-body p { color: #f0d0ec; }
+  body.sexy-mode .info-page h2 { border-bottom-color: rgba(255,128,200,0.25); }
+  body.sexy-mode .contact-method,
+  body.sexy-mode .contact-form-wrap { background: rgba(255,128,200,0.08); border-color: rgba(255,128,200,0.25); }
+  body.sexy-mode .contact-form-wrap input,
+  body.sexy-mode .contact-form-wrap select,
+  body.sexy-mode .contact-form-wrap textarea { background: rgba(255,255,255,0.08); border-color: rgba(255,128,200,0.35); color: #fff; }
+  body.sexy-mode .contact-form-wrap button[type="submit"] { background: #ff80c8; color: #1a1a1a; }
+  body.sexy-mode .contact-form-wrap button[type="submit"]:hover { background: #ff60b8; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
+  </div>
+
+  <!-- Search Bar -->
+  <div class="srcbar-wrap">
+  <form class="srcbartn" action="search.html">
+    <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
+           onclick="listFunction()" onkeyup="searchFunction()" autocomplete="off" />
+    <button type="submit"><i class="fa fa-search"></i></button>
+    <ul id="productline"></ul>
+  </form>
+  <script>
+    function listFunction() {
+      var prdlin = document.getElementById("productline");
+      var allist = "";
+      for (var i = 0; i < prodb.length; i++) {
+        allist += "<li id='liid" + i + "'><a href='product.html'>" + prodb[i].pname + "</a></li>";
+      }
+      prdlin.innerHTML = allist;
+      document.getElementById("srch001").removeAttribute("onclick");
+    }
+    function searchFunction() {
+      var filter = document.getElementById("srch001").value.toUpperCase();
+      for (var i = 0; i < prodb.length; i++) {
+        var el = document.getElementById("liid" + i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  </script>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button">Log In</button>
+      <button id="btn001" type="button">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" class="fas fa-shopping-cart fa-lg" title="View cart" aria-label="View cart"></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+      <button id="btn-sexy-mode" type="button" class="sexy-mode-btn" title="Sexy Mode: OFF" aria-label="Toggle Sexy Mode">🐾</button>
+    </div>
+  </header>
+
+  <!-- Mobile Nav -->
+  <nav id="mobile-nav" class="mobile-nav" aria-hidden="true">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="product.html">Shop</a></li>
+      <li><a href="search.html">Collections</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+    </ul>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="content">
+    <div class="info-page">
+
+      <h1>Contact Us</h1>
+      <p class="info-lead">Questions, order issues, or just want to talk mugs? We'd love to hear from you.</p>
+
+      <div class="contact-grid">
+        <div class="contact-method">
+          <i class="fas fa-envelope contact-method-icon"></i>
+          <div class="contact-method-body">
+            <h3>Email Us</h3>
+            <p>Best for order issues, returns, and general questions. We reply within 2 business days.</p>
+            <a href="mailto:hello@dorkmugs.shop">hello@dorkmugs.shop</a>
+          </div>
+        </div>
+        <div class="contact-method">
+          <i class="fas fa-clock contact-method-icon"></i>
+          <div class="contact-method-body">
+            <h3>Response Time</h3>
+            <p>We typically respond within 1–2 business days. For urgent order issues, include your order number.</p>
+          </div>
+        </div>
+      </div>
+
+      <h2>Send Us a Message</h2>
+      <div class="contact-form-wrap">
+        <form id="contact-form" novalidate>
+          <div class="form-row">
+            <div>
+              <label for="cf-name">Your Name</label>
+              <input type="text" id="cf-name" name="name" placeholder="Dork McDorington" required autocomplete="name" />
+            </div>
+            <div>
+              <label for="cf-email">Email Address</label>
+              <input type="email" id="cf-email" name="email" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+          </div>
+          <label for="cf-subject">Subject</label>
+          <select id="cf-subject" name="subject">
+            <option value="">Select a topic…</option>
+            <option value="order">Order issue or question</option>
+            <option value="shipping">Shipping or tracking</option>
+            <option value="return">Return or replacement</option>
+            <option value="other">Something else</option>
+          </select>
+          <label for="cf-message">Message</label>
+          <textarea id="cf-message" name="message" placeholder="Tell us what's on your mind…" required></textarea>
+          <button type="submit">Send Message</button>
+          <p class="form-note">We'll never share your email with anyone.</p>
+        </form>
+        <div id="contact-success">
+          <p><i class="fas fa-check-circle"></i>&nbsp; Message sent! We'll be in touch within 2 business days.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Info</h4>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="shipping.html">Shipping</a></li>
+          <li><a href="returns.html">Returns</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+
+</div>
+
+<!-- Cart Overlay -->
+<div id="cart-overlay" class="cart-overlay"></div>
+
+<!-- Cart Drawer -->
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div id="cart-toast" class="cart-toast"></div>
+
+<script src="./include/cart.js"></script>
+<script src="./include/auth.js"></script>
+<script>
+  // Contact form — POST to /api/contact; fall back to mailto on failure
+  document.getElementById("contact-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    var name    = document.getElementById("cf-name").value.trim();
+    var email   = document.getElementById("cf-email").value.trim();
+    var subject = document.getElementById("cf-subject").value;
+    var message = document.getElementById("cf-message").value.trim();
+    if (!name || !email || !message) {
+      alert("Please fill in your name, email, and message.");
+      return;
+    }
+    var btn = this.querySelector("button[type='submit']");
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name, email: email, subject: subject, message: message })
+    })
+    .then(function(r) { return r.ok ? r : Promise.reject(r.status); })
+    .then(function() {
+      document.getElementById("contact-form").style.display = "none";
+      document.getElementById("contact-success").style.display = "block";
+    })
+    .catch(function() {
+      // Fall back to mailto if API not available
+      var mailto = "mailto:hello@dorkmugs.shop"
+        + "?subject=" + encodeURIComponent((subject || "Contact") + " from " + name)
+        + "&body=" + encodeURIComponent(message + "\n\nFrom: " + name + " <" + email + ">");
+      window.location.href = mailto;
+      btn.disabled = false;
+      btn.textContent = "Send Message";
+    });
+  });
+</script>
+<script src="./include/sexymode.js"></script>
+</body>
+</html>

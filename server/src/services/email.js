@@ -125,4 +125,20 @@ async function sendShippingUpdate(to, order) {
   });
 }
 
-module.exports = { sendWelcome, sendPasswordReset, sendOrderConfirmation, sendShippingUpdate };
+async function sendContactMessage({ name, email, subject, message }) {
+  const CONTACT_TO = process.env.CONTACT_EMAIL || config.email.from || 'hello@dorkmugs.shop';
+  await send({
+    to: CONTACT_TO,
+    subject: `[Contact] ${subject} — from ${name}`,
+    html: wrap(
+      'New contact form message',
+      `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
+       <p><strong>Subject:</strong> ${subject}</p>
+       <hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>
+       <p style="white-space:pre-wrap">${message.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+       <p style="color:#999;font-size:12px">Reply directly to: <a href="mailto:${email}">${email}</a></p>`
+    ),
+  });
+}
+
+module.exports = { sendWelcome, sendPasswordReset, sendOrderConfirmation, sendShippingUpdate, sendContactMessage };
