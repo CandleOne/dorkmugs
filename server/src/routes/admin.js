@@ -32,6 +32,7 @@ router.post('/printify/create-mug', ctrl.printifyCreateMug);
 // Shop Products (catalog management)
 router.get('/shop-products', ctrl.adminListShopProducts);
 router.post('/shop-products', ctrl.createShopProduct);
+router.patch('/shop-products/:id/featured', ctrl.toggleFeaturedProduct);
 router.patch('/shop-products/:id', ctrl.updateShopProduct);
 router.delete('/shop-products/:id', ctrl.deleteShopProduct);
 

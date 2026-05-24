@@ -165,6 +165,7 @@
         <a href="#" data-section="orders"><i class="fas fa-box"></i> Orders</a>
         <a href="#" data-section="users"><i class="fas fa-users"></i> Users</a>
         <a href="#" data-section="shop-manager"><i class="fas fa-store-alt"></i> Shop Manager</a>
+        <a href="#" data-section="featured"><i class="fas fa-star"></i> Featured</a>
         <a href="#" data-section="collections"><i class="fas fa-layer-group"></i> Collections</a>
         <a href="#" data-section="products"><i class="fas fa-sync-alt"></i> Printify Sync</a>
         <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
@@ -225,6 +226,16 @@
           <button class="btn-sm btn-primary" id="sm-add-btn"><i class="fas fa-plus"></i> Add Product</button>
         </div>
         <div id="sm-table-wrap"></div>
+      </div>
+
+      <!-- Featured Products -->
+      <div id="section-featured" class="admin-section section-inactive">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <h1 style="margin:0">Featured Products</h1>
+          <button class="btn-sm btn-primary" id="feat-refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <p style="color:#5a6a80;margin:0 0 20px;font-size:.9rem">Toggle which products appear in the Featured section on the homepage. Use the order field to control their sequence (lower = first).</p>
+        <div id="feat-table-wrap"><p style="color:#888">Loading…</p></div>
       </div>
 
       <!-- Collections -->
@@ -579,6 +590,7 @@ function showSection(name) {
   else if (name === 'orders') loadOrders();
   else if (name === 'users') loadUsers();
   else if (name === 'collections') loadCollections();
+  else if (name === 'featured') loadFeatured();
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
   else if (name === 'shop-manager') loadShopManager();
 }
@@ -1040,6 +1052,83 @@ function renderPagination(id, current, total, onPage) {
     if (!btn.disabled) btn.addEventListener('click', function () { onPage(parseInt(btn.dataset.p)); });
   });
 }
+
+// ─── Featured Products ────────────────────────────────────────────────────────
+
+function loadFeatured() {
+  document.getElementById('feat-table-wrap').innerHTML = '<p style="color:#888">Loading…</p>';
+  apiFetch('/admin/shop-products').then(function (data) {
+    var products = (data.products || []).slice().sort(function (a, b) {
+      if (a.featured !== b.featured) return a.featured ? -1 : 1;
+      return (a.featuredOrder || 0) - (b.featuredOrder || 0);
+    });
+    if (!products.length) {
+      document.getElementById('feat-table-wrap').innerHTML = '<div class="empty-state">No products in Shop Manager yet. Add some first.</div>';
+      return;
+    }
+    var rows = products.map(function (p) {
+      var img = p.imageLeft || p.imageCenter || p.imageRight || '';
+      var isFeat = !!p.featured;
+      return '<tr id="feat-row-' + esc(p.id) + '">' +
+        '<td>' + (img ? '<img class="sm-product-img" src="' + esc(img) + '" alt="" />' : '<span style="color:#ccc">—</span>') + '</td>' +
+        '<td><strong>' + esc(p.pname) + '</strong><br><small style="color:#888">' + esc(p.id) + '</small></td>' +
+        '<td>$' + parseFloat(p.price).toFixed(2) + '</td>' +
+        '<td>' + (p.published ? '<span class="pub-badge pub-yes">Published</span>' : '<span class="pub-badge pub-no">Draft</span>') + '</td>' +
+        '<td>' +
+          (isFeat
+            ? '<span style="color:#1a6fc4;font-weight:700"><i class="fas fa-star"></i> Featured</span>'
+            : '<span style="color:#aaa">—</span>') +
+        '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn-sm ' + (isFeat ? 'btn-danger feat-remove-btn' : 'btn-primary feat-add-btn') + '" ' +
+            'data-id="' + esc(p.id) + '" data-featured="' + (isFeat ? 'true' : 'false') + '" ' +
+            'style="margin-right:6px">' +
+            (isFeat ? '<i class="fas fa-star-half-alt"></i> Remove' : '<i class="fas fa-star"></i> Feature') +
+          '</button>' +
+          (isFeat
+            ? '<input type="number" class="feat-order-input" data-id="' + esc(p.id) + '" ' +
+                'value="' + (p.featuredOrder || 0) + '" min="0" step="1" ' +
+                'style="width:58px;padding:5px 7px;border:1.5px solid #d1dae6;border-radius:5px;font-size:.85rem;text-align:center" ' +
+                'title="Featured order (lower = first)" />'
+            : '') +
+        '</td></tr>';
+    }).join('');
+    document.getElementById('feat-table-wrap').innerHTML =
+      '<table class="data-table"><thead><tr>' +
+        '<th>Image</th><th>Product</th><th>Price</th><th>Status</th><th>Featured</th><th>Actions</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    // Toggle featured
+    document.querySelectorAll('.feat-add-btn, .feat-remove-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var isFeatured = btn.dataset.featured === 'true';
+        var id = btn.dataset.id;
+        btn.disabled = true;
+        apiFetch('/admin/shop-products/' + encodeURIComponent(id) + '/featured', {
+          method: 'PATCH',
+          body: JSON.stringify({ featured: !isFeatured })
+        }).then(function () { loadFeatured(); })
+          .catch(function (e) { alert(e.message); btn.disabled = false; });
+      });
+    });
+
+    // Update featured order on blur
+    document.querySelectorAll('.feat-order-input').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var id = inp.dataset.id;
+        var order = parseInt(inp.value, 10) || 0;
+        apiFetch('/admin/shop-products/' + encodeURIComponent(id) + '/featured', {
+          method: 'PATCH',
+          body: JSON.stringify({ featuredOrder: order })
+        }).catch(function (e) { alert(e.message); });
+      });
+    });
+  }).catch(function (e) {
+    document.getElementById('feat-table-wrap').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+document.getElementById('feat-refresh-btn').addEventListener('click', loadFeatured);
 
 // ─── Collections Editor ───────────────────────────────────────────────────────
 

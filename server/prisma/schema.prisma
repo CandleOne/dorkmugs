@@ -136,8 +136,10 @@ model ShopProduct {
   rating      Float    @default(0)
   collection  String                  // "bp" | "fame" | "stem"
   description String   @default("")
-  published   Boolean  @default(true)
-  sortOrder   Int      @default(0)
+  published     Boolean  @default(true)
+  featured      Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  featuredOrder Int      @default(0)
 
   // Left placement
   imageLeft        String  @default("")

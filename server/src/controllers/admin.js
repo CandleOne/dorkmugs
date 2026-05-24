@@ -254,6 +254,8 @@ async function updateShopProduct(req, res) {
       description:      String(req.body.description || '').trim(),
       published:        req.body.published !== false,
       sortOrder:        parseInt(req.body.sortOrder, 10) || 0,
+      featured:         Boolean(req.body.featured),
+      featuredOrder:    parseInt(req.body.featuredOrder, 10) || 0,
       imageLeft:        String(req.body.imageLeft || '').trim(),
       printifyIdLeft:   String(req.body.printifyIdLeft || '').trim(),
       variantIdLeft:    String(req.body.variantIdLeft || '').trim(),
@@ -268,10 +270,34 @@ async function updateShopProduct(req, res) {
   return res.json({ product });
 }
 
+// PATCH /api/admin/shop-products/:id/featured  (quick featured toggle)
+async function toggleFeaturedProduct(req, res) {
+  const data = {};
+  if (req.body.featured !== undefined)      data.featured      = Boolean(req.body.featured);
+  if (req.body.featuredOrder !== undefined) data.featuredOrder = parseInt(req.body.featuredOrder, 10) || 0;
+  if (!Object.keys(data).length) return res.status(422).json({ error: 'No fields to update.' });
+  const product = await prisma.shopProduct.update({ where: { id: req.params.id }, data });
+  return res.json({ product });
+}
+
 // DELETE /api/admin/shop-products/:id
 async function deleteShopProduct(req, res) {
   await prisma.shopProduct.delete({ where: { id: req.params.id } });
   return res.json({ ok: true });
+}
+
+// GET /api/shop-products/featured  (public — homepage featured list)
+async function getFeaturedProducts(req, res) {
+  const [products, collections] = await Promise.all([
+    prisma.shopProduct.findMany({
+      where: { published: true, featured: true },
+      orderBy: [{ featuredOrder: 'asc' }, { createdAt: 'asc' }],
+    }),
+    prisma.collection.findMany(),
+  ]);
+  const collMap = {};
+  collections.forEach(c => { collMap[c.slug] = c.name; });
+  return res.json({ products: products.map(p => ({ ...p, collectionName: collMap[p.collection] || null })) });
 }
 
 // ─── Collections ──────────────────────────────────────────────────────────────
@@ -469,6 +495,8 @@ module.exports = {
   createShopProduct,
   updateShopProduct,
   deleteShopProduct,
+  toggleFeaturedProduct,
+  getFeaturedProducts,
   getPublicCollections,
   adminListCollections,
   createAdminCollection,

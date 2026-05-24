@@ -135,37 +135,8 @@
   </div>
 
   <!-- Featured Products -->
-  <section class="products">
-    <div class="card">
-      <a href="item.html?id=gc01">
-        <img src="https://res.cloudinary.com/ddzvojsgj/image/upload/f_auto,q_auto,w_340,c_limit/v1779330960/de024ded-4de9-4459-b716-50c2716f4220.png" class="primg0" alt="Genetically Cursed! Mug" width="340" height="340" />
-      </a>
-      <span class="collection-badge badge-bp">BP Collection</span>
-      <h2>Genetically Cursed! Mug</h2>
-      <span class="price-tag">$18.99</span>
-      <button class="card-add-btn" onclick="Cart.add('gc01','Genetically Cursed! Mug',18.99,'https://res.cloudinary.com/ddzvojsgj/image/upload/v1779330960/de024ded-4de9-4459-b716-50c2716f4220.png',1,'6a0d441cf34bf3e7a90b8942','65216')">Add to Cart</button>
-      <a href="item.html?id=gc01" class="card-view-link">View Details &rsaquo;</a>
-    </div>
-    <div class="card">
-      <a href="item.html?id=sg01">
-        <img src="https://res.cloudinary.com/ddzvojsgj/image/upload/f_auto,q_auto,w_340,c_limit/v1779332666/Left_11oz_6_hwwvmj.png" class="primg0" alt="Made Via Spontaneous Generation Mug" width="340" height="340" />
-      </a>
-      <span class="collection-badge badge-stem">STEM Collection</span>
-      <h2>Made Via Spontaneous Generation Mug</h2>
-      <span class="price-tag">$19.99</span>
-      <button class="card-add-btn" onclick="Cart.add('sg01','Made Via Spontaneous Generation Mug',19.99,'https://res.cloudinary.com/ddzvojsgj/image/upload/v1779332666/Left_11oz_6_hwwvmj.png',1,'','')">Add to Cart</button>
-      <a href="item.html?id=sg01" class="card-view-link">View Details &rsaquo;</a>
-    </div>
-    <div class="card">
-      <a href="item.html?id=bi01">
-        <img src="https://res.cloudinary.com/ddzvojsgj/image/upload/f_auto,q_auto,w_340,c_limit/v1779332668/Left_11oz_5_yud7lh.png" class="primg0" alt="Big EP Mug" width="340" height="340" />
-      </a>
-      <span class="collection-badge badge-fame">Fame &amp; Infamy</span>
-      <h2>Big EP Mug</h2>
-      <span class="price-tag">$21.99</span>
-      <button class="card-add-btn" onclick="Cart.add('bi01','Big EP Mug',21.99,'https://res.cloudinary.com/ddzvojsgj/image/upload/v1779332668/Left_11oz_5_yud7lh.png',1,'','')">Add to Cart</button>
-      <a href="item.html?id=bi01" class="card-view-link">View Details &rsaquo;</a>
-    </div>
+  <section class="products" id="featured-products-section">
+    <!-- cards injected by featured-loader below -->
   </section>
 
   <!-- Brand Story -->
@@ -258,4 +229,70 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script src="./include/sexymode.js"></script>
+<script>
+// ─── Featured Products Loader ─────────────────────────────────────────────────
+(function () {
+  function resolveApiBase() {
+    if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+    if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return window.location.protocol + '//' + window.location.hostname + ':5000/api';
+    }
+    return window.location.origin.replace(/\/+$/, '') + '/api';
+  }
+
+  var COLLECTION_BADGE = {
+    bp:   { cls: 'badge-bp',   label: 'BP Collection' },
+    fame: { cls: 'badge-fame', label: 'Fame &amp; Infamy' },
+    stem: { cls: 'badge-stem', label: 'STEM Collection' },
+  };
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderFeatured(products) {
+    var section = document.getElementById('featured-products-section');
+    if (!section) return;
+    if (!products.length) { section.style.display = 'none'; return; }
+    section.innerHTML = products.map(function (p) {
+      var img    = p.imageLeft || p.imageCenter || p.imageRight || '';
+      var pid    = p.printifyIdLeft || p.printifyIdCenter || p.printifyIdRight || '';
+      var vid    = p.variantIdLeft  || p.variantIdCenter  || p.variantIdRight  || '';
+      var badgeInfo = COLLECTION_BADGE[p.collection] || { cls: '', label: esc(p.collectionName || p.collection) };
+      return '<div class="card">' +
+        '<a href="item.html?id=' + esc(p.id) + '">' +
+          (img ? '<img src="' + esc(img) + '" class="primg0" alt="' + esc(p.pname) + '" width="340" height="340" />' : '') +
+        '</a>' +
+        (badgeInfo.label ? '<span class="collection-badge ' + badgeInfo.cls + '">' + badgeInfo.label + '</span>' : '') +
+        '<h2>' + esc(p.pname) + '</h2>' +
+        '<span class="price-tag">$' + parseFloat(p.price).toFixed(2) + '</span>' +
+        '<button class="card-add-btn" data-feat-add="1" ' +
+          'data-id="' + esc(p.id) + '" data-pname="' + esc(p.pname) + '" ' +
+          'data-price="' + esc(p.price) + '" data-img="' + esc(img) + '" ' +
+          'data-pid="' + esc(pid) + '" data-vid="' + esc(vid) + '">Add to Cart</button>' +
+        '<a href="item.html?id=' + esc(p.id) + '" class="card-view-link">View Details &rsaquo;</a>' +
+      '</div>';
+    }).join('');
+
+    // Wire up Add to Cart buttons
+    section.querySelectorAll('[data-feat-add]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (window.Cart && Cart.add) {
+          Cart.add(btn.dataset.id, btn.dataset.pname, parseFloat(btn.dataset.price), btn.dataset.img, 1, btn.dataset.pid, btn.dataset.vid);
+        }
+      });
+    });
+  }
+
+  fetch(resolveApiBase() + '/shop-products/featured')
+    .then(function (r) { return r.json(); })
+    .then(function (data) { renderFeatured(data.products || []); })
+    .catch(function () {
+      // On error, fall through — section stays empty/hidden
+      var section = document.getElementById('featured-products-section');
+      if (section) section.style.display = 'none';
+    });
+}());
+</script>
 </body>
