@@ -231,15 +231,13 @@ form.srcbartn::after { content: ""; clear: both; display: table; }
 	border-bottom: 1px solid #d0d8e4;
 }
 .hero h1 {
-	font-size: 3rem;
-	font-weight: 900;
-	color: #ffffff;
-	margin-bottom: 15px;
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: #1a2540;
+	margin: 14px 0 6px;
 	padding: 0;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
+	letter-spacing: 0.02em;
 }
-.hero h1 span { color: #c8e6ff; }
 .hero p {
 	font-size: 1.1rem;
 	color: #5a6a80;
@@ -1677,4 +1675,9 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 	/* Brand story: stack cols */
 	.brand-story { padding: 32px 20px; }
 	.brand-story-cols { flex-direction: column; }
+
+	/* Keep badge text above 12px floor */
+	.collection-badge { font-size: 0.75rem; }
+	/* Scale hero H1 down */
+	.hero h1 { font-size: 1.15rem; margin: 10px 0 4px; }
 }
