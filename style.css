@@ -28,7 +28,6 @@ body::before {
 	z-index: -1;
 	pointer-events: none;
 	mix-blend-mode: multiply;
-	transform: scaleY(-1);
 }
 body::after {
 	content: '';
