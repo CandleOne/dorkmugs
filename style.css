@@ -1213,7 +1213,7 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 @media (max-width: 720px) {
 	.item-detail-wrap { flex-direction: column; padding: 24px 16px; gap: 24px; }
 	.item-detail-img { flex: none; max-width: 100%; }
-	.shop-card { width: calc(33.333% - 10px); }
+	.shop-card { width: calc(50% - 10px); }
 }
 
 /* ===== Responsive ===== */
@@ -1676,9 +1676,9 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 
 	/* Products: 3 columns on mobile */
 	.products { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; padding: 10px 8px 32px; gap: 8px; }
-	.card { width: calc(33.333% - 6px); max-width: none; padding: 10px 6px; }
-	.primg0 { max-width: 80px; max-height: 80px; }
-	.card h2, .card h1 { font-size: 0.72rem; margin: 6px 0 4px; padding: 0 2px; }
+	.card { width: calc(50% - 6px); max-width: none; padding: 12px 8px; }
+	.primg0 { max-width: 120px; max-height: 120px; }
+	.card h2, .card h1 { font-size: 0.8rem; margin: 8px 0 4px; padding: 0 4px; }
 	.price-tag { font-size: 0.85rem; margin-bottom: 6px; }
 	.card-add-btn { padding: 7px 4px; font-size: 0.7rem; min-height: 36px; }
 	.card-view-link { font-size: 0.7rem; }
@@ -1686,10 +1686,10 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 	/* Search page: 3 columns on mobile */
 	.collection-group { padding: 20px 8px 16px; }
 	.collection-group-grid { gap: 8px; }
-	.product-card { width: calc(33.333% - 6px); padding: 10px 6px; }
-	.product-card .product-image img { max-width: 75px; max-height: 75px; }
-	.product-card .product-info h5 { font-size: 0.68rem; margin: 6px 0 3px; }
-	.product-card .product-info h6 { font-size: 0.82rem; }
+	.product-card { width: calc(50% - 6px); padding: 14px 10px; }
+	.product-card .product-image img { max-width: 120px; max-height: 120px; }
+	.product-card .product-info h5 { font-size: 0.82rem; margin: 8px 0 4px; }
+	.product-card .product-info h6 { font-size: 0.95rem; }
 
 	/* Hide auth buttons from header on mobile; shown in nav dropdown */
 	#btn-login, #btn001, #btn-account, #btn-logout { display: none !important; }
