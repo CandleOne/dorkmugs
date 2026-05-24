@@ -671,6 +671,130 @@ body.sexy-mode .footer {
 	border-top-color: #8b5e1a;
 }
 
+/* ===== Sexy Mode — Dark Theme ===== */
+body.sexy-mode {
+	background-color: #1c1008;
+	background-image: none;
+	color: #f5e6cc;
+}
+body.sexy-mode::after { display: none; }
+body.sexy-mode a:link    { color: #f0c060; }
+body.sexy-mode a:visited { color: #c8941a; }
+body.sexy-mode a:hover, body.sexy-mode a:focus { color: #ffe066; }
+
+/* Page wrapper / content areas */
+body.sexy-mode .content,
+body.sexy-mode .auth-page,
+body.sexy-mode .account-page,
+body.sexy-mode .admin-layout,
+body.sexy-mode .item-page,
+body.sexy-mode .order-success-page,
+body.sexy-mode .search-page { background: transparent; color: #f5e6cc; }
+
+/* Search / promo bar */
+body.sexy-mode form.srcbartn input[type=text] {
+	background: #2a1c0e;
+	color: #f5e6cc;
+	border-color: #5a3a1a;
+}
+body.sexy-mode form.srcbartn input[type=text]::placeholder { color: #9a7a50; }
+
+/* Cards */
+body.sexy-mode .card,
+body.sexy-mode .collection-card,
+body.sexy-mode .bp-card,
+body.sexy-mode .fame-card,
+body.sexy-mode .stem-card {
+	background: #2a1c0e;
+	border-color: #5a3a1a;
+	color: #f5e6cc;
+}
+body.sexy-mode .card:hover,
+body.sexy-mode .collection-card:hover { border-color: #c8941a; background: #321f0e; }
+body.sexy-mode .collection-card h3,
+body.sexy-mode .card h3,
+body.sexy-mode .card h4 { color: #f5e6cc; }
+body.sexy-mode .collection-card p,
+body.sexy-mode .card p { color: #c8a878; }
+
+/* Badges */
+body.sexy-mode .badge { background: #3a2510; color: #c8a878; }
+body.sexy-mode .badge-bp   { background: #1a2a3a; color: #88aadd; }
+body.sexy-mode .badge-fame { background: #1a2838; color: #66aadd; }
+body.sexy-mode .badge-stem { background: #0e2a2a; color: #44c0c8; }
+
+/* Headings and general text */
+body.sexy-mode h1,
+body.sexy-mode h2,
+body.sexy-mode h3,
+body.sexy-mode h4 { color: #f5e6cc; }
+body.sexy-mode p { color: #c8a878; }
+
+/* Buttons */
+body.sexy-mode #btn-login {
+	background-color: #2a1c0e;
+	color: #f0c060;
+	border-color: #c8941a;
+}
+body.sexy-mode #btn-login:hover { background-color: #3a2510; }
+
+/* Sort / filter selects */
+body.sexy-mode select,
+body.sexy-mode input[type=text],
+body.sexy-mode input[type=email],
+body.sexy-mode input[type=password],
+body.sexy-mode textarea {
+	background: #2a1c0e;
+	color: #f5e6cc;
+	border-color: #5a3a1a;
+}
+
+/* Gallery */
+body.sexy-mode .gallery-hero { background: #241508; border-bottom-color: #5a3a1a; }
+body.sexy-mode .gallery-hero h1 { color: #f5e6cc; }
+body.sexy-mode .gallery-hero p,
+body.sexy-mode .gallery-hero-sub { color: #c8a878; }
+body.sexy-mode .gallery-card { background: #2a1c0e; border-color: #5a3a1a; }
+body.sexy-mode .gallery-cta { background: #241508; border-color: #5a3a1a; color: #c8a878; }
+body.sexy-mode .gallery-cta strong { color: #f5e6cc; }
+
+/* Filters / tabs */
+body.sexy-mode .gallery-tab { color: #c8a878; }
+body.sexy-mode .gallery-tab:hover,
+body.sexy-mode .gallery-tab.active { color: #f0c060; border-bottom-color: #f0c060; }
+
+/* Cart drawer */
+body.sexy-mode .cart-drawer { background: #1c1008; }
+body.sexy-mode .cart-drawer-header { background: #2a1c0e; border-bottom-color: #5a3a1a; }
+body.sexy-mode .cart-item { background: #2a1c0e; border-color: #5a3a1a; }
+body.sexy-mode .cart-item-name { color: #f5e6cc; }
+body.sexy-mode .cart-item-price { color: #f0c060; }
+body.sexy-mode .cart-item-meta { color: #c8a878; }
+body.sexy-mode .cart-summary { background: #2a1c0e; border-top-color: #5a3a1a; }
+body.sexy-mode .cart-item-qty button { background: #3a2510; color: #f5e6cc; }
+body.sexy-mode .cart-item-qty button:hover { background: #5a3a1a; }
+
+/* Auth / form pages */
+body.sexy-mode .auth-card,
+body.sexy-mode .auth-box { background: #2a1c0e; border-color: #5a3a1a; }
+body.sexy-mode label { color: #c8a878; }
+
+/* Product / item detail */
+body.sexy-mode .item-detail,
+body.sexy-mode .item-info { background: #2a1c0e; border-color: #5a3a1a; color: #f5e6cc; }
+body.sexy-mode .item-meta { color: #c8a878; }
+body.sexy-mode .item-meta .fas { color: #f0c060; }
+body.sexy-mode .placement-btn {
+	background: #2a1c0e;
+	border-color: #5a3a1a;
+	color: #c8a878;
+}
+body.sexy-mode .placement-btn.active,
+body.sexy-mode .placement-btn:hover:not(.active) { border-color: #c8941a; background: #3a2510; color: #f0c060; }
+
+/* Header hamburger */
+body.sexy-mode .nav-hamburger { color: #f5e6cc; }
+
 /* ===== Compatibility shims ===== */
 .button { display: none; }
 .fltrt  { float: right; margin-left: 8px; }
