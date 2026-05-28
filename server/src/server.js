@@ -12,7 +12,7 @@ const REQUIRED_IN_PROD = [
   'STRIPE_SUCCESS_URL',
   'STRIPE_CANCEL_URL',
   'SITE_URL',
-  'SMTP_HOST',
+  // SMTP_HOST intentionally omitted — email service degrades gracefully without it
   'PRINTIFY_API_KEY',
   'PRINTIFY_SHOP_ID',
 ];
