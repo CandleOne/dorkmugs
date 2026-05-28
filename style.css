@@ -1702,6 +1702,7 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 		font-size: 0.82rem;
 	}
 	#btn002 { min-height: 44px; padding: 10px 12px; }
+	.sexy-mode-btn { min-height: 44px; padding: 10px 12px; font-size: 1.1rem; }
 	.nav-hamburger { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
 	.card-add-btn { min-height: 44px; padding: 12px 12px; font-size: 0.9rem; }
 	.btn-collections-all { min-height: 44px; padding: 12px 24px; }
