@@ -48,8 +48,8 @@ module.exports = {
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || '',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
-    successUrl: process.env.STRIPE_SUCCESS_URL || 'http://localhost:3000/order-success.html',
-    cancelUrl: process.env.STRIPE_CANCEL_URL || 'http://localhost:3000/index.html',
+    successUrl: process.env.STRIPE_SUCCESS_URL || `http://localhost:${port}/order-success.html`,
+    cancelUrl: process.env.STRIPE_CANCEL_URL || `http://localhost:${port}/index.html`,
   },
 
   email: {
@@ -58,8 +58,10 @@ module.exports = {
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.EMAIL_FROM || 'Dork Mugs <noreply@dorkmugs.com>',
+    from: process.env.EMAIL_FROM || 'Dork Mugs <noreply@dorkmugs.shop>',
   },
+
+  siteUrl: (process.env.SITE_URL || `http://localhost:${port}`).replace(/\/+$/, ''),
 
   allowedOrigins: Array.from(new Set([...configuredOrigins, ...localOrigins])),
 };

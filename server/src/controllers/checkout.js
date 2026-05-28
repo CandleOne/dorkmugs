@@ -48,18 +48,22 @@ async function createCheckout(req, res) {
     placement: ['left', 'center', 'right'].includes(item.placement) ? item.placement : 'left',
   }));
 
-  // Metadata stored on session — used by the Stripe webhook and success page
+  // Metadata stored on session — used by the Stripe webhook and success page.
+  // NOTE: Stripe enforces a 500-char limit per metadata value. Images are omitted
+  // to stay well within the limit; the download feature degrades gracefully.
+  const metaItems = sanitised.map((i) => ({
+    printifyProductId: i.printifyProductId || null,
+    variantId: i.variantId || null,
+    qty: i.qty,
+    name: i.name,
+    placement: i.placement,
+  }));
+  const metaItemsJson = JSON.stringify(metaItems);
+  if (metaItemsJson.length > 490) {
+    console.warn(`[checkout] metadata.items is ${metaItemsJson.length} chars — may exceed Stripe's 500-char limit.`);
+  }
   const metadata = {
-    items: JSON.stringify(
-      sanitised.map((i) => ({
-        printifyProductId: i.printifyProductId,
-        variantId: i.variantId,
-        qty: i.qty,
-        name: i.name,
-        image: i.image || null,
-        placement: i.placement,
-      }))
-    ),
+    items: metaItemsJson,
     userId: req.user?.id || '',
     userEmail: req.user?.email || '',
   };

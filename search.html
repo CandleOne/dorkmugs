@@ -39,11 +39,14 @@
     <ul id="productline"></ul>
   </form>
   <script>
+    function _escSafe(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
     function listFunction() {
       var prdlin = document.getElementById("productline");
       var allist = "";
       for (var i = 0; i < prodb.length; i++) {
-        allist += "<li id='liid" + i + "'><a href='product.html'>" + prodb[i].pname + "</a></li>";
+        allist += "<li id='liid" + i + "'><a href='product.html'>" + _escSafe(prodb[i].pname) + "</a></li>";
       }
       prdlin.innerHTML = allist;
       document.getElementById("srch001").removeAttribute("onclick");

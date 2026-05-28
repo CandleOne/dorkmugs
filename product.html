@@ -98,7 +98,10 @@
   </div>
 
   <section id="shop-grid" class="products" style="padding: 0 24px 40px;">
-    <!-- Products are rendered dynamically from prodb / API -->
+    <div id="shop-grid-loading" style="width:100%;text-align:center;padding:60px 0;color:#888;font-size:1rem">
+      <i class="fas fa-circle-notch fa-spin" style="font-size:2rem;color:#1a6fc4;"></i>
+      <p style="margin-top:14px">Loading products&hellip;</p>
+    </div>
   </section>
 
   <!-- Footer -->
@@ -167,7 +170,13 @@
 
   function renderShopGrid() {
     var grid = document.getElementById('shop-grid');
-    if (!grid || !prodb.length) return;
+    var loading = document.getElementById('shop-grid-loading');
+    if (loading) loading.remove();
+    if (!grid) return;
+    if (!prodb.length) {
+      grid.innerHTML = '<p style="width:100%;text-align:center;padding:60px 0;color:#888">No products found.</p>';
+      return;
+    }
     grid.innerHTML = prodb.map(function(p) {
       var badge = collectionBadges[p.collection] || '';
       var label = p.collectionName || escHtml(p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
@@ -180,7 +189,10 @@
     }).join('');
   }
 
-  prodbReady.then(renderShopGrid);
+  prodbReady.then(renderShopGrid).catch(function() {
+    var loading = document.getElementById('shop-grid-loading');
+    if (loading) loading.innerHTML = '<p style="color:#c0392b">Could not load products. Please refresh the page.</p>';
+  });
 </script>
 <script src="./include/sexymode.js"></script>
 </body>

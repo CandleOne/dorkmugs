@@ -43,7 +43,7 @@ function wrap(title, body) {
     <div class="box">
       <h1>${title}</h1>
       ${body}
-      <div class="footer">&copy; 2026 Dork Mugs &mdash; <a href="https://dorkmugs.com">dorkmugs.com</a></div>
+      <div class="footer">&copy; 2026 Dork Mugs &mdash; <a href="${config.siteUrl}">${new URL(config.siteUrl).hostname}</a></div>
     </div></body></html>`;
 }
 
@@ -54,7 +54,7 @@ async function sendWelcome(to, name) {
     html: wrap(
       `Welcome, ${name}!`,
       `<p>Your account is all set. Start browsing our collection of mugs for dorks.</p>
-       <a class="btn" href="https://dorkmugs.com/product.html">Shop Now</a>`
+       <a class="btn" href="${config.siteUrl}/product.html">Shop Now</a>`
     ),
   });
 }
@@ -107,7 +107,7 @@ async function sendOrderConfirmation(to, order) {
            </tr>
          </tfoot>
        </table>
-       <a class="btn" href="https://dorkmugs.com/account.html">View Order</a>`
+       <a class="btn" href="${config.siteUrl}/account.html">View Order</a>`
     ),
   });
 }

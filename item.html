@@ -66,7 +66,7 @@
 
   <!-- Product Detail -->
   <div class="content">
-    <div id="item-detail"></div>
+    <div id="item-detail"><div style="text-align:center;padding:80px 20px;color:#888"><i class="fas fa-circle-notch fa-spin" style="font-size:2.5rem;color:#1a6fc4;"></i><p style="margin-top:16px">Loading product&hellip;</p></div></div>
   </div>
 
   <!-- Footer -->
@@ -245,7 +245,10 @@
     }
   }
 
-  prodbReady.then(renderItem);
+  prodbReady.then(renderItem).catch(function() {
+    var el = document.getElementById('item-detail');
+    if (el) el.innerHTML = '<p style="text-align:center;padding:80px 20px;color:#c0392b">Could not load product. <a href="product.html">Return to shop</a>.</p>';
+  });
 </script>
 <script src="./include/sexymode.js"></script>
 </body>
