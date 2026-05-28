@@ -1,0 +1,56 @@
+[Unit]
+Description=Webcam Stream — Puppeteer + FFmpeg → YouTube + Twitch
+Documentation=https://github.com/CandleOne/dorkmugs/tree/main/stream
+# Start after the network is fully up so RTMP connections succeed
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# ── Identity ────────────────────────────────────────────────────────────────────
+# Run as a dedicated low-privilege user. Create it with:
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin streamer
+User=streamer
+Group=streamer
+
+# ── Working directory & environment ────────────────────────────────────────────
+WorkingDirectory=/opt/webcam-stream
+
+# Reads YOUTUBE_KEY, TWITCH_KEY, and other variables from this file.
+# See .env.example for the full list of supported variables.
+EnvironmentFile=/opt/webcam-stream/.env
+
+# ── Pre-start ──────────────────────────────────────────────────────────────────
+# Make sure the log directory exists before the script tries to write to it
+ExecStartPre=/bin/mkdir -p /var/log
+ExecStartPre=/bin/touch /var/log/webcam-stream.log
+ExecStartPre=/bin/chown streamer:streamer /var/log/webcam-stream.log
+
+# ── Main command ───────────────────────────────────────────────────────────────
+ExecStart=/opt/webcam-stream/start-stream.sh
+
+# ── Restart policy ─────────────────────────────────────────────────────────────
+# Always restart so the stream recovers from crashes, FFmpeg disconnects, or
+# temporary network outages.
+Restart=always
+# Wait 5 s between restart attempts to avoid hammering RTMP endpoints
+RestartSec=5
+
+# ── Logging (journalctl -u webcam-stream -f) ───────────────────────────────────
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=webcam-stream
+
+# ── Sandboxing (reduces attack surface — remove if you hit permission errors) ──
+NoNewPrivileges=yes
+PrivateTmp=yes
+# Allow write access to /var/log and the app directory
+ReadWritePaths=/var/log /opt/webcam-stream
+
+# ── Timeouts ───────────────────────────────────────────────────────────────────
+# Give the process 15 s to exit cleanly before SIGKILL
+TimeoutStopSec=15
+KillMode=process
+
+[Install]
+# The service will start automatically when the system reaches multi-user mode
+WantedBy=multi-user.target
