@@ -137,6 +137,7 @@ var Cart = (function () {
 
     var payload = items.map(function (i) {
       return {
+        id: i.id || undefined,
         name: i.name,
         price: Math.round(i.price * 100), // convert to cents
         qty: i.qty,

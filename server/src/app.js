@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const config = require('./config');
-const { apiLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, contactLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
@@ -25,9 +25,25 @@ app.use((req, res, next) => {
 // ─── Security headers ─────────────────────────────────────────────────────────
 app.use(
   helmet({
-    // Existing pages include inline scripts/styles and CDN assets.
-    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    // Pages use inline scripts/styles and Font Awesome from cdnjs
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc:  ["'self'", "'unsafe-inline'"],
+        styleSrc:   ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+        fontSrc:    ["'self'", 'https://cdnjs.cloudflare.com'],
+        imgSrc:     ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+        objectSrc:  ["'none'"],
+        baseUri:    ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year — required for HSTS preload eligibility
+      includeSubDomains: true,
+    },
   })
 );
 
@@ -93,7 +109,7 @@ app.use('/api/webhooks',      require('./routes/webhooks'));
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 // ─── Contact form ─────────────────────────────────────────────────────────────
-app.post('/api/contact', async (req, res) => {
+app.post('/api/contact', contactLimiter, async (req, res) => {
   const { name, email, subject, message } = req.body || {};
   if (!name || !email || !message || typeof name !== 'string' || typeof email !== 'string' || typeof message !== 'string') {
     return res.status(400).json({ error: 'name, email, and message are required.' });

@@ -3,8 +3,11 @@ const https = require('https');
 const http = require('http');
 const { URL } = require('url');
 const { validationResult } = require('express-validator');
+const { PrismaClient } = require('@prisma/client');
 const stripeSvc = require('../services/stripe');
 const config = require('../config');
+
+const prisma = new PrismaClient();
 
 // Domains we trust as image sources for the download proxy
 const ALLOWED_IMAGE_HOSTS = [
@@ -39,14 +42,32 @@ async function createCheckout(req, res) {
 
   // Sanitise
   const sanitised = items.map((item) => ({
+    id: item.id ? String(item.id).slice(0, 50) : undefined,
     name: String(item.name).slice(0, 250),
-    price: Math.max(1, Math.round(Number(item.price))), // cents
+    price: Math.max(1, Math.round(Number(item.price))), // cents — will be overwritten by DB price below
     qty: Math.max(1, parseInt(item.qty, 10) || 1),
     image: item.image ? String(item.image) : undefined,
     printifyProductId: item.printifyProductId ? String(item.printifyProductId) : undefined,
     variantId: item.variantId ? String(item.variantId) : undefined,
     placement: ['left', 'center', 'right'].includes(item.placement) ? item.placement : 'left',
   }));
+
+  // ── Server-side price validation ────────────────────────────────────────────
+  // Look up prices from the DB for any item that carries a product ID.
+  // This prevents a client from manipulating the price before checkout.
+  const productIds = [...new Set(sanitised.map((i) => i.id).filter(Boolean))];
+  if (productIds.length > 0) {
+    const dbProducts = await prisma.shopProduct.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, price: true },
+    });
+    const dbPriceMap = Object.fromEntries(dbProducts.map((p) => [p.id, Math.round(p.price * 100)]));
+    for (const item of sanitised) {
+      if (item.id && dbPriceMap[item.id] !== undefined) {
+        item.price = dbPriceMap[item.id]; // cents, authoritative from DB
+      }
+    }
+  }
 
   // Metadata stored on session — used by the Stripe webhook and success page.
   // NOTE: Stripe enforces a 500-char limit per metadata value. Images are omitted

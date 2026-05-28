@@ -29,4 +29,13 @@ const passwordResetLimiter = rateLimit({
   message: { error: 'Too many password reset attempts. Try again in an hour.' },
 });
 
-module.exports = { authLimiter, apiLimiter, passwordResetLimiter };
+/** Contact form — prevent spam-relay abuse */
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many messages sent. Please try again in an hour.' },
+});
+
+module.exports = { authLimiter, apiLimiter, passwordResetLimiter, contactLimiter };
