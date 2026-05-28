@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dork Mugs</title>
 <meta name="robots" content="noindex, follow" />
+<meta property="og:type" content="product" />
+<meta property="og:site_name" content="Dork Mugs" />
+<meta property="og:title" content="Dork Mugs" />
+<meta property="og:description" content="Original designs on premium ceramic mugs for bold thinkers, science nerds, and unapologetic coffee drinkers." />
+<meta property="og:image" content="https://res.cloudinary.com/ddzvojsgj/image/upload/v1779330960/de024ded-4de9-4459-b716-50c2716f4220.png" />
+<meta property="og:url" content="https://dorkmugs.shop/item.html" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Dork Mugs" />
+<meta name="twitter:description" content="Original designs on premium ceramic mugs for bold thinkers, science nerds, and unapologetic coffee drinkers." />
+<meta name="twitter:image" content="https://res.cloudinary.com/ddzvojsgj/image/upload/v1779330960/de024ded-4de9-4459-b716-50c2716f4220.png" />
 <link rel="icon" type="image/png" href="./favicon.png" />
 <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 <script src="./include/prodbs.js"></script>
@@ -151,6 +161,19 @@
     }
 
     document.title = "Dork Mugs \u2013 " + product.pname;
+
+    // Update OG / social meta tags dynamically
+    var productImg = product.imageLeft || product.imageCenter || product.imageRight || product.image || '';
+    var productUrl = 'https://dorkmugs.shop/item.html?id=' + encodeURIComponent(product.id);
+    var productDesc = product.description || 'Original design on a premium 11oz ceramic mug.';
+    function setMeta(sel, attr, val) { var el = document.querySelector(sel); if (el) el.setAttribute(attr, val); }
+    setMeta('meta[property="og:title"]',       'content', product.pname + ' \u2013 Dork Mugs');
+    setMeta('meta[property="og:description"]', 'content', productDesc);
+    setMeta('meta[property="og:image"]',        'content', productImg);
+    setMeta('meta[property="og:url"]',          'content', productUrl);
+    setMeta('meta[name="twitter:title"]',       'content', product.pname + ' \u2013 Dork Mugs');
+    setMeta('meta[name="twitter:description"]', 'content', productDesc);
+    setMeta('meta[name="twitter:image"]',       'content', productImg);
 
     var badge = collectionBadges[product.collection] || "";
     var label = product.collectionName || product.collection;
