@@ -2,8 +2,12 @@
 const path = require('path');
 const fs   = require('fs').promises;
 const { PrismaClient } = require('@prisma/client');
+const Stripe = require('stripe');
 const printify = require('../services/printify');
 const emailSvc = require('../services/email');
+const config   = require('../config');
+
+const stripe = Stripe(config.stripe.secretKey);
 
 const prisma = new PrismaClient();
 
@@ -507,4 +511,117 @@ module.exports = {
   printifyCatalogVariants,
   printifyCreateMug,
   listImageAssets,
+  listCoupons,
+  createCoupon,
+  deactivateCoupon,
 };
+
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+
+// GET /api/admin/coupons
+// Returns all promotion codes (and their underlying coupons) from Stripe.
+async function listCoupons(req, res) {
+  try {
+    const promoCodes = await stripe.promotionCodes.list({ limit: 100, expand: ['data.coupon'] });
+    const items = promoCodes.data.map((pc) => ({
+      id: pc.id,
+      code: pc.code,
+      active: pc.active,
+      timesRedeemed: pc.times_redeemed,
+      maxRedemptions: pc.max_redemptions,
+      expiresAt: pc.expires_at,
+      coupon: {
+        id: pc.coupon.id,
+        percentOff: pc.coupon.percent_off,
+        amountOff: pc.coupon.amount_off,   // cents
+        currency: pc.coupon.currency,
+        duration: pc.coupon.duration,
+        durationInMonths: pc.coupon.duration_in_months,
+        timesRedeemed: pc.coupon.times_redeemed,
+        maxRedemptions: pc.coupon.max_redemptions,
+      },
+    }));
+    return res.json({ coupons: items });
+  } catch (err) {
+    console.error('[admin/coupons] list error', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+// POST /api/admin/coupons
+// Body: { code, discountType: 'percent'|'amount', discountValue, duration: 'once'|'forever'|'repeating', durationMonths?, maxRedemptions?, expiresAt? }
+async function createCoupon(req, res) {
+  const { code, discountType, discountValue, duration, durationMonths, maxRedemptions, expiresAt } = req.body || {};
+
+  if (!code || typeof code !== 'string' || !/^[A-Z0-9_-]{1,50}$/i.test(code.trim())) {
+    return res.status(422).json({ error: 'Invalid code. Use letters, numbers, hyphens or underscores (max 50 chars).' });
+  }
+  if (!['percent', 'amount'].includes(discountType)) {
+    return res.status(422).json({ error: 'discountType must be "percent" or "amount".' });
+  }
+  const value = parseFloat(discountValue);
+  if (!value || value <= 0) {
+    return res.status(422).json({ error: 'discountValue must be a positive number.' });
+  }
+  if (discountType === 'percent' && value > 100) {
+    return res.status(422).json({ error: 'Percent discount cannot exceed 100.' });
+  }
+  if (!['once', 'forever', 'repeating'].includes(duration)) {
+    return res.status(422).json({ error: 'duration must be once, forever, or repeating.' });
+  }
+
+  try {
+    // Build coupon params
+    const couponParams = { duration };
+    if (discountType === 'percent') {
+      couponParams.percent_off = value;
+    } else {
+      couponParams.amount_off = Math.round(value * 100); // dollars → cents
+      couponParams.currency = 'usd';
+    }
+    if (duration === 'repeating') {
+      const months = parseInt(durationMonths, 10);
+      if (!months || months < 1) return res.status(422).json({ error: 'durationMonths required for repeating coupons.' });
+      couponParams.duration_in_months = months;
+    }
+    if (maxRedemptions) {
+      const max = parseInt(maxRedemptions, 10);
+      if (max > 0) couponParams.max_redemptions = max;
+    }
+
+    const coupon = await stripe.coupons.create(couponParams);
+
+    // Create the promotion code with the human-readable code string
+    const promoParams = {
+      coupon: coupon.id,
+      code: code.trim().toUpperCase(),
+    };
+    if (expiresAt) {
+      const ts = Math.floor(new Date(expiresAt).getTime() / 1000);
+      if (ts > Math.floor(Date.now() / 1000)) promoParams.expires_at = ts;
+    }
+    if (maxRedemptions) {
+      const max = parseInt(maxRedemptions, 10);
+      if (max > 0) promoParams.max_redemptions = max;
+    }
+
+    const promoCode = await stripe.promotionCodes.create(promoParams);
+    return res.status(201).json({ id: promoCode.id, code: promoCode.code });
+  } catch (err) {
+    console.error('[admin/coupons] create error', err.message);
+    // Stripe returns a clear message for duplicate codes
+    return res.status(400).json({ error: err.message });
+  }
+}
+
+// DELETE /api/admin/coupons/:id
+// Deactivates (not deletes) a promotion code so existing redeemed ones stay in records.
+async function deactivateCoupon(req, res) {
+  try {
+    await stripe.promotionCodes.update(req.params.id, { active: false });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/coupons] deactivate error', err.message);
+    return res.status(400).json({ error: err.message });
+  }
+}

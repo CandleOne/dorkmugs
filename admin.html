@@ -167,6 +167,7 @@
         <a href="#" data-section="shop-manager"><i class="fas fa-store-alt"></i> Shop Manager</a>
         <a href="#" data-section="featured"><i class="fas fa-star"></i> Featured</a>
         <a href="#" data-section="collections"><i class="fas fa-layer-group"></i> Collections</a>
+        <a href="#" data-section="coupons"><i class="fas fa-tag"></i> Coupons</a>
         <a href="#" data-section="products"><i class="fas fa-sync-alt"></i> Printify Sync</a>
         <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
       </nav>
@@ -208,6 +209,71 @@
         <h1>Users</h1>
         <div id="users-table"></div>
         <div class="pagination" id="users-pagination"></div>
+      </div>
+
+      <!-- Coupons -->
+      <div id="section-coupons" class="admin-section section-inactive">
+        <h1 style="margin:0 0 4px">Coupons</h1>
+        <p style="color:#5a6a80;margin:0 0 24px;font-size:.9rem">Manage Stripe promotion codes. Codes are applied at checkout when customers enter them.</p>
+
+        <!-- Create form -->
+        <div class="panel-section" style="background:#fff;border:1px solid #e0e6f2;border-radius:10px;padding:22px 24px;margin-bottom:28px">
+          <h2 style="margin:0 0 18px;font-size:1rem"><i class="fas fa-plus-circle" style="color:#1a6fc4;margin-right:6px"></i>Create New Coupon</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px 16px;align-items:end">
+            <div>
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Code (e.g. DORK10)</label>
+              <input type="text" id="cp-code" placeholder="DORK10" maxlength="50"
+                style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box;text-transform:uppercase" />
+            </div>
+            <div>
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Discount Type</label>
+              <select id="cp-type" style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box">
+                <option value="percent">% Off</option>
+                <option value="amount">$ Off</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Value</label>
+              <input type="number" id="cp-value" placeholder="10" min="0.01" step="0.01"
+                style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Duration</label>
+              <select id="cp-duration" style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box">
+                <option value="once">Once</option>
+                <option value="forever">Forever</option>
+                <option value="repeating">Repeating</option>
+              </select>
+            </div>
+            <div id="cp-months-wrap" style="display:none">
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Months</label>
+              <input type="number" id="cp-months" placeholder="3" min="1" step="1"
+                style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Max Redemptions <span style="font-weight:400;color:#888">(optional)</span></label>
+              <input type="number" id="cp-max" placeholder="Unlimited" min="1" step="1"
+                style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Expires <span style="font-weight:400;color:#888">(optional)</span></label>
+              <input type="date" id="cp-expires"
+                style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <button class="btn-sm btn-primary" id="cp-create-btn">Create Coupon</button>
+            <p id="cp-error" style="color:#b00020;font-size:.85rem;margin:0;display:none"></p>
+            <p id="cp-success" style="color:#1a7c3e;font-size:.85rem;margin:0;display:none"></p>
+          </div>
+        </div>
+
+        <!-- Coupon list -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h2 style="margin:0;font-size:1rem">Existing Codes</h2>
+          <button class="btn-sm" id="cp-refresh-btn" style="font-size:.8rem"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div id="cp-table-wrap"><p style="color:#888">Loading&hellip;</p></div>
       </div>
 
       <!-- Printify Products -->
@@ -591,6 +657,7 @@ function showSection(name) {
   else if (name === 'users') loadUsers();
   else if (name === 'collections') loadCollections();
   else if (name === 'featured') loadFeatured();
+  else if (name === 'coupons') loadCoupons();
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
   else if (name === 'shop-manager') loadShopManager();
 }
@@ -1472,5 +1539,140 @@ function pmCreate() {
   });
 }
 </script>
+
+<!-- ─── Coupons ─────────────────────────────────────────────────────────── -->
+<script>
+// ─── Coupon list ─────────────────────────────────────────────────────────────
+
+function loadCoupons() {
+  var wrap = document.getElementById('cp-table-wrap');
+  wrap.innerHTML = '<p style="color:#888">Loading&hellip;</p>';
+  apiFetch('/admin/coupons').then(function (data) {
+    wrap.innerHTML = renderCouponTable(data.coupons || []);
+    bindCouponActions();
+  }).catch(function (e) {
+    wrap.innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+  });
+}
+
+function renderCouponTable(coupons) {
+  if (!coupons.length) return '<p style="color:#888;padding:16px 0">No promotion codes yet.</p>';
+  var rows = coupons.map(function (pc) {
+    var c = pc.coupon;
+    var discount = c.percentOff != null
+      ? c.percentOff + '% off'
+      : '$' + (c.amountOff / 100).toFixed(2) + ' off';
+    var duration = c.duration === 'repeating'
+      ? 'Repeating (' + c.durationInMonths + ' mo)'
+      : c.duration.charAt(0).toUpperCase() + c.duration.slice(1);
+    var uses = pc.timesRedeemed + (pc.maxRedemptions ? ' / ' + pc.maxRedemptions : '');
+    var expires = pc.expiresAt ? new Date(pc.expiresAt * 1000).toLocaleDateString() : '—';
+    var activeBadge = pc.active
+      ? '<span class="status-badge status-PROCESSING" style="background:#e6f4ea;color:#1a7c3e;border:1px solid #b7dfc7">Active</span>'
+      : '<span class="status-badge status-CANCELLED">Inactive</span>';
+    var deactivateBtn = pc.active
+      ? '<button class="btn-sm" style="font-size:.78rem;background:#fff;color:#b00020;border:1px solid #f5b8b8" data-cp-id="' + esc(pc.id) + '" data-cp-deactivate>Deactivate</button>'
+      : '';
+    return '<tr>'
+      + '<td><strong>' + esc(pc.code) + '</strong></td>'
+      + '<td>' + esc(discount) + '</td>'
+      + '<td>' + esc(duration) + '</td>'
+      + '<td>' + esc(uses) + '</td>'
+      + '<td>' + esc(expires) + '</td>'
+      + '<td>' + activeBadge + '</td>'
+      + '<td>' + deactivateBtn + '</td>'
+      + '</tr>';
+  }).join('');
+  return '<table class="data-table">'
+    + '<thead><tr><th>Code</th><th>Discount</th><th>Duration</th><th>Uses</th><th>Expires</th><th>Status</th><th></th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>';
+}
+
+function bindCouponActions() {
+  document.querySelectorAll('[data-cp-deactivate]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!confirm('Deactivate code "' + btn.dataset.cpId + '"? Customers can no longer redeem it.')) return;
+      btn.disabled = true;
+      apiFetch('/admin/coupons/' + btn.dataset.cpId, { method: 'DELETE' })
+        .then(function () { loadCoupons(); })
+        .catch(function (e) {
+          alert('Error: ' + e.message);
+          btn.disabled = false;
+        });
+    });
+  });
+}
+
+document.getElementById('cp-refresh-btn').addEventListener('click', loadCoupons);
+
+// ─── Duration select: show months input when "repeating" ─────────────────────
+
+document.getElementById('cp-duration').addEventListener('change', function () {
+  document.getElementById('cp-months-wrap').style.display = this.value === 'repeating' ? '' : 'none';
+});
+
+// ─── Create coupon ───────────────────────────────────────────────────────────
+
+document.getElementById('cp-create-btn').addEventListener('click', function () {
+  var errEl  = document.getElementById('cp-error');
+  var okEl   = document.getElementById('cp-success');
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+
+  var code      = (document.getElementById('cp-code').value || '').trim().toUpperCase();
+  var type      = document.getElementById('cp-type').value;
+  var value     = document.getElementById('cp-value').value;
+  var duration  = document.getElementById('cp-duration').value;
+  var months    = document.getElementById('cp-months').value;
+  var maxRed    = document.getElementById('cp-max').value;
+  var expires   = document.getElementById('cp-expires').value;
+
+  if (!code) { errEl.textContent = 'Code is required.'; errEl.style.display = 'block'; return; }
+  if (!value || parseFloat(value) <= 0) { errEl.textContent = 'Discount value must be greater than 0.'; errEl.style.display = 'block'; return; }
+  if (duration === 'repeating' && (!months || parseInt(months) < 1)) {
+    errEl.textContent = 'Enter the number of months for a repeating coupon.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var btn = document.getElementById('cp-create-btn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  apiFetch('/admin/coupons', {
+    method: 'POST',
+    body: JSON.stringify({
+      code: code,
+      discountType: type,
+      discountValue: parseFloat(value),
+      duration: duration,
+      durationMonths: months ? parseInt(months) : undefined,
+      maxRedemptions: maxRed ? parseInt(maxRed) : undefined,
+      expiresAt: expires || undefined,
+    }),
+  }).then(function (result) {
+    okEl.textContent = 'Coupon "' + result.code + '" created successfully!';
+    okEl.style.display = 'block';
+    // Reset form
+    document.getElementById('cp-code').value    = '';
+    document.getElementById('cp-value').value   = '';
+    document.getElementById('cp-max').value     = '';
+    document.getElementById('cp-expires').value = '';
+    document.getElementById('cp-months').value  = '';
+    document.getElementById('cp-months-wrap').style.display = 'none';
+    document.getElementById('cp-duration').value = 'once';
+    document.getElementById('cp-type').value     = 'percent';
+    loadCoupons();
+  }).catch(function (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }).finally(function () {
+    btn.disabled = false;
+    btn.textContent = 'Create Coupon';
+  });
+});
+</script>
+
 <script src="./include/sexymode.js"></script>
 </body>

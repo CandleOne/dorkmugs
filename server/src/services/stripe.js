@@ -46,6 +46,7 @@ async function createCheckoutSession(items, metadata, successUrl, cancelUrl, cus
     payment_method_types: ['card'],
     mode: 'payment',
     line_items: lineItems,
+    allow_promotion_codes: true,
     shipping_address_collection: {
       allowed_countries: ['US', 'CA', 'GB', 'AU'],
     },

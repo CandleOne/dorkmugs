@@ -38,6 +38,11 @@ router.delete('/shop-products/:id', ctrl.deleteShopProduct);
 
 router.get('/image-assets', ctrl.listImageAssets);
 
+// Coupons (Stripe promotion codes)
+router.get('/coupons', ctrl.listCoupons);
+router.post('/coupons', ctrl.createCoupon);
+router.delete('/coupons/:id', ctrl.deactivateCoupon);
+
 // Collections (admin CRUD)
 router.get('/collections', ctrl.adminListCollections);
 router.post('/collections', ctrl.createAdminCollection);
