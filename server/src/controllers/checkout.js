@@ -76,7 +76,6 @@ async function createCheckout(req, res) {
     printifyProductId: i.printifyProductId || null,
     variantId: i.variantId || null,
     qty: i.qty,
-    name: i.name,
     placement: i.placement,
   }));
   const metaItemsJson = JSON.stringify(metaItems);

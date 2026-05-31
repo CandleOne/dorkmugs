@@ -117,12 +117,26 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script>
-  // Redirect already-logged-in users
+  // Redirect already-logged-in users (resume pending checkout if applicable)
   document.addEventListener('DOMContentLoaded', function () {
     if (Auth.isLoggedIn()) {
-      window.location.href = Auth.isAdmin() ? 'admin.html' : 'account.html';
+      if (sessionStorage.getItem('dm_checkout_pending')) {
+        sessionStorage.removeItem('dm_checkout_pending');
+        Cart.checkout();
+      } else {
+        window.location.href = Auth.isAdmin() ? 'admin.html' : 'account.html';
+      }
     }
   });
+
+  function afterAuth(user) {
+    if (sessionStorage.getItem('dm_checkout_pending')) {
+      sessionStorage.removeItem('dm_checkout_pending');
+      Cart.checkout();
+    } else {
+      window.location.href = user.role === 'ADMIN' ? 'admin.html' : 'account.html';
+    }
+  }
 
   document.getElementById('login-form').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -137,7 +151,7 @@
 
     Auth.login(email, password)
       .then(function (user) {
-        window.location.href = user.role === 'ADMIN' ? 'admin.html' : 'account.html';
+        afterAuth(user);
       })
       .catch(function (err) {
         errEl.textContent = (err && err.message) || 'Login failed. Please try again.';

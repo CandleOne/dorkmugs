@@ -131,9 +131,23 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     if (Auth.isLoggedIn()) {
-      window.location.href = Auth.isAdmin() ? 'admin.html' : 'account.html';
+      if (sessionStorage.getItem('dm_checkout_pending')) {
+        sessionStorage.removeItem('dm_checkout_pending');
+        Cart.checkout();
+      } else {
+        window.location.href = Auth.isAdmin() ? 'admin.html' : 'account.html';
+      }
     }
   });
+
+  function afterAuth(user) {
+    if (sessionStorage.getItem('dm_checkout_pending')) {
+      sessionStorage.removeItem('dm_checkout_pending');
+      Cart.checkout();
+    } else {
+      window.location.href = user.role === 'ADMIN' ? 'admin.html' : 'account.html';
+    }
+  }
 
   function showFieldError(id, msg) {
     var el = document.getElementById(id);
@@ -166,7 +180,7 @@
 
     Auth.register(name, email, password)
       .then(function (user) {
-        window.location.href = user.role === 'ADMIN' ? 'admin.html' : 'account.html';
+        afterAuth(user);
       })
       .catch(function (err) {
         var msg = (err && err.data && err.data.error) || (err && err.message) || 'Registration failed.';

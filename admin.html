@@ -156,7 +156,7 @@
     </div>
   </header>
 
-  <div class="admin-layout">
+  <div class="admin-layout" id="admin-layout" style="display:none">
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <h2><i class="fas fa-mug-hot" style="margin-right:6px"></i> Admin</h2>
@@ -1287,6 +1287,7 @@ function initAdmin() {
     .catch(function() {})
     .then(function() {
       document.getElementById('section-loading').style.display = 'none';
+      document.getElementById('admin-layout').style.display = '';
       showSection('dashboard');
     });
 }
@@ -1573,6 +1574,7 @@ function renderCouponTable(coupons) {
     var deactivateBtn = pc.active
       ? '<button class="btn-sm" style="font-size:.78rem;background:#fff;color:#b00020;border:1px solid #f5b8b8" data-cp-id="' + esc(pc.id) + '" data-cp-deactivate>Deactivate</button>'
       : '';
+    var deleteBtn = '<button class="btn-sm" style="font-size:.78rem;background:#fff;color:#555;border:1px solid #ccc;margin-left:4px" data-cp-coupon-id="' + esc(pc.coupon.id) + '" data-cp-code="' + esc(pc.code) + '" data-cp-delete>Delete</button>';
     return '<tr>'
       + '<td><strong>' + esc(pc.code) + '</strong></td>'
       + '<td>' + esc(discount) + '</td>'
@@ -1580,7 +1582,7 @@ function renderCouponTable(coupons) {
       + '<td>' + esc(uses) + '</td>'
       + '<td>' + esc(expires) + '</td>'
       + '<td>' + activeBadge + '</td>'
-      + '<td>' + deactivateBtn + '</td>'
+      + '<td>' + deactivateBtn + deleteBtn + '</td>'
       + '</tr>';
   }).join('');
   return '<table class="data-table">'
@@ -1595,6 +1597,18 @@ function bindCouponActions() {
       if (!confirm('Deactivate code "' + btn.dataset.cpId + '"? Customers can no longer redeem it.')) return;
       btn.disabled = true;
       apiFetch('/admin/coupons/' + btn.dataset.cpId, { method: 'DELETE' })
+        .then(function () { loadCoupons(); })
+        .catch(function (e) {
+          alert('Error: ' + e.message);
+          btn.disabled = false;
+        });
+    });
+  });
+  document.querySelectorAll('[data-cp-delete]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!confirm('Permanently delete coupon "' + btn.dataset.cpCode + '"? This cannot be undone.')) return;
+      btn.disabled = true;
+      apiFetch('/admin/coupons/coupon/' + btn.dataset.cpCouponId, { method: 'DELETE' })
         .then(function () { loadCoupons(); })
         .catch(function (e) {
           alert('Error: ' + e.message);

@@ -41,6 +41,7 @@ router.get('/image-assets', ctrl.listImageAssets);
 // Coupons (Stripe promotion codes)
 router.get('/coupons', ctrl.listCoupons);
 router.post('/coupons', ctrl.createCoupon);
+router.delete('/coupons/coupon/:couponId', ctrl.deleteCoupon);
 router.delete('/coupons/:id', ctrl.deactivateCoupon);
 
 // Collections (admin CRUD)

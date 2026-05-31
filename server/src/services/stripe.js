@@ -42,14 +42,25 @@ async function createCheckoutSession(items, metadata, successUrl, cancelUrl, cus
     };
   });
 
+  // Calculate subtotal (cents) to determine whether free shipping applies.
+  const subtotal = items.reduce((sum, item) => sum + Math.round(item.price) * item.qty, 0);
+  const FREE_SHIPPING_THRESHOLD = 4000; // $40.00 in cents
+  const shippingAmount = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 499; // $4.99 under threshold
+
   const sessionParams = {
     payment_method_types: ['card'],
     mode: 'payment',
     line_items: lineItems,
     allow_promotion_codes: true,
-    shipping_address_collection: {
-      allowed_countries: ['US', 'CA', 'GB', 'AU'],
-    },
+    shipping_options: [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: shippingAmount, currency: 'usd' },
+          display_name: shippingAmount === 0 ? 'Free Shipping' : 'Standard Shipping',
+        },
+      },
+    ],
     metadata,
     success_url: successUrl,
     cancel_url: cancelUrl,

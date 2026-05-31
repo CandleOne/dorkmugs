@@ -120,8 +120,16 @@ var Cart = (function () {
   /* ── checkout ── */
   /**
    * Create a Stripe Checkout Session via the backend and redirect to Stripe.
+   * Requires the user to be signed in; redirects to login if not.
    */
   function checkout() {
+    // Guard: must be logged in to place an order
+    if (typeof Auth !== 'undefined' && !Auth.isLoggedIn()) {
+      sessionStorage.setItem('dm_checkout_pending', '1');
+      window.location.href = 'login.html?next=checkout';
+      return;
+    }
+
     var items = load();
     if (!items.length) return;
 

@@ -30,7 +30,7 @@ router.post(
 
 router.post('/logout', requireAuth, ctrl.logout);
 
-router.post('/refresh', ctrl.refresh);
+router.post('/refresh', authLimiter, ctrl.refresh);
 
 router.get('/me', requireAuth, ctrl.me);
 

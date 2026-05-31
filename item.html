@@ -210,12 +210,12 @@
           '<p class="item-desc">' + esc(product.description || 'Printed on a premium 11oz ceramic mug.') + '</p>' +
           '<span class="rating item-rating" data-default-rating="' + esc(product.rating) + '"></span>' +
           '<form class="pform item-form">' +
-            '<div class="placement-selector">' +
+            '<div class="placement-selector"' + (hasLeft && !hasCenter && !hasRight ? ' style="display:none"' : '') + '>' +
               '<label>Design Placement:</label>' +
               '<div class="placement-options">' +
-                '<button type="button" class="placement-btn' + (hasLeft   ? ' active' : '') + '" data-placement="left"  ><i class="fas fa-align-left"  ></i>Left</button>'   +
-                '<button type="button" class="placement-btn" data-placement="center"><i class="fas fa-align-center"></i>Center</button>' +
-                '<button type="button" class="placement-btn" data-placement="right" ><i class="fas fa-align-right" ></i>Right</button>'  +
+                '<button type="button" class="placement-btn' + (hasLeft   ? ' active' : '') + '"' + (!hasLeft   ? ' style="display:none"' : '') + ' data-placement="left"  ><i class="fas fa-align-left"  ></i>Left</button>'   +
+                '<button type="button" class="placement-btn' + (!hasLeft && hasCenter ? ' active' : '') + '"' + (!hasCenter ? ' style="display:none"' : '') + ' data-placement="center"><i class="fas fa-align-center"></i>Center</button>' +
+                '<button type="button" class="placement-btn"' + (!hasRight  ? ' style="display:none"' : '') + ' data-placement="right" ><i class="fas fa-align-right" ></i>Right</button>'  +
               '</div>' +
             '</div>' +
             '<label for="item-qty">Quantity:</label>' +

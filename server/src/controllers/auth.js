@@ -198,7 +198,10 @@ async function forgotPassword(req, res) {
       data: { token: hashed, userId: user.id, expiresAt },
     });
 
-    const resetUrl = `${process.env.ALLOWED_ORIGINS?.split(',')[0] || 'http://localhost:5500'}/reset-password.html?token=${rawToken}`;
+    const siteBase = process.env.SITE_URL ||
+      process.env.ALLOWED_ORIGINS?.split(',')[0] ||
+      'http://localhost:5500';
+    const resetUrl = `${siteBase}/reset-password.html?token=${rawToken}`;
     email.sendPasswordReset(user.email, resetUrl).catch(() => {});
   }
 

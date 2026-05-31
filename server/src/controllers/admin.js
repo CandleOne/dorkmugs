@@ -514,6 +514,7 @@ module.exports = {
   listCoupons,
   createCoupon,
   deactivateCoupon,
+  deleteCoupon,
 };
 
 // ─── Coupons ──────────────────────────────────────────────────────────────────
@@ -622,6 +623,18 @@ async function deactivateCoupon(req, res) {
     return res.json({ ok: true });
   } catch (err) {
     console.error('[admin/coupons] deactivate error', err.message);
+    return res.status(400).json({ error: err.message });
+  }
+}
+
+// DELETE /api/admin/coupons/coupon/:couponId
+// Permanently deletes the underlying Stripe coupon, invalidating all associated promotion codes.
+async function deleteCoupon(req, res) {
+  try {
+    await stripe.coupons.del(req.params.couponId);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/coupons] delete error', err.message);
     return res.status(400).json({ error: err.message });
   }
 }

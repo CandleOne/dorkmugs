@@ -38,11 +38,12 @@
     <ul id="productline"></ul>
   </form>
   <script>
+    function _escSafe(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function listFunction() {
       var prdlin = document.getElementById("productline");
       var allist = "";
       for (var i = 0; i < prodb.length; i++) {
-        allist += "<li id='liid" + i + "'><a href='product.html'>" + prodb[i].pname + "</a></li>";
+        allist += "<li id='liid" + i + "'><a href='item.html?id=" + encodeURIComponent(prodb[i].id) + "'>" + _escSafe(prodb[i].pname) + "</a></li>";
       }
       prdlin.innerHTML = allist;
       document.getElementById("srch001").removeAttribute("onclick");
@@ -108,78 +109,7 @@
 
   <!-- Gallery Grid -->
   <div class="gallery-grid" id="gallery-grid">
-
-    <!-- Our Designs -->
-    <div class="gallery-card" data-category="ours" data-src="./Assets/productpreviews/gencursedleft.png">
-      <div class="gallery-card-img">
-        <img src="./Assets/productpreviews/gencursedleft.png" alt="Genetically Cursed! Mug" loading="lazy" />
-        <div class="gallery-card-overlay">
-          <span class="gallery-card-title">Genetically Cursed! Mug</span>
-          <a href="item.html?id=gc01" class="gallery-shop-btn">Shop This &rsaquo;</a>
-        </div>
-      </div>
-      <div class="gallery-card-meta">
-        <span class="gallery-badge gallery-badge-ours"><i class="fas fa-store"></i> Our Design</span>
-        <span class="gallery-card-caption">BP Collection</span>
-      </div>
-    </div>
-
-    <div class="gallery-card" data-category="ours" data-src="./Assets/finaldesigns/BPcollection/hypergamyfinal.png">
-      <div class="gallery-card-img">
-        <img src="./Assets/finaldesigns/BPcollection/hypergamyfinal.png" alt="Hypergamy Mug" loading="lazy" />
-        <div class="gallery-card-overlay">
-          <span class="gallery-card-title">Hypergamy Mug</span>
-          <a href="item.html?id=hy01" class="gallery-shop-btn">Shop This &rsaquo;</a>
-        </div>
-      </div>
-      <div class="gallery-card-meta">
-        <span class="gallery-badge gallery-badge-ours"><i class="fas fa-store"></i> Our Design</span>
-        <span class="gallery-card-caption">BP Collection</span>
-      </div>
-    </div>
-
-    <div class="gallery-card" data-category="ours" data-src="./Assets/finaldesigns/BPcollection/bpbrutal.png">
-      <div class="gallery-card-img">
-        <img src="./Assets/finaldesigns/BPcollection/bpbrutal.png" alt="BP Brutal Mug" loading="lazy" />
-        <div class="gallery-card-overlay">
-          <span class="gallery-card-title">BP Brutal Mug</span>
-          <a href="item.html?id=bp01" class="gallery-shop-btn">Shop This &rsaquo;</a>
-        </div>
-      </div>
-      <div class="gallery-card-meta">
-        <span class="gallery-badge gallery-badge-ours"><i class="fas fa-store"></i> Our Design</span>
-        <span class="gallery-card-caption">BP Collection</span>
-      </div>
-    </div>
-
-    <div class="gallery-card" data-category="ours" data-src="./Assets/finaldesigns/Fame&InfamyCollection/bigep.png">
-      <div class="gallery-card-img">
-        <img src="./Assets/finaldesigns/Fame&InfamyCollection/bigep.png" alt="Big EP Mug" loading="lazy" />
-        <div class="gallery-card-overlay">
-          <span class="gallery-card-title">Big EP Mug</span>
-          <a href="item.html?id=bi01" class="gallery-shop-btn">Shop This &rsaquo;</a>
-        </div>
-      </div>
-      <div class="gallery-card-meta">
-        <span class="gallery-badge gallery-badge-ours"><i class="fas fa-store"></i> Our Design</span>
-        <span class="gallery-card-caption">Fame &amp; Infamy Collection</span>
-      </div>
-    </div>
-
-    <div class="gallery-card" data-category="ours" data-src="./Assets/finaldesigns/StemCollection/spontaneousgeneration.png">
-      <div class="gallery-card-img">
-        <img src="./Assets/finaldesigns/StemCollection/spontaneousgeneration.png" alt="Made Via Spontaneous Generation Mug" loading="lazy" />
-        <div class="gallery-card-overlay">
-          <span class="gallery-card-title">Made Via Spontaneous Generation Mug</span>
-          <a href="item.html?id=sg01" class="gallery-shop-btn">Shop This &rsaquo;</a>
-        </div>
-      </div>
-      <div class="gallery-card-meta">
-        <span class="gallery-badge gallery-badge-ours"><i class="fas fa-store"></i> Our Design</span>
-        <span class="gallery-card-caption">STEM Collection</span>
-      </div>
-    </div>
-
+    <!-- Populated dynamically from the product catalog -->
   </div>
 
   <!-- Submit CTA -->
@@ -252,6 +182,55 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script>
+  // ─── Dynamic gallery rendering from product catalog ───────────────────────
+  function _escG(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function _colLabelG(p) {
+    if (p.collectionName) return p.collectionName;
+    var map = { bp: 'BP Collection', fame: 'Fame &amp; Infamy Collection', stem: 'STEM Collection' };
+    return map[p.collection] || (p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
+  }
+  function _bindGalleryLightbox() {
+    document.querySelectorAll('#gallery-grid .gallery-card:not(.gallery-card-community) .gallery-card-img').forEach(function(el) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function(e) {
+        if (e.target.closest('a')) return;
+        var src = el.closest('.gallery-card').getAttribute('data-src');
+        var alt = el.querySelector('img') ? el.querySelector('img').alt : '';
+        if (!src) return;
+        document.getElementById('gallery-lb-img').src = src;
+        document.getElementById('gallery-lb-img').alt = alt;
+        document.getElementById('gallery-lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+  }
+  prodbReady.then(function() {
+    var grid = document.getElementById('gallery-grid');
+    var html = prodb.map(function(p) {
+      var img = p.image || p.imageLeft || '';
+      if (!img) return '';
+      var label = _colLabelG(p);
+      return '<div class="gallery-card" data-category="ours" data-src="' + _escG(img) + '">' +
+        '<div class="gallery-card-img">' +
+          '<img src="' + _escG(img) + '" alt="' + _escG(p.pname) + '" loading="lazy" onerror="this.closest(\'.gallery-card\').style.display=\'none\'" />' +
+          '<div class="gallery-card-overlay">' +
+            '<span class="gallery-card-title">' + _escG(p.pname) + '</span>' +
+            '<a href="item.html?id=' + _escG(p.id) + '" class="gallery-shop-btn">Shop This &rsaquo;</a>' +
+          '</div>' +
+        '</div>' +
+        '<div class="gallery-card-meta">' +
+          '<span class="gallery-badge gallery-badge-ours"><i class="fas fa-store"></i> Our Design</span>' +
+          '<span class="gallery-card-caption">' + _escG(label) + '</span>' +
+        '</div>' +
+      '</div>';
+    }).filter(Boolean).join('');
+    grid.innerHTML = html || '<p style="padding:40px;text-align:center;color:#888">No designs yet.</p>';
+    _bindGalleryLightbox();
+  });
+</script>
+<script>
   // Filter tabs
   document.querySelectorAll(".gallery-tab").forEach(function(btn) {
     btn.addEventListener("click", function() {
@@ -262,21 +241,6 @@
         var cat = card.getAttribute("data-category");
         card.style.display = (filter === "all" || cat === filter) ? "" : "none";
       });
-    });
-  });
-
-  // Lightbox — only for cards with a real image (not placeholders)
-  document.querySelectorAll(".gallery-card:not(.gallery-card-community) .gallery-card-img").forEach(function(el) {
-    el.style.cursor = "pointer";
-    el.addEventListener("click", function(e) {
-      if (e.target.closest("a")) return; // let shop link through
-      var src = el.closest(".gallery-card").getAttribute("data-src");
-      var alt = el.querySelector("img") ? el.querySelector("img").alt : "";
-      if (!src) return;
-      document.getElementById("gallery-lb-img").src = src;
-      document.getElementById("gallery-lb-img").alt = alt;
-      document.getElementById("gallery-lightbox").classList.add("open");
-      document.body.style.overflow = "hidden";
     });
   });
 

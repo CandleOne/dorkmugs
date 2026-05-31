@@ -96,6 +96,7 @@ async function handleSessionCompleted(session) {
             price: (li.price?.unit_amount || 0) / 100,
             qty: li.quantity || 1,
             image: null,
+            placement: meta.placement || 'left',
           };
         }),
       },
