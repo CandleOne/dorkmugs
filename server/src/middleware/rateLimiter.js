@@ -38,4 +38,22 @@ const contactLimiter = rateLimit({
   message: { error: 'Too many messages sent. Please try again in an hour.' },
 });
 
-module.exports = { authLimiter, apiLimiter, passwordResetLimiter, contactLimiter };
+/** Order lookup — prevent enumeration attacks */
+const orderLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many lookup attempts. Please try again in 15 minutes.' },
+});
+
+/** Newsletter signup — prevent spam */
+const newsletterLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many signup attempts. Please try again later.' },
+});
+
+module.exports = { authLimiter, apiLimiter, passwordResetLimiter, contactLimiter, orderLookupLimiter, newsletterLimiter };

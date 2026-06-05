@@ -332,6 +332,7 @@
       </div>
 
       <div class="btn-row" id="success-btn-row">
+        <a href="order-lookup.html" id="track-order-link" class="btn-ghost"><i class="fas fa-search"></i> Track Order</a>
         <a href="index.html" class="btn-solid"><i class="fas fa-store"></i> Keep Shopping</a>
       </div>
     </div>
@@ -462,6 +463,10 @@
     var refCode = document.getElementById('ref-code');
     if (refCode) refCode.textContent = sessionId.slice(-8).toUpperCase();
     if (refWrap) refWrap.style.display = 'inline-flex';
+
+    // Pre-fill the order lookup link with the full session/order ID if available
+    var trackLink = document.getElementById('track-order-link');
+    if (trackLink) trackLink.href = 'order-lookup.html?ref=' + encodeURIComponent(sessionId);
 
     function resolveApiBase() {
       if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');

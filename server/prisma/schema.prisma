@@ -163,6 +163,16 @@ model ShopProduct {
 
   reviews Review[]
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Newsletter subscribers
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Subscriber {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  subscribedAt DateTime @default(now())
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // Reviews
 // One review per user per product. Rating is 1–5 (integer).

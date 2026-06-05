@@ -206,6 +206,28 @@
       });
     })();
 
+    // Breadcrumb JSON-LD
+    (function() {
+      var bc = document.getElementById('breadcrumb-ld-json');
+      if (!bc) {
+        bc = document.createElement('script');
+        bc.type = 'application/ld+json';
+        bc.id = 'breadcrumb-ld-json';
+        document.head.appendChild(bc);
+      }
+      var collLabel = product.collectionName || (product.collection.charAt(0).toUpperCase() + product.collection.slice(1));
+      bc.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home',       item: 'https://dorkmugs.shop/' },
+          { '@type': 'ListItem', position: 2, name: 'Shop',       item: 'https://dorkmugs.shop/product.html' },
+          { '@type': 'ListItem', position: 3, name: collLabel,    item: 'https://dorkmugs.shop/search.html?filter=' + encodeURIComponent(product.collection) },
+          { '@type': 'ListItem', position: 4, name: product.pname, item: productUrl },
+        ],
+      });
+    })();
+
     var badge = collectionBadges[product.collection] || "";
     var label = product.collectionName || product.collection;
 
@@ -593,6 +615,90 @@
   prodbReady.then(renderItem).catch(function() {
     var el = document.getElementById('item-detail');
     if (el) el.innerHTML = '<p style="text-align:center;padding:80px 20px;color:#c0392b">Could not load product. <a href="product.html">Return to shop</a>.</p>';
+  });
+
+  /* ── Recently Viewed ───────────────────────────────────────────────── */
+  var RV_KEY = 'dm_recently_viewed';
+  var RV_MAX = 6;
+
+  function trackRecentlyViewed(productId) {
+    try {
+      var list = JSON.parse(localStorage.getItem(RV_KEY) || '[]');
+      list = list.filter(function(id) { return id !== productId; });
+      list.unshift(productId);
+      if (list.length > RV_MAX) list = list.slice(0, RV_MAX);
+      localStorage.setItem(RV_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function renderRecentlyViewed(currentProductId) {
+    var list;
+    try { list = JSON.parse(localStorage.getItem(RV_KEY) || '[]'); } catch(e) { return; }
+    var others = list.filter(function(id) { return id !== currentProductId; }).slice(0, 4);
+    if (!others.length) return;
+
+    var products = others.map(function(id) {
+      for (var i = 0; i < prodb.length; i++) { if (prodb[i].id === id) return prodb[i]; }
+      return null;
+    }).filter(Boolean);
+    if (!products.length) return;
+
+    var section = document.createElement('section');
+    section.className = 'recently-viewed-section';
+    section.innerHTML = '<h3>Recently Viewed</h3>' +
+      '<div class="rv-grid">' +
+      products.map(function(p) {
+        var img = p.imageLeft || p.image || '';
+        return '<a href="item.html?id=' + esc(p.id) + '" class="rv-card">' +
+          '<img src="' + esc(img) + '" alt="' + esc(p.pname) + '" loading="lazy" />' +
+          '<p class="rv-name">' + esc(p.pname) + '</p>' +
+          '<p class="rv-price">$' + parseFloat(p.price).toFixed(2) + '</p>' +
+        '</a>';
+      }).join('') +
+      '</div>';
+    document.getElementById('item-detail').appendChild(section);
+  }
+
+  /* ── Product Recommendations ───────────────────────────────────────── */
+  function renderRecommendations(product) {
+    var sameCollection = prodb.filter(function(p) {
+      return p.collection === product.collection && p.id !== product.id;
+    });
+    // Shuffle and take up to 4
+    for (var i = sameCollection.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = sameCollection[i]; sameCollection[i] = sameCollection[j]; sameCollection[j] = tmp;
+    }
+    var picks = sameCollection.slice(0, 4);
+    if (!picks.length) return;
+
+    var section = document.createElement('section');
+    section.className = 'recommendations-section';
+    section.innerHTML = '<h3>You Might Also Like</h3>' +
+      '<div class="rv-grid">' +
+      picks.map(function(p) {
+        var img = p.imageLeft || p.image || '';
+        return '<a href="item.html?id=' + esc(p.id) + '" class="rv-card">' +
+          '<img src="' + esc(img) + '" alt="' + esc(p.pname) + '" loading="lazy" />' +
+          '<p class="rv-name">' + esc(p.pname) + '</p>' +
+          '<p class="rv-price">$' + parseFloat(p.price).toFixed(2) + '</p>' +
+        '</a>';
+      }).join('') +
+      '</div>';
+    document.getElementById('item-detail').appendChild(section);
+  }
+
+  prodbReady.then(function() {
+    var params = new URLSearchParams(window.location.search);
+    var id = (typeof window._productId !== 'undefined' && window._productId) || params.get('id');
+    if (!id) return;
+    var product = null;
+    for (var i = 0; i < prodb.length; i++) { if (prodb[i].id === id) { product = prodb[i]; break; } }
+    if (!product) return;
+
+    trackRecentlyViewed(id);
+    renderRecommendations(product);
+    renderRecentlyViewed(id);
   });
 </script>
 <script src="./include/sexymode.js"></script>

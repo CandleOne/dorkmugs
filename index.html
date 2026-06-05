@@ -164,6 +164,18 @@
     <p style="margin-top: 24px;"><a href="product.html" class="cta-btn">Shop All Mugs</a></p>
   </section>
 
+  <!-- Newsletter Strip -->
+  <div class="newsletter-strip">
+    <h3>Stay in the Loop</h3>
+    <p>New designs, drops, and dork-approved discounts — straight to your inbox.</p>
+    <form class="newsletter-form" id="newsletter-form" novalidate>
+      <input type="email" id="nl-email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address" />
+      <button type="submit" id="nl-btn">Subscribe</button>
+    </form>
+    <p class="newsletter-success" id="nl-success"><i class="fas fa-check-circle"></i> You're in! Thanks for subscribing.</p>
+    <p class="newsletter-note">No spam, ever. Unsubscribe any time.</p>
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-inner">
@@ -230,6 +242,37 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script src="./include/sexymode.js"></script>
+<script>
+(function() {
+  var form = document.getElementById('newsletter-form');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var email = document.getElementById('nl-email').value.trim();
+    var btn = document.getElementById('nl-btn');
+    var success = document.getElementById('nl-success');
+    if (!email) return;
+    btn.disabled = true; btn.textContent = '…';
+    var api = (window.__DORKMUGS_API_BASE__ || (window.location.origin + '/api')).replace(/\/+$/, '');
+    fetch(api + '/newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email }),
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      if (res.ok) {
+        form.style.display = 'none';
+        success.style.display = 'block';
+      } else {
+        btn.disabled = false; btn.textContent = 'Subscribe';
+        alert(res.data.error || 'Could not subscribe. Please try again.');
+      }
+    })
+    .catch(function() { btn.disabled = false; btn.textContent = 'Subscribe'; });
+  });
+})();
+</script>
 <script>
 // ─── Featured Products Loader ─────────────────────────────────────────────────
 (function () {

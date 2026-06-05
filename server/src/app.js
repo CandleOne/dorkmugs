@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const config = require('./config');
-const { apiLimiter, contactLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, contactLimiter, newsletterLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
@@ -108,6 +108,32 @@ app.use('/api/webhooks',      require('./routes/webhooks'));
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+// ─── Newsletter signup ────────────────────────────────────────────────────────
+app.post('/api/newsletter', newsletterLimiter, async (req, res) => {
+  const { email } = req.body || {};
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email is required.' });
+  }
+  const safeEmail = email.trim().toLowerCase().slice(0, 200);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeEmail)) {
+    return res.status(400).json({ error: 'Invalid email address.' });
+  }
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const _prisma = new PrismaClient();
+    await _prisma.subscriber.upsert({
+      where: { email: safeEmail },
+      update: {},
+      create: { email: safeEmail },
+    });
+    await _prisma.$disconnect();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[newsletter] error', err.message);
+    res.status(500).json({ error: 'Could not subscribe. Please try again.' });
+  }
+});
 
 // ─── Contact form ─────────────────────────────────────────────────────────────
 app.post('/api/contact', contactLimiter, async (req, res) => {
