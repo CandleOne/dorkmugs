@@ -200,7 +200,10 @@
     el.innerHTML =
       '<div class="item-detail-wrap">' +
         '<div class="item-detail-img">' +
-          '<img id="item-main-img" src="' + esc(defaultImg) + '" alt="' + esc(product.pname) + '" onerror="this.style.opacity=\'0.25\';this.title=\'Image not available\'" />' +
+          '<div class="item-img-zoom-trigger" title="Click to zoom" role="button" tabindex="0" aria-label="Zoom product image">' +
+            '<img id="item-main-img" src="' + esc(defaultImg) + '" alt="' + esc(product.pname) + '" onerror="this.style.opacity=\'0.25\';this.title=\'Image not available\'" />' +
+            '<span class="item-img-zoom-icon"><i class="fas fa-search-plus"></i></span>' +
+          '</div>' +
         '</div>' +
         '<div class="item-detail-info">' +
           '<a href="product.html" class="item-back-link"><i class="fas fa-arrow-left"></i> Back to Shop</a>' +
@@ -271,6 +274,110 @@
     if (ratingEl && typeof SimpleStarRating !== "undefined") {
       new SimpleStarRating(ratingEl);
     }
+
+    initProductZoom();
+  }
+
+  function initProductZoom() {
+    var trigger = document.querySelector('.item-img-zoom-trigger');
+    if (!trigger) return;
+    var lb = document.getElementById('img-lightbox');
+    if (!lb) return;
+    var lbImg = lb.querySelector('.img-lightbox-img');
+    var lbClose = lb.querySelector('.img-lightbox-close');
+    var lbInner = lb.querySelector('.img-lightbox-inner');
+
+    var scale = 1, tx = 0, ty = 0;
+    var isDragging = false, startX = 0, startY = 0, startTx = 0, startTy = 0;
+
+    function applyTransform() {
+      lbImg.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+    }
+
+    function openLightbox() {
+      var src = document.getElementById('item-main-img');
+      lbImg.src = src ? src.src : '';
+      lbImg.alt = src ? src.alt : '';
+      scale = 1; tx = 0; ty = 0;
+      lbImg.style.cursor = 'default';
+      applyTransform();
+      lb.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lb.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    trigger.addEventListener('click', openLightbox);
+    trigger.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(); }
+    });
+
+    lbClose.addEventListener('click', function(e) { e.stopPropagation(); closeLightbox(); });
+    lb.addEventListener('click', function(e) {
+      if (e.target === lb || e.target === lbInner) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && lb.classList.contains('active')) closeLightbox();
+    });
+
+    // Scroll to zoom
+    lbInner.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var rect = lbInner.getBoundingClientRect();
+      var mx = e.clientX - (rect.left + rect.width / 2);
+      var my = e.clientY - (rect.top + rect.height / 2);
+      var factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      var newScale = Math.max(1, Math.min(6, scale * factor));
+      var r = newScale / scale;
+      tx = mx - (mx - tx) * r;
+      ty = my - (my - ty) * r;
+      if (newScale === 1) { tx = 0; ty = 0; }
+      scale = newScale;
+      lbImg.style.cursor = scale > 1 ? 'grab' : 'default';
+      applyTransform();
+    }, { passive: false });
+
+    // Drag to pan
+    lbImg.addEventListener('mousedown', function(e) {
+      if (scale <= 1) return;
+      isDragging = true;
+      startX = e.clientX; startY = e.clientY;
+      startTx = tx; startTy = ty;
+      lbImg.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      tx = startTx + (e.clientX - startX);
+      ty = startTy + (e.clientY - startY);
+      applyTransform();
+    });
+    document.addEventListener('mouseup', function() {
+      if (isDragging) {
+        isDragging = false;
+        lbImg.style.cursor = scale > 1 ? 'grab' : 'default';
+      }
+    });
+
+    // Touch pan
+    var tStartX, tStartY, tTx, tTy;
+    lbImg.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        tStartX = e.touches[0].clientX; tStartY = e.touches[0].clientY;
+        tTx = tx; tTy = ty;
+      }
+    }, { passive: true });
+    lbImg.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 1 && scale > 1) {
+        tx = tTx + (e.touches[0].clientX - tStartX);
+        ty = tTy + (e.touches[0].clientY - tStartY);
+        applyTransform();
+        e.preventDefault();
+      }
+    }, { passive: false });
   }
 
   prodbReady.then(renderItem).catch(function() {
@@ -279,4 +386,14 @@
   });
 </script>
 <script src="./include/sexymode.js"></script>
+
+<!-- Image zoom lightbox -->
+<div id="img-lightbox" class="img-lightbox" role="dialog" aria-modal="true" aria-label="Product image zoom">
+  <button class="img-lightbox-close" aria-label="Close zoom">&times;</button>
+  <div class="img-lightbox-inner">
+    <img class="img-lightbox-img" src="" alt="Product zoom view" draggable="false" />
+  </div>
+  <p class="img-lightbox-hint">Scroll to zoom &bull; Drag to pan</p>
+</div>
+
 </body>

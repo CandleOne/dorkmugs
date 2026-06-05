@@ -1165,6 +1165,109 @@ body.sexy-mode .announcement-bar strong { color: #ffffff; font-weight: 900; text
 	border: 1px solid #c8ddf5;
 	padding: 16px;
 }
+
+/* ── Image zoom trigger ─────────────────────── */
+.item-img-zoom-trigger {
+	position: relative;
+	display: block;
+	cursor: zoom-in;
+	border-radius: 8px;
+	overflow: hidden;
+}
+.item-img-zoom-trigger img {
+	display: block;
+	transition: transform 0.2s ease;
+}
+.item-img-zoom-trigger:hover img {
+	transform: scale(1.03);
+}
+.item-img-zoom-icon {
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	background: rgba(255, 255, 255, 0.92);
+	border-radius: 50%;
+	width: 36px;
+	height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #1a6fc4;
+	font-size: 15px;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+	pointer-events: none;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.item-img-zoom-trigger:hover .item-img-zoom-icon {
+	opacity: 1;
+}
+
+/* ── Image lightbox ─────────────────────────── */
+.img-lightbox {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 9998;
+	background: rgba(0, 0, 0, 0.88);
+}
+.img-lightbox.active {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.img-lightbox-inner {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+.img-lightbox-img {
+	max-width: 88vw;
+	max-height: 88vh;
+	object-fit: contain;
+	cursor: default;
+	user-select: none;
+	-webkit-user-drag: none;
+	transform-origin: center center;
+	will-change: transform;
+}
+.img-lightbox-close {
+	position: fixed;
+	top: 18px;
+	right: 22px;
+	z-index: 9999;
+	background: rgba(255,255,255,0.92);
+	border: none;
+	border-radius: 50%;
+	width: 42px;
+	height: 42px;
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+	color: #222;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+	transition: background 0.15s;
+}
+.img-lightbox-close:hover {
+	background: #fff;
+}
+.img-lightbox-hint {
+	position: fixed;
+	bottom: 22px;
+	left: 50%;
+	transform: translateX(-50%);
+	color: rgba(255,255,255,0.6);
+	font-size: 0.78rem;
+	pointer-events: none;
+	white-space: nowrap;
+}
 .item-detail-info {
 	flex: 1;
 	display: flex;
