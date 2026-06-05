@@ -34,7 +34,7 @@
   <div class="srcbar-wrap">
   <form class="srcbartn" action="search.html">
     <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
-           onclick="listFunction()" onkeyup="searchFunction()" autocomplete="off" />
+           oninput="_srcSearch()" autocomplete="off" />
     <button type="submit"><i class="fa fa-search"></i></button>
     <ul id="productline"></ul>
   </form>
@@ -42,21 +42,38 @@
     function _escSafe(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-    function listFunction() {
+    function _srcPopulate() {
       var prdlin = document.getElementById("productline");
+      if (!prdlin || prdlin.children.length) return; // already built
       var allist = "";
       for (var i = 0; i < prodb.length; i++) {
         allist += "<li id='liid" + i + "'><a href='item.html?id=" + encodeURIComponent(prodb[i].id) + "'>" + _escSafe(prodb[i].pname) + "</a></li>";
       }
       prdlin.innerHTML = allist;
-      document.getElementById("srch001").removeAttribute("onclick");
     }
-    function searchFunction() {
+    function _srcSearch() {
+      _srcPopulate();
       var filter = document.getElementById("srch001").value.toUpperCase();
+      var prdlin = document.getElementById("productline");
+      prdlin.style.display = filter ? '' : 'none';
       for (var i = 0; i < prodb.length; i++) {
         var el = document.getElementById("liid" + i);
         if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
       }
+    }
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.srcbartn')) {
+        var pl = document.getElementById('productline');
+        if (pl) pl.style.display = 'none';
+      }
+    });
+    // Populate after products are ready so new products show up
+    if (typeof prodbReady !== 'undefined') {
+      prodbReady.then(function() {
+        var prdlin = document.getElementById('productline');
+        if (prdlin) prdlin.innerHTML = ''; // reset so _srcPopulate rebuilds fresh
+      });
     }
   </script>
   </div>
@@ -136,6 +153,10 @@
     function colLabel(p) {
       return p.collectionName || (p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
     }
+
+    // Hoist to window so onchange attributes on the <select> elements can reach them
+    window.filterFunc = filterFunc;
+    window.sortFunc = sortFunc;
 
     function updateUrl() {
       var filter = document.getElementById('sel1').value;
@@ -258,6 +279,10 @@
     }
 
     prodbReady.then(renderCollections);
+
+    // Expose after definition (prodbReady may resolve synchronously from cache)
+    window.filterFunc = filterFunc;
+    window.sortFunc = sortFunc;
   </script>
 
   <!-- Footer -->

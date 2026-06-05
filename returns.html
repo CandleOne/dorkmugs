@@ -57,28 +57,29 @@
   <div class="srcbar-wrap">
   <form class="srcbartn" action="search.html">
     <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
-           onclick="listFunction()" onkeyup="searchFunction()" autocomplete="off" />
+           oninput="_srcSearch()" autocomplete="off" />
     <button type="submit"><i class="fa fa-search"></i></button>
     <ul id="productline"></ul>
   </form>
   <script>
     function _escSafe(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    function listFunction() {
-      var prdlin = document.getElementById("productline");
-      var allist = "";
-      for (var i = 0; i < prodb.length; i++) {
-        allist += "<li id='liid" + i + "'><a href='item.html?id=" + encodeURIComponent(prodb[i].id) + "'>" + _escSafe(prodb[i].pname) + "</a></li>";
-      }
-      prdlin.innerHTML = allist;
-      document.getElementById("srch001").removeAttribute("onclick");
+    function _srcBuild() {
+      var pl = document.getElementById('productline'); if (!pl) return;
+      pl.innerHTML = '';
+      for (var i = 0; i < prodb.length; i++)
+        pl.innerHTML += "<li id='liid"+i+"'><a href='item.html?id="+encodeURIComponent(prodb[i].id)+"'>"+_escSafe(prodb[i].pname)+"</a></li>";
     }
-    function searchFunction() {
-      var filter = document.getElementById("srch001").value.toUpperCase();
+    function _srcSearch() {
+      _srcBuild();
+      var filter = document.getElementById('srch001').value.toUpperCase();
+      var pl = document.getElementById('productline');
+      pl.style.display = filter ? '' : 'none';
       for (var i = 0; i < prodb.length; i++) {
-        var el = document.getElementById("liid" + i);
-        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        var el = document.getElementById('liid'+i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
       }
     }
+    document.addEventListener('click', function(e) { if (!e.target.closest('.srcbartn')) { var pl = document.getElementById('productline'); if (pl) pl.style.display = 'none'; } });
   </script>
   </div>
 
