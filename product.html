@@ -182,7 +182,7 @@
       var badge = collectionBadges[p.collection] || '';
       var label = p.collectionName || escHtml(p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
       return '<a href="item.html?id=' + escHtml(p.id) + '" class="shop-card">' +
-        '<div class="shop-card-img"><img src="' + escHtml(p.image || p.imageLeft || '') + '" alt="' + escHtml(p.pname) + '" /></div>' +
+        '<div class="shop-card-img"><img src="' + escHtml(p.image || p.imageLeft || '') + '" alt="' + escHtml(p.pname) + '" loading="lazy" /></div>' +
         '<span class="collection-badge ' + escHtml(badge) + '">' + label + '</span>' +
         '<p class="shop-card-name">' + escHtml(p.pname) + '</p>' +
         '<p class="shop-card-price">$' + parseFloat(p.price).toFixed(2) + '</p>' +

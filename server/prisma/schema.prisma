@@ -35,6 +35,7 @@ model User {
   addresses      Address[]
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
+  reviews        Review[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -159,4 +160,26 @@ model ShopProduct {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  reviews Review[]
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Reviews
+// One review per user per product. Rating is 1–5 (integer).
+// ShopProduct.rating caches the rolling average for fast reads.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int
+  body      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product ShopProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId],    references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
 }

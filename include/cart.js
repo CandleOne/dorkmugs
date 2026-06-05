@@ -123,13 +123,6 @@ var Cart = (function () {
    * Requires the user to be signed in; redirects to login if not.
    */
   function checkout() {
-    // Guard: must be logged in to place an order
-    if (typeof Auth !== 'undefined' && !Auth.isLoggedIn()) {
-      sessionStorage.setItem('dm_checkout_pending', '1');
-      window.location.href = 'login.html?next=checkout';
-      return;
-    }
-
     var items = load();
     if (!items.length) return;
 
@@ -238,6 +231,17 @@ var Cart = (function () {
     if (drawer)  { drawer.classList.add('open');  drawer.setAttribute('aria-hidden', 'false'); }
     if (overlay) overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // Inject promo code hint once (Stripe Checkout accepts promo codes natively)
+    var footer = drawer && drawer.querySelector('.cart-drawer-footer');
+    if (footer && !footer.querySelector('.cart-promo-hint')) {
+      var hint = document.createElement('p');
+      hint.className = 'cart-promo-hint';
+      hint.innerHTML = '<i class="fas fa-tag"></i> Have a promo code? Enter it at checkout.';
+      var checkoutBtn = footer.querySelector('.cart-checkout-btn');
+      if (checkoutBtn) footer.insertBefore(hint, checkoutBtn);
+      else footer.appendChild(hint);
+    }
   }
 
   function closeDrawer() {

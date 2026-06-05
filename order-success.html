@@ -331,8 +331,7 @@
         Order reference: <span class="ref-code" id="ref-code"></span>
       </div>
 
-      <div class="btn-row">
-        <a href="account.html" class="btn-ghost"><i class="fas fa-box-open"></i> View My Orders</a>
+      <div class="btn-row" id="success-btn-row">
         <a href="index.html" class="btn-solid"><i class="fas fa-store"></i> Keep Shopping</a>
       </div>
     </div>
@@ -411,6 +410,23 @@
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script>
+  // Show "View My Orders" button only for logged-in users
+  (function() {
+    var btnRow = document.getElementById('success-btn-row');
+    if (!btnRow) return;
+    function maybeAddAccountBtn() {
+      if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
+        var a = document.createElement('a');
+        a.href = 'account.html';
+        a.className = 'btn-ghost';
+        a.innerHTML = '<i class="fas fa-box-open"></i> View My Orders';
+        btnRow.insertBefore(a, btnRow.firstChild);
+      }
+    }
+    if (typeof Auth !== 'undefined') {
+      Auth.refreshSession().then(maybeAddAccountBtn);
+    }
+  })();
   // Clear cart immediately
   try { localStorage.removeItem('dorkmugs_cart'); } catch (e) {}
 

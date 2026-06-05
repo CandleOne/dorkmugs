@@ -180,6 +180,32 @@
     var canon = document.querySelector('link[rel="canonical"]');
     if (canon) canon.setAttribute('href', productUrl);
 
+    // Inject Product JSON-LD for Google rich results
+    (function() {
+      var ld = document.getElementById('product-ld-json');
+      if (!ld) {
+        ld = document.createElement('script');
+        ld.type = 'application/ld+json';
+        ld.id = 'product-ld-json';
+        document.head.appendChild(ld);
+      }
+      ld.textContent = JSON.stringify({
+        '@context': 'https://schema.org/',
+        '@type': 'Product',
+        name: product.pname,
+        image: productImg,
+        description: productDesc,
+        brand: { '@type': 'Brand', name: 'Dork Mugs' },
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'USD',
+          price: product.price.toFixed(2),
+          availability: 'https://schema.org/InStock',
+          url: productUrl,
+        },
+      });
+    })();
+
     var badge = collectionBadges[product.collection] || "";
     var label = product.collectionName || product.collection;
 
@@ -269,13 +295,197 @@
       Cart.add(product.id, product.pname, product.price, pd.image || defaultImg, qty, pd.pid, pd.vid, currentPlacement);
     });
 
-    // Init star rating
+    // Init star rating (inline display in product info — read-only average)
     var ratingEl = document.querySelector(".item-rating");
     if (ratingEl && typeof SimpleStarRating !== "undefined") {
+      ratingEl.setAttribute('disabled', '');
       new SimpleStarRating(ratingEl);
     }
 
     initProductZoom();
+    initReviews(product);
+  }
+
+  /* ── Reviews ──────────────────────────────────────────────────────── */
+  var _reviewsApiBase = (function() {
+    if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+    if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      return window.location.protocol + '//' + window.location.hostname + ':5000/api';
+    return window.location.origin.replace(/\/+$/, '') + '/api';
+  })();
+
+  function initReviews(product) {
+    // Insert reviews section after the item-detail-wrap
+    var detailDiv = document.getElementById('item-detail');
+    if (!detailDiv) return;
+    var section = document.createElement('div');
+    section.className = 'reviews-section';
+    section.id = 'reviews-section';
+    section.innerHTML =
+      '<h3>Ratings &amp; Reviews</h3>' +
+      '<div class="reviews-summary">' +
+        '<span class="reviews-avg-num" id="rv-avg-num">—</span>' +
+        '<span class="rating reviews-avg-stars" id="rv-avg-stars" data-default-rating="0" disabled></span>' +
+        '<span class="reviews-count" id="rv-count"></span>' +
+      '</div>' +
+      '<div id="rv-user-box"></div>' +
+      '<div class="reviews-list" id="rv-list"></div>';
+    detailDiv.appendChild(section);
+
+    // Init average stars widget (read-only)
+    var avgStarsEl = document.getElementById('rv-avg-stars');
+    var avgStarsWidget = null;
+    if (typeof SimpleStarRating !== 'undefined') {
+      avgStarsWidget = new SimpleStarRating(avgStarsEl);
+    }
+
+    function updateAvgDisplay(average, count) {
+      var numEl = document.getElementById('rv-avg-num');
+      var countEl = document.getElementById('rv-count');
+      if (numEl) numEl.textContent = count > 0 ? average.toFixed(1) : '—';
+      if (countEl) countEl.textContent = count === 1 ? '(1 rating)' : '(' + count + ' ratings)';
+      if (avgStarsWidget && count > 0) avgStarsWidget.setDefaultRating(average);
+      // Also update the small inline star in the product info
+      var inlineRating = document.querySelector('.item-rating');
+      if (inlineRating && count > 0) {
+        inlineRating.setAttribute('data-default-rating', average);
+        if (avgStarsWidget) { var w2 = new SimpleStarRating(inlineRating); }
+      }
+    }
+
+    function renderUserBox(userRating, productId) {
+      var box = document.getElementById('rv-user-box');
+      if (!box) return;
+      var loggedIn = typeof Auth !== 'undefined' && Auth.isLoggedIn();
+      if (!loggedIn) {
+        box.innerHTML = '<p class="reviews-login-prompt"><a href="login.html?next=' + encodeURIComponent('item.html?id=' + productId) + '">Log in</a> to rate this product.</p>';
+        return;
+      }
+      var label = userRating ? 'Update your rating:' : 'Rate this product:';
+      var existingRating = userRating || 0;
+      box.innerHTML =
+        '<div class="reviews-user-box">' +
+          '<p>' + label + '</p>' +
+          '<span class="rating reviews-user-stars" id="rv-user-stars" data-default-rating="' + existingRating + '"></span>' +
+          '<div id="rv-body-wrap" style="' + (existingRating ? '' : 'display:none') + ';margin-top:10px">' +
+            '<textarea class="reviews-body-input" id="rv-body" placeholder="Leave a comment (optional)…" maxlength="500"></textarea>' +
+            '<button class="reviews-submit-btn" id="rv-submit-btn">Submit Rating</button>' +
+          '</div>' +
+        '</div>';
+
+      // Init interactive user star widget
+      var userStarsEl = document.getElementById('rv-user-stars');
+      if (typeof SimpleStarRating !== 'undefined' && userStarsEl) {
+        var userWidget = new SimpleStarRating(userStarsEl);
+        if (existingRating) userWidget.setCurrentRating(existingRating);
+
+        userStarsEl.addEventListener('rate', function(e) {
+          var selectedRating = e.detail;
+          // Show the text + submit button once a star is clicked
+          var bodyWrap = document.getElementById('rv-body-wrap');
+          if (bodyWrap) bodyWrap.style.display = '';
+          // Store selected rating as data attribute for submission
+          userStarsEl.setAttribute('data-selected', selectedRating);
+        });
+      }
+
+      var submitBtn = document.getElementById('rv-submit-btn');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+          var userStarsElNow = document.getElementById('rv-user-stars');
+          var selectedRating = userStarsElNow ? parseInt(userStarsElNow.getAttribute('data-selected') || userStarsElNow.getAttribute('data-rating') || existingRating, 10) : 0;
+          if (!selectedRating || selectedRating < 1 || selectedRating > 5) {
+            _reviewsToast('Please select a star rating first.', true);
+            return;
+          }
+          var bodyEl = document.getElementById('rv-body');
+          var body = bodyEl ? bodyEl.value.trim() : '';
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving…';
+
+          fetch(_reviewsApiBase + '/reviews', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: productId, rating: selectedRating, body: body }),
+          })
+          .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+          .then(function(res) {
+            if (!res.ok) throw new Error(res.data.error || 'Failed to save.');
+            updateAvgDisplay(res.data.newAverage, res.data.newCount);
+            _reviewsToast('Your rating was saved! Thanks.');
+            // Reload reviews list to include this submission
+            loadReviewsList(productId);
+            // Update the label to "Update your rating"
+            renderUserBox(selectedRating, productId);
+            // Restore the submitted body text and rating on the freshly-rendered box
+            var newStarsEl = document.getElementById('rv-user-stars');
+            if (newStarsEl) newStarsEl.setAttribute('data-selected', selectedRating);
+          })
+          .catch(function(err) {
+            _reviewsToast(err.message || 'Could not save rating.', true);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Rating';
+          });
+        });
+      }
+    }
+
+    function loadReviewsList(productId) {
+      var listEl = document.getElementById('rv-list');
+      if (!listEl) return;
+      fetch(_reviewsApiBase + '/reviews/' + encodeURIComponent(productId), {
+        credentials: 'include',
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        updateAvgDisplay(data.average, data.count);
+        renderUserBox(data.userRating, productId);
+        var textReviews = (data.reviews || []).filter(function(r) { return r.body && r.body.trim(); });
+        if (!textReviews.length) {
+          listEl.innerHTML = data.count > 0
+            ? '<p class="reviews-empty">No written reviews yet. Be the first!</p>'
+            : '<p class="reviews-empty">No ratings yet. Be the first to rate this product!</p>';
+          return;
+        }
+        listEl.innerHTML = textReviews.map(function(r) {
+          var starsHtml = '';
+          for (var i = 1; i <= 5; i++) {
+            starsHtml += '<span class="star' + (i <= r.rating ? ' active' : '') + '"></span>';
+          }
+          var date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          return '<div class="review-item">' +
+            '<div class="review-item-header">' +
+              '<span class="review-item-name">' + esc(r.userName) + '</span>' +
+              '<span class="rating review-item-stars" data-default-rating="' + r.rating + '" disabled></span>' +
+              '<span class="review-item-date">' + date + '</span>' +
+            '</div>' +
+            '<p class="review-item-body">' + esc(r.body) + '</p>' +
+          '</div>';
+        }).join('');
+        // Init star widgets for each review item
+        listEl.querySelectorAll('.review-item-stars').forEach(function(el) {
+          if (typeof SimpleStarRating !== 'undefined') { el.setAttribute('disabled',''); new SimpleStarRating(el); }
+        });
+      })
+      .catch(function() {
+        var listElNow = document.getElementById('rv-list');
+        if (listElNow) listElNow.innerHTML = '<p class="reviews-empty">Could not load reviews.</p>';
+      });
+    }
+
+    loadReviewsList(product.id);
+  }
+
+  function _reviewsToast(msg, isErr) {
+    var t = document.getElementById('cart-toast');
+    if (!t) return;
+    t.innerHTML = '<i class="fas fa-' + (isErr ? 'exclamation-circle' : 'check-circle') + '"></i> ' + esc(msg);
+    t.style.background = isErr ? '#c0392b' : '';
+    t.classList.add('show');
+    clearTimeout(t._rtimer);
+    t._rtimer = setTimeout(function() { t.classList.remove('show'); t.style.background = ''; }, 3000);
   }
 
   function initProductZoom() {
