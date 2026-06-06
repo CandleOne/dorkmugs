@@ -620,6 +620,7 @@ function getEmailInboxUrl(req, res) {
 }
 
 module.exports = {
+  getTrafficAnalytics: exports.getTrafficAnalytics,
   getStats,
   listUsers,
   updateUserRole,
