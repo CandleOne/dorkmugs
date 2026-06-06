@@ -609,6 +609,17 @@
     </div>
   </div>
 
+  <!-- Order Detail Modal -->
+  <div class="modal-overlay" id="order-detail-modal">
+    <div class="modal" style="max-width:680px;width:95%;max-height:88vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h3 style="margin:0">Order Details</h3>
+        <button class="btn-sm" id="order-detail-close" style="font-size:1.1rem;line-height:1;padding:4px 10px">&times;</button>
+      </div>
+      <div id="order-detail-body"></div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="footer-copy">&copy; 2026 Dork Mugs — Admin Panel</div>
   </footer>
@@ -722,16 +733,20 @@ function renderOrdersTable(orders) {
   if (!orders.length) return '<div class="empty-state">No orders found.</div>';
   var rows = orders.map(function (o) {
     var date = new Date(o.createdAt).toLocaleDateString();
+    var orderJson = esc(JSON.stringify(o));
     return '<tr>' +
       '<td>#' + esc(o.id.slice(-8).toUpperCase()) + '</td>' +
       '<td>' + esc(o.email) + '</td>' +
       '<td>' + date + '</td>' +
       '<td>$' + o.total.toFixed(2) + '</td>' +
       '<td>' + statusBadge(o.status) + '</td>' +
-      '<td><button class="btn-sm btn-update-status" data-id="' + esc(o.id) + '" data-status="' + esc(o.status) + '" data-tracking="' + esc(o.trackingNumber||'') + '" data-tracking-url="' + esc(o.trackingUrl||'') + '">Update</button></td>' +
+      '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button class="btn-sm btn-view-order" data-order="' + orderJson + '">Details</button>' +
+        '<button class="btn-sm btn-update-status" data-id="' + esc(o.id) + '" data-status="' + esc(o.status) + '" data-tracking="' + esc(o.trackingNumber||'') + '" data-tracking-url="' + esc(o.trackingUrl||'') + '">Update</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
-  return '<table class="data-table"><thead><tr><th>Order</th><th>Email</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  return '<table class="data-table"><thead><tr><th>Order</th><th>Email</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
 function bindOrderActions() {
@@ -745,6 +760,69 @@ function bindOrderActions() {
       document.getElementById('status-modal').classList.add('open');
     });
   });
+
+  document.querySelectorAll('.btn-view-order').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var o = JSON.parse(btn.dataset.order);
+      openOrderDetail(o);
+    });
+  });
+}
+
+function openOrderDetail(o) {
+  var ref = '#' + o.id.slice(-8).toUpperCase();
+  var date = new Date(o.createdAt).toLocaleString();
+
+  // Items table
+  var itemRows = (o.items || []).map(function (i) {
+    return '<tr>' +
+      '<td style="padding:6px 10px">' + esc(i.name) + '</td>' +
+      '<td style="padding:6px 10px;text-align:center">' + i.qty + '</td>' +
+      '<td style="padding:6px 10px;text-align:right">$' + parseFloat(i.price).toFixed(2) + '</td>' +
+      '<td style="padding:6px 10px;font-size:.78rem;color:#5a6a80">' + esc(i.placement || '—') + '</td>' +
+      '<td style="padding:6px 10px;font-size:.75rem;color:#9aa4b2;font-family:monospace">' + esc(i.productId || '—') + '</td>' +
+    '</tr>';
+  }).join('');
+  var itemsHtml = o.items && o.items.length
+    ? '<table style="width:100%;border-collapse:collapse;font-size:.88rem">' +
+        '<thead><tr style="background:#f5f7fb">' +
+          '<th style="padding:6px 10px;text-align:left;font-weight:600">Item</th>' +
+          '<th style="padding:6px 10px;text-align:center;font-weight:600">Qty</th>' +
+          '<th style="padding:6px 10px;text-align:right;font-weight:600">Price</th>' +
+          '<th style="padding:6px 10px;font-weight:600">Placement</th>' +
+          '<th style="padding:6px 10px;font-weight:600">Printify ID</th>' +
+        '</tr></thead><tbody>' + itemRows + '</tbody></table>'
+    : '<p style="color:#888;font-size:.88rem">No items recorded.</p>';
+
+  // Shipping block
+  var addr = [o.shippingLine1, o.shippingLine2, o.shippingCity, o.shippingState, o.shippingZip, o.shippingCountry]
+    .filter(Boolean).join(', ');
+  var shippingHtml = '<p style="margin:0;font-size:.9rem"><strong>' + esc(o.shippingName || '—') + '</strong></p>' +
+    '<p style="margin:4px 0 0;font-size:.88rem;color:#5a6a80">' + esc(addr || '—') + '</p>';
+
+  // Tracking
+  var trackingHtml = o.trackingNumber
+    ? '<p style="font-size:.88rem;margin:0">' + esc(o.trackingNumber) +
+        (o.trackingUrl ? ' — <a href="' + esc(o.trackingUrl) + '" target="_blank" rel="noopener">Track</a>' : '') + '</p>'
+    : '<p style="font-size:.88rem;color:#888;margin:0">No tracking yet.</p>';
+
+  document.getElementById('order-detail-body').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin-bottom:20px">' +
+      '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Order</p><p style="margin:0;font-weight:700">' + esc(ref) + '</p></div>' +
+      '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Date</p><p style="margin:0">' + esc(date) + '</p></div>' +
+      '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Customer</p><p style="margin:0">' + esc(o.email || '—') + '</p></div>' +
+      '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Total</p><p style="margin:0;font-weight:700">$' + parseFloat(o.total).toFixed(2) + '</p></div>' +
+      '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Status</p>' + statusBadge(o.status) + '</div>' +
+      '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Printify Order</p><p style="margin:0;font-size:.85rem;font-family:monospace">' + esc(o.printifyOrderId || '—') + '</p></div>' +
+    '</div>' +
+    '<p style="margin:0 0 8px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Items</p>' +
+    '<div style="border:1px solid #e8eaed;border-radius:8px;overflow:hidden;margin-bottom:20px">' + itemsHtml + '</div>' +
+    '<p style="margin:0 0 8px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Ship To</p>' +
+    '<div style="border:1px solid #e8eaed;border-radius:8px;padding:12px 14px;margin-bottom:20px">' + shippingHtml + '</div>' +
+    '<p style="margin:0 0 8px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Tracking</p>' +
+    '<div style="border:1px solid #e8eaed;border-radius:8px;padding:12px 14px">' + trackingHtml + '</div>';
+
+  document.getElementById('order-detail-modal').classList.add('open');
 }
 
 document.getElementById('modal-cancel').addEventListener('click', function () {
@@ -767,6 +845,13 @@ document.getElementById('modal-save').addEventListener('click', function () {
       else loadDashboard();
     })
     .catch(function (e) { errEl.textContent = e.message; errEl.style.display = 'block'; });
+});
+
+document.getElementById('order-detail-close').addEventListener('click', function () {
+  document.getElementById('order-detail-modal').classList.remove('open');
+});
+document.getElementById('order-detail-modal').addEventListener('click', function (e) {
+  if (e.target === this) this.classList.remove('open');
 });
 
 document.getElementById('order-status-filter').addEventListener('change', function () { ordersPage = 1; loadOrders(); });
