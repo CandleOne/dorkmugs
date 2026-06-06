@@ -171,9 +171,10 @@
     function filterFunc() {
       var val = document.getElementById('sel1').value;
       document.querySelectorAll('#sectionpart .collection-group').forEach(function(group) {
-        group.style.display = (val === 'all' || group.dataset.collection === val) ? '' : 'none';
+        var col = group.getAttribute('data-collection');
+        group.classList.toggle('dm-hidden', val !== 'all' && col !== val);
       });
-      updateUrl();
+      try { updateUrl(); } catch(e) {}
     }
 
     function sortFunc() {
