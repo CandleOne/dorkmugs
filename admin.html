@@ -129,6 +129,23 @@
   .sm-img-picker-url { margin-top: 6px; }
   .sm-img-picker-url input { font-size: .8rem; padding: 5px 9px; }
 
+  /* Analytics */
+  .an-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .an-stat { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 18px 20px; }
+  .an-stat-label { font-size: .78rem; color: #888; text-transform: uppercase; font-weight: 600; margin: 0 0 6px; }
+  .an-stat-val { font-size: 1.7rem; font-weight: 700; color: #1a1a1a; margin: 0; }
+  .an-section-title { font-size: .82rem; font-weight: 700; text-transform: uppercase; color: #1a6fc4; letter-spacing: .06em; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #eef4fd; }
+  .an-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .an-bar-label { width: 38px; font-size: .78rem; color: #666; text-align: right; flex-shrink: 0; }
+  .an-bar-track { flex: 1; background: #eef2f9; border-radius: 4px; height: 18px; }
+  .an-bar-fill { height: 18px; border-radius: 4px; background: #1a6fc4; min-width: 2px; }
+  .an-bar-count { font-size: .78rem; color: #444; flex-shrink: 0; }
+  .an-top-pages { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  .an-top-pages th { text-align: left; padding: 8px 10px; background: #f4f6fa; border-bottom: 2px solid #e0e6f0; font-size: .78rem; text-transform: uppercase; color: #666; }
+  .an-top-pages td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+  .an-window-btn { padding: 5px 14px; border: 1.5px solid #d1dae6; background: #fff; border-radius: 20px; cursor: pointer; font-size: .82rem; font-weight: 600; color: #555; }
+  .an-window-btn.active { background: #1a6fc4; color: #fff; border-color: #1a6fc4; }
+
   @media (max-width: 700px) {
     .admin-layout { flex-direction: column; }
     .admin-sidebar { width: 100%; padding: 12px 0; }
@@ -195,6 +212,13 @@
         <h1>Analytics</h1>
         <div id="traffic-analytics-content">
 
+          <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:.82rem;color:#888;font-weight:600;text-transform:uppercase">Window:</span>
+            <button class="an-window-btn active" data-days="7" onclick="loadTrafficAnalytics(7)">7 days</button>
+            <button class="an-window-btn" data-days="30" onclick="loadTrafficAnalytics(30)">30 days</button>
+            <button class="an-window-btn" data-days="90" onclick="loadTrafficAnalytics(90)">90 days</button>
+          </div>
+
           <div class="an-stat-grid">
             <div class="an-stat"><p class="an-stat-label">Total visitors</p><p class="an-stat-val" id="an-total">—</p></div>
             <div class="an-stat"><p class="an-stat-label">Unique visitors</p><p class="an-stat-val" id="an-unique">—</p></div>
@@ -202,7 +226,7 @@
             <div class="an-stat"><p class="an-stat-label">Bounce rate</p><p class="an-stat-val" id="an-bounce">—</p></div>
           </div>
 
-          <!-- trend chart, top pages table, donut chart go here -->
+          <div id="an-details"></div>
 
         </div>
       </div>
@@ -771,6 +795,7 @@ function showSection(name) {
   else if (name === 'email-tools') { loadEmailInboxUrl(); }
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
   else if (name === 'shop-manager') loadShopManager();
+  else if (name === 'traffic-analytics') loadTrafficAnalytics();
 }
 
 document.querySelectorAll('.admin-sidebar nav a[data-section]').forEach(function (a) {
@@ -799,15 +824,57 @@ function stat(label, val) {
 
 // ___ Analytics ______________________________________________________________
 
+var anDays = 7;
 
-function loadTrafficAnalytics() {
-  apiFetch('/api/admin/traffic-analytics').then(function (data) {
-    document.getElementById('traffic-analytics-content').innerHTML =
-      '<p>Total Visitors: ' + esc(data.totalVisitors) + '</p>' +
-      '<p>Unique Visitors: ' + esc(data.uniqueVisitors) + '</p>' +
-      '<p>Page Views: ' + esc(data.pageViews) + '</p>';
-  }).catch(function (e) {
-    document.getElementById('traffic-analytics-content').innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
+function loadTrafficAnalytics(days) {
+  if (days !== undefined) anDays = days;
+  document.querySelectorAll('.an-window-btn').forEach(function(b) {
+    b.classList.toggle('active', parseInt(b.dataset.days, 10) === anDays);
+  });
+  var detailsEl = document.getElementById('an-details');
+  detailsEl.innerHTML = '<p style="color:#888;font-size:.9rem">Loading…</p>';
+
+  apiFetch('/api/admin/analytics/traffic?days=' + anDays).then(function(data) {
+    document.getElementById('an-total').textContent  = data.totalVisitors.toLocaleString();
+    document.getElementById('an-unique').textContent = data.uniqueVisitors.toLocaleString();
+    document.getElementById('an-views').textContent  = data.pageViews.toLocaleString();
+    document.getElementById('an-bounce').textContent = data.bounceRate + '%';
+
+    var html = '';
+
+    // Daily bar chart (last 7 days)
+    if (data.daily && data.daily.length) {
+      var maxViews = Math.max.apply(null, data.daily.map(function(d) { return d.views; })) || 1;
+      html += '<p class="an-section-title">Last 7 Days</p>';
+      data.daily.forEach(function(d) {
+        var pct = Math.round((d.views / maxViews) * 100);
+        html += '<div class="an-bar-row">' +
+          '<span class="an-bar-label">' + esc(d.label) + '</span>' +
+          '<div class="an-bar-track"><div class="an-bar-fill" style="width:' + pct + '%"></div></div>' +
+          '<span class="an-bar-count">' + d.views + ' views &middot; ' + d.uniques + ' uniq</span>' +
+          '</div>';
+      });
+    }
+
+    // New vs returning
+    html += '<p class="an-section-title">Audience <span style="color:#aaa;font-weight:400;font-size:.78rem">(last ' + esc(String(data.windowDays)) + ' days)</span></p>';
+    html += '<p style="font-size:.9rem;color:#555;margin:0">' +
+      '<strong>' + data.newVisitorPct + '%</strong> new &nbsp;&middot;&nbsp; ' +
+      '<strong>' + (100 - data.newVisitorPct) + '%</strong> returning</p>';
+
+    // Top pages table
+    if (data.topPages && data.topPages.length) {
+      html += '<p class="an-section-title">Top Pages</p>';
+      html += '<table class="an-top-pages"><thead><tr><th>Page</th><th>Views</th></tr></thead><tbody>';
+      data.topPages.forEach(function(p) {
+        html += '<tr><td>' + esc(p.path) + '</td><td>' + p.views + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    detailsEl.innerHTML = html;
+  }).catch(function(e) {
+    detailsEl.innerHTML = '<p style="color:#b00020">' + esc(e.message) + '</p>';
   });
 }
 
