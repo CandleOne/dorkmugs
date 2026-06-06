@@ -874,6 +874,12 @@ function openOrderDetail(o) {
       '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Total</p><p style="margin:0;font-weight:700">$' + parseFloat(o.total).toFixed(2) + '</p></div>' +
       '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Status</p>' + statusBadge(o.status) + '</div>' +
       '<div><p style="margin:0 0 2px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Printify Order</p><p style="margin:0;font-size:.85rem;font-family:monospace">' + esc(o.printifyOrderId || '—') + '</p></div>' +
+      '<div style="grid-column:1/-1"><p style="margin:0 0 4px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Full Order ID <span style="font-weight:400;color:#aaa">(paste into Email Tools)</span></p>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<code style="font-size:.82rem;background:#f5f7fb;border:1px solid #e0e6f2;border-radius:4px;padding:4px 8px;flex:1;overflow-x:auto;white-space:nowrap;user-select:all">' + esc(o.id) + '</code>' +
+          '<button class="btn-sm" id="od-copy-id" style="flex-shrink:0;font-size:.78rem" title="Copy ID"><i class="fas fa-copy"></i></button>' +
+        '</div>' +
+      '</div>' +
     '</div>' +
     '<p style="margin:0 0 8px;font-size:.78rem;font-weight:700;color:#9aa4b2;text-transform:uppercase;letter-spacing:.08em">Items</p>' +
     '<div style="border:1px solid #e8eaed;border-radius:8px;overflow:hidden;margin-bottom:20px">' + itemsHtml + '</div>' +
@@ -884,6 +890,15 @@ function openOrderDetail(o) {
     '<div style="border:1px solid #e8eaed;border-radius:8px;padding:12px 14px">' + trackingHtml + '</div>';
 
   document.getElementById('order-detail-modal').classList.add('open');
+
+  // Copy full order ID button
+  document.getElementById('od-copy-id').addEventListener('click', function () {
+    navigator.clipboard.writeText(o.id).then(function () {
+      var btn = document.getElementById('od-copy-id');
+      btn.innerHTML = '<i class="fas fa-check"></i>';
+      setTimeout(function () { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+    });
+  });
 
   // Backfill shipping button — re-fetches address from Stripe and patches the order
   document.getElementById('od-backfill-btn').addEventListener('click', function () {

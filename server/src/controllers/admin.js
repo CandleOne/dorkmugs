@@ -707,14 +707,25 @@ async function sendAdminEmail(req, res) {
   try {
     // Template-based sends
     if (templateType === 'order_confirmation' && orderId) {
-      const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+      // Accept full CUID or the 8-char display reference shown in the admin UI
+      const order = await prisma.order.findFirst({
+        where: orderId.length <= 8
+          ? { id: { endsWith: orderId.toLowerCase() } }
+          : { id: orderId },
+        include: { items: true },
+      });
       if (!order) return res.status(404).json({ error: 'Order not found.' });
       await emailSvc.sendOrderConfirmation(to, order);
       return res.json({ ok: true, message: `Order confirmation sent to ${to}` });
     }
 
     if (templateType === 'shipping_update' && orderId) {
-      const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+      const order = await prisma.order.findFirst({
+        where: orderId.length <= 8
+          ? { id: { endsWith: orderId.toLowerCase() } }
+          : { id: orderId },
+        include: { items: true },
+      });
       if (!order) return res.status(404).json({ error: 'Order not found.' });
       await emailSvc.sendShippingUpdate(to, order);
       return res.json({ ok: true, message: `Shipping update sent to ${to}` });
