@@ -5,6 +5,7 @@ const { URL } = require('url');
 const { validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
 const stripeSvc = require('../services/stripe');
+const { ensureOrderFromSession } = require('../services/orderService');
 const config = require('../config');
 
 const prisma = new PrismaClient();
@@ -143,8 +144,21 @@ async function getSession(req, res) {
     if (session.payment_status !== 'paid') {
       return res.status(400).json({ error: 'Payment not yet completed.' });
     }
+
+    // Ensure the order exists in the DB — this is the fallback for when the
+    // Stripe webhook hasn't fired yet (e.g. webhook not configured in dashboard).
+    // ensureOrderFromSession is fully idempotent so calling it here is safe.
+    const order = await ensureOrderFromSession(session).catch((err) => {
+      console.error('[checkout] getSession order ensure failed:', err.message);
+      return null;
+    });
+
     const metaItems = JSON.parse(session.metadata?.items || '[]');
-    return res.json({ items: metaItems, email: session.customer_details?.email || '' });
+    return res.json({
+      items: metaItems,
+      email: session.customer_details?.email || '',
+      orderId: order?.id || null,
+    });
   } catch (err) {
     console.error('[checkout] getSession error', err.message);
     return res.status(502).json({ error: 'Could not retrieve session.' });
