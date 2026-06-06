@@ -141,4 +141,11 @@ async function sendContactMessage({ name, email, subject, message }) {
   });
 }
 
-module.exports = { sendWelcome, sendPasswordReset, sendOrderConfirmation, sendShippingUpdate, sendContactMessage };
+async function sendCustom({ to, subject, html }) {
+  // Wraps an arbitrary body string in the branded shell if it looks like plain
+  // text (no <html> tag), otherwise sends as-is.
+  const isFullDoc = /<html/i.test(html);
+  await send({ to, subject, html: isFullDoc ? html : wrap(subject, `<p style="white-space:pre-wrap">${html.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</p>`) });
+}
+
+module.exports = { sendWelcome, sendPasswordReset, sendOrderConfirmation, sendShippingUpdate, sendContactMessage, sendCustom, wrap };

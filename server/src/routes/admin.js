@@ -18,6 +18,10 @@ router.delete('/users/:id', ctrl.deleteUser);
 router.get('/orders', ctrl.listOrders);
 router.get('/orders/:id', ctrl.getOrder);
 router.patch('/orders/:id/status', ctrl.updateOrderStatus);
+router.post('/orders/:id/backfill-shipping', ctrl.backfillOrderShipping);
+
+// Email
+router.post('/email/send', ctrl.sendAdminEmail);
 
 // Printify
 router.get('/printify/products', ctrl.listPrintifyProducts);

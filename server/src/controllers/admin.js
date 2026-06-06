@@ -515,6 +515,8 @@ module.exports = {
   createCoupon,
   deactivateCoupon,
   deleteCoupon,
+  backfillOrderShipping,
+  sendAdminEmail,
 };
 
 // ─── Coupons ──────────────────────────────────────────────────────────────────
@@ -650,5 +652,83 @@ async function deleteCoupon(req, res) {
   } catch (err) {
     console.error('[admin/coupons] delete error', err.message);
     return res.status(400).json({ error: err.message });
+  }
+}
+
+// ─── Order shipping backfill ───────────────────────────────────────────────────
+
+// POST /api/admin/orders/:id/backfill-shipping
+// Re-fetches shipping/customer address from the Stripe session and patches the order.
+async function backfillOrderShipping(req, res) {
+  const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+  if (!order) return res.status(404).json({ error: 'Order not found.' });
+  if (!order.stripeSessionId) return res.status(422).json({ error: 'No Stripe session linked to this order.' });
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+    const addr = session.shipping_details?.address || session.customer_details?.address || {};
+    const name = session.shipping_details?.name   || session.customer_details?.name   || order.shippingName;
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        shippingName:    name,
+        shippingLine1:   addr.line1        || order.shippingLine1,
+        shippingLine2:   addr.line2        || order.shippingLine2,
+        shippingCity:    addr.city         || order.shippingCity,
+        shippingState:   addr.state        || order.shippingState,
+        shippingZip:     addr.postal_code  || order.shippingZip,
+        shippingCountry: addr.country      || order.shippingCountry,
+      },
+      include: { items: true },
+    });
+    return res.json({ order: updated });
+  } catch (err) {
+    console.error('[admin] backfillOrderShipping error', err.message);
+    return res.status(502).json({ error: err.message });
+  }
+}
+
+// ─── Admin email sender ────────────────────────────────────────────────────────
+
+// POST /api/admin/email/send
+// Body: { to, subject, html?, templateType?, orderId? }
+// Sends a one-off email to any address from the admin panel.
+async function sendAdminEmail(req, res) {
+  const { to, subject, html, templateType, orderId } = req.body || {};
+
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(to).trim())) {
+    return res.status(422).json({ error: 'A valid recipient email address is required.' });
+  }
+  if (!subject || !String(subject).trim()) {
+    return res.status(422).json({ error: 'Subject is required.' });
+  }
+
+  try {
+    // Template-based sends
+    if (templateType === 'order_confirmation' && orderId) {
+      const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+      if (!order) return res.status(404).json({ error: 'Order not found.' });
+      await emailSvc.sendOrderConfirmation(to, order);
+      return res.json({ ok: true, message: `Order confirmation sent to ${to}` });
+    }
+
+    if (templateType === 'shipping_update' && orderId) {
+      const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+      if (!order) return res.status(404).json({ error: 'Order not found.' });
+      await emailSvc.sendShippingUpdate(to, order);
+      return res.json({ ok: true, message: `Shipping update sent to ${to}` });
+    }
+
+    // Custom / free-form send
+    if (!html || !String(html).trim()) {
+      return res.status(422).json({ error: 'Email body (html) is required for custom emails.' });
+    }
+    const body = String(html).slice(0, 50000); // hard cap
+    await emailSvc.sendCustom({ to: String(to).trim(), subject: String(subject).trim(), html: body });
+    return res.json({ ok: true, message: `Email sent to ${to}` });
+  } catch (err) {
+    console.error('[admin] sendAdminEmail error', err.message);
+    return res.status(502).json({ error: err.message });
   }
 }

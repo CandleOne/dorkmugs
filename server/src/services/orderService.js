@@ -27,7 +27,10 @@ async function ensureOrderFromSession(session) {
   if (existing) return existing;
 
   const metadata = session.metadata || {};
-  const shipping  = session.shipping_details?.address || {};
+  // Stripe puts the address in shipping_details when a dedicated shipping step is
+  // shown at checkout, but falls back to customer_details when collect_shipping_address
+  // is not set — handle both.
+  const shipping  = session.shipping_details?.address || session.customer_details?.address || {};
   const shippingName = session.shipping_details?.name || session.customer_details?.name || '';
   const email     = session.customer_details?.email || metadata.userEmail || '';
 
