@@ -106,7 +106,9 @@ var prodbReady = (function () {
           var img = p.imageLeft || p.imageCenter || p.imageRight || '';
           return {
             id: p.id, pname: p.pname, price: p.price, rating: p.rating,
-            collection: p.collection, description: p.description,
+            collection: p.collection, collectionName: p.collectionName || null,
+            description: p.description,
+            sortOrder: p.sortOrder != null ? p.sortOrder : 0,
             image: img,
             imageLeft:   p.imageLeft   || '', imageCenter: p.imageCenter || '', imageRight: p.imageRight || '',
             printifyIdLeft:   p.printifyIdLeft   || '', variantIdLeft:   p.variantIdLeft   || '',

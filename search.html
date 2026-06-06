@@ -259,8 +259,36 @@
       var params = new URLSearchParams(window.location.search);
       var f = params.get('filter');
       var s = params.get('sort');
+      var q = params.get('search');
       if (f) { sel.value = f; filterFunc(); }
       if (s) { document.getElementById('sel2').value = s; sortFunc(); }
+
+      // Handle text search from the search bar
+      if (q) {
+        var qUp = q.trim().toUpperCase();
+        // Pre-fill the search input with the query
+        var si = document.getElementById('srch001');
+        if (si) si.value = q;
+        // Update the page heading to reflect search context
+        var heading = document.querySelector('.content h2');
+        if (heading) heading.textContent = 'Results for: \u201c' + q + '\u201d';
+        // Filter individual cards
+        section.querySelectorAll('.product-card').forEach(function(card) {
+          var h5 = card.querySelector('h5');
+          var name = h5 ? h5.textContent : '';
+          card.classList.toggle('dm-hidden', name.toUpperCase().indexOf(qUp) === -1);
+        });
+        // Hide collection groups that have no visible cards
+        section.querySelectorAll('.collection-group').forEach(function(group) {
+          var hasVisible = group.querySelectorAll('.product-card:not(.dm-hidden)').length > 0;
+          group.classList.toggle('dm-hidden', !hasVisible);
+        });
+        // Show a no-results message if nothing matched
+        var anyVisible = section.querySelectorAll('.product-card:not(.dm-hidden)').length > 0;
+        if (!anyVisible) {
+          section.innerHTML = '<p style="padding:40px;color:#888;text-align:center">No products matched \u201c' + escH(q) + '\u201d.</p>';
+        }
+      }
 
       // Event delegation for Add to Cart (avoids inline onclick / XSS)
       document.getElementById('sectionpart').addEventListener('click', function(e) {
