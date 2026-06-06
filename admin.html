@@ -834,7 +834,7 @@ function loadTrafficAnalytics(days) {
   var detailsEl = document.getElementById('an-details');
   detailsEl.innerHTML = '<p style="color:#888;font-size:.9rem">Loading…</p>';
 
-  apiFetch('/api/admin/analytics/traffic?days=' + anDays).then(function(data) {
+  apiFetch('/admin/analytics/traffic?days=' + anDays).then(function(data) {
     document.getElementById('an-total').textContent  = data.totalVisitors.toLocaleString();
     document.getElementById('an-unique').textContent = data.uniqueVisitors.toLocaleString();
     document.getElementById('an-views').textContent  = data.pageViews.toLocaleString();
