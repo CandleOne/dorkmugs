@@ -121,13 +121,13 @@
     <div class="sort">
       <div class="collection-sort">
         <label>Collection:</label>
-        <select id="sel1" onchange="filterFunc()">
+        <select id="sel1">
           <option value="all">All Collections</option>
         </select>
       </div>
       <div class="collection-sort">
         <label>Sort by:</label>
-        <select id="sel2" onchange="sortFunc()">
+        <select id="sel2">
           <option value="nosort">Default</option>
           <option value="price-asc">Price: Low to High</option>
           <option value="price-desc">Price: High to Low</option>
@@ -152,10 +152,6 @@
     function colLabel(p) {
       return p.collectionName || (p.collection.charAt(0).toUpperCase() + p.collection.slice(1));
     }
-
-    // Hoist to window so onchange attributes on the <select> elements can reach them
-    window.filterFunc = filterFunc;
-    window.sortFunc = sortFunc;
 
     function updateUrl() {
       var filter = document.getElementById('sel1').value;
@@ -306,11 +302,13 @@
       });
     }
 
-    prodbReady.then(renderCollections);
+    // Wire up the filter/sort dropdowns via addEventListener (more reliable than
+    // onchange HTML attributes, which can silently fail if the function isn't in
+    // scope at the exact moment the browser compiles the attribute string).
+    document.getElementById('sel1').addEventListener('change', filterFunc);
+    document.getElementById('sel2').addEventListener('change', sortFunc);
 
-    // Expose after definition (prodbReady may resolve synchronously from cache)
-    window.filterFunc = filterFunc;
-    window.sortFunc = sortFunc;
+    prodbReady.then(renderCollections);
   </script>
 
   <!-- Footer -->
