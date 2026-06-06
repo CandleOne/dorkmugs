@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const config = require('./config');
 const { apiLimiter, contactLimiter, newsletterLimiter } = require('./middleware/rateLimiter');
+const trackPageView = require('./middleware/trackPageView');
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // ─── Cookies ─────────────────────────────────────────────────────────────────
 app.use(cookieParser());
+app.use(trackPageView);
 
 // ─── Logging ─────────────────────────────────────────────────────────────────
 if (config.env !== 'test') {

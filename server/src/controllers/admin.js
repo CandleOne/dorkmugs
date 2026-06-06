@@ -11,6 +11,115 @@ const stripe = Stripe(config.stripe.secretKey);
 
 const prisma = new PrismaClient();
 
+// src/controllers/admin.js  — add this export
+
+exports.getTrafficAnalytics = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Default: last 30 days. Frontend can pass ?days=7 etc.
+    const days = Math.min(parseInt(req.query.days) || 30, 365);
+    const since = new Date(now - days * 24 * 60 * 60 * 1000);
+
+    // Last 7 days for the daily chart (always fixed)
+    const chartDays = 7;
+    const chartSince = new Date(now - chartDays * 24 * 60 * 60 * 1000);
+
+    const [allViews, chartViews] = await Promise.all([
+      prisma.pageView.findMany({
+        where: { createdAt: { gte: since } },
+        select: { sessionId: true, ip: true, path: true, createdAt: true },
+      }),
+      prisma.pageView.findMany({
+        where: { createdAt: { gte: chartSince } },
+        select: { sessionId: true, path: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // ── Totals ──────────────────────────────────────────────────────────────
+    const totalVisitors  = allViews.length;
+    const uniqueSessions = new Set(allViews.map(v => v.sessionId));
+    const uniqueVisitors = uniqueSessions.size;
+    const pageViews      = totalVisitors; // every tracked hit = a page view
+
+    // ── Bounce rate: sessions that only hit one page ─────────────────────────
+    const sessionHits = {};
+    for (const v of allViews) {
+      sessionHits[v.sessionId] = (sessionHits[v.sessionId] || 0) + 1;
+    }
+    const bounced    = Object.values(sessionHits).filter(n => n === 1).length;
+    const bounceRate = uniqueVisitors > 0
+      ? Math.round((bounced / uniqueVisitors) * 100)
+      : 0;
+
+    // ── Top pages ─────────────────────────────────────────────────────────────
+    const pathCounts = {};
+    for (const v of allViews) {
+      pathCounts[v.path] = (pathCounts[v.path] || 0) + 1;
+    }
+    const topPages = Object.entries(pathCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([path, views]) => ({ path, views }));
+
+    // ── Daily chart data (last 7 days) ────────────────────────────────────────
+    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dailyMap  = {};
+
+    for (let i = chartDays - 1; i >= 0; i--) {
+      const d   = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10); // "2026-06-01"
+      dailyMap[key] = { label: DAY_NAMES[d.getDay()], views: 0, sessions: new Set() };
+    }
+
+    for (const v of chartViews) {
+      const key = v.createdAt.toISOString().slice(0, 10);
+      if (dailyMap[key]) {
+        dailyMap[key].views++;
+        dailyMap[key].sessions.add(v.sessionId);
+      }
+    }
+
+    const daily = Object.values(dailyMap).map(d => ({
+      label:   d.label,
+      views:   d.views,
+      uniques: d.sessions.size,
+    }));
+
+    // ── New vs returning (session seen before the window = returning) ─────────
+    // A session is "returning" if it has views on more than one calendar day
+    const sessionDays = {};
+    for (const v of allViews) {
+      const day = v.createdAt.toISOString().slice(0, 10);
+      if (!sessionDays[v.sessionId]) sessionDays[v.sessionId] = new Set();
+      sessionDays[v.sessionId].add(day);
+    }
+    const returning    = Object.values(sessionDays).filter(s => s.size > 1).length;
+    const newVisitors  = uniqueVisitors - returning;
+    const newVisitorPct = uniqueVisitors > 0
+      ? Math.round((newVisitors / uniqueVisitors) * 100)
+      : 0;
+
+    res.json({
+      totalVisitors,
+      uniqueVisitors,
+      pageViews,
+      bounceRate,
+      topPages,
+      daily,
+      newVisitorPct,
+      windowDays: days,
+    });
+  } catch (err) {
+    console.error('[analytics] error', err.message);
+    res.status(500).json({ error: 'Failed to load analytics.' });
+  }
+};
+
+
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 // GET /api/admin/stats

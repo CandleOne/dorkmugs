@@ -9,6 +9,9 @@ router.use(requireAuth, requireAdmin);
 // Dashboard
 router.get('/stats', ctrl.getStats);
 
+// Traffic analytics
+router.get('/analytics/traffic', ctrl.getTrafficAnalytics);
+
 // Users
 router.get('/users', ctrl.listUsers);
 router.patch('/users/:id/role', ctrl.updateUserRole);

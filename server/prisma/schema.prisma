@@ -173,6 +173,7 @@ model Subscriber {
   email       String   @unique
   subscribedAt DateTime @default(now())
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Reviews
 // One review per user per product. Rating is 1–5 (integer).
@@ -192,4 +193,21 @@ model Review {
   user    User        @relation(fields: [userId],    references: [id], onDelete: Cascade)
 
   @@unique([productId, userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page view tracking
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  ip        String   @default("")
+  userAgent String   @default("")
+  sessionId String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([sessionId])
 }

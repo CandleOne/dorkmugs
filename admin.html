@@ -801,7 +801,7 @@ function stat(label, val) {
 
 
 function loadTrafficAnalytics() {
-  apiFetch('/admin/traffic-analytics').then(function (data) {
+  apiFetch('/api/admin/traffic-analytics').then(function (data) {
     document.getElementById('traffic-analytics-content').innerHTML =
       '<p>Total Visitors: ' + esc(data.totalVisitors) + '</p>' +
       '<p>Unique Visitors: ' + esc(data.uniqueVisitors) + '</p>' +
