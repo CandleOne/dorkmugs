@@ -551,43 +551,55 @@ async function listCoupons(req, res) {
 
 // POST /api/admin/coupons
 // Body: { code, discountType: 'percent'|'amount', discountValue, duration: 'once'|'forever'|'repeating', durationMonths?, maxRedemptions?, expiresAt? }
+// OR:   { code, zeroCharge: true }  — creates a 100%-off once coupon with zero_charge metadata
 async function createCoupon(req, res) {
-  const { code, discountType, discountValue, duration, durationMonths, maxRedemptions, expiresAt } = req.body || {};
+  const { code, discountType, discountValue, duration, durationMonths, maxRedemptions, expiresAt, zeroCharge } = req.body || {};
 
   if (!code || typeof code !== 'string' || !/^[A-Z0-9_-]{1,50}$/i.test(code.trim())) {
     return res.status(422).json({ error: 'Invalid code. Use letters, numbers, hyphens or underscores (max 50 chars).' });
   }
-  if (!['percent', 'amount'].includes(discountType)) {
-    return res.status(422).json({ error: 'discountType must be "percent" or "amount".' });
-  }
-  const value = parseFloat(discountValue);
-  if (!value || value <= 0) {
-    return res.status(422).json({ error: 'discountValue must be a positive number.' });
-  }
-  if (discountType === 'percent' && value > 100) {
-    return res.status(422).json({ error: 'Percent discount cannot exceed 100.' });
-  }
-  if (!['once', 'forever', 'repeating'].includes(duration)) {
-    return res.status(422).json({ error: 'duration must be once, forever, or repeating.' });
-  }
 
   try {
-    // Build coupon params
-    const couponParams = { duration };
-    if (discountType === 'percent') {
-      couponParams.percent_off = value;
+    let couponParams;
+
+    if (zeroCharge) {
+      // Zero-charge test coupon: 100% off, once, with metadata so checkout can detect it
+      couponParams = {
+        percent_off: 100,
+        duration: 'once',
+        metadata: { zero_charge: 'true' },
+      };
     } else {
-      couponParams.amount_off = Math.round(value * 100); // dollars → cents
-      couponParams.currency = 'usd';
-    }
-    if (duration === 'repeating') {
-      const months = parseInt(durationMonths, 10);
-      if (!months || months < 1) return res.status(422).json({ error: 'durationMonths required for repeating coupons.' });
-      couponParams.duration_in_months = months;
-    }
-    if (maxRedemptions) {
-      const max = parseInt(maxRedemptions, 10);
-      if (max > 0) couponParams.max_redemptions = max;
+      if (!['percent', 'amount'].includes(discountType)) {
+        return res.status(422).json({ error: 'discountType must be "percent" or "amount".' });
+      }
+      const value = parseFloat(discountValue);
+      if (!value || value <= 0) {
+        return res.status(422).json({ error: 'discountValue must be a positive number.' });
+      }
+      if (discountType === 'percent' && value > 100) {
+        return res.status(422).json({ error: 'Percent discount cannot exceed 100.' });
+      }
+      if (!['once', 'forever', 'repeating'].includes(duration)) {
+        return res.status(422).json({ error: 'duration must be once, forever, or repeating.' });
+      }
+
+      couponParams = { duration };
+      if (discountType === 'percent') {
+        couponParams.percent_off = value;
+      } else {
+        couponParams.amount_off = Math.round(value * 100);
+        couponParams.currency = 'usd';
+      }
+      if (duration === 'repeating') {
+        const months = parseInt(durationMonths, 10);
+        if (!months || months < 1) return res.status(422).json({ error: 'durationMonths required for repeating coupons.' });
+        couponParams.duration_in_months = months;
+      }
+      if (maxRedemptions) {
+        const max = parseInt(maxRedemptions, 10);
+        if (max > 0) couponParams.max_redemptions = max;
+      }
     }
 
     const coupon = await stripe.coupons.create(couponParams);
@@ -597,13 +609,15 @@ async function createCoupon(req, res) {
       coupon: coupon.id,
       code: code.trim().toUpperCase(),
     };
-    if (expiresAt) {
-      const ts = Math.floor(new Date(expiresAt).getTime() / 1000);
-      if (ts > Math.floor(Date.now() / 1000)) promoParams.expires_at = ts;
-    }
-    if (maxRedemptions) {
-      const max = parseInt(maxRedemptions, 10);
-      if (max > 0) promoParams.max_redemptions = max;
+    if (!zeroCharge) {
+      if (expiresAt) {
+        const ts = Math.floor(new Date(expiresAt).getTime() / 1000);
+        if (ts > Math.floor(Date.now() / 1000)) promoParams.expires_at = ts;
+      }
+      if (maxRedemptions) {
+        const max = parseInt(maxRedemptions, 10);
+        if (max > 0) promoParams.max_redemptions = max;
+      }
     }
 
     const promoCode = await stripe.promotionCodes.create(promoParams);

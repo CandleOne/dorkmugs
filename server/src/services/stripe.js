@@ -4,6 +4,10 @@ const config = require('../config');
 
 const stripe = Stripe(config.stripe.secretKey);
 
+// Exported so other modules (e.g. checkout controller) can call the Stripe API
+// directly without re-instantiating the client.
+module.exports.stripeClient = stripe;
+
 function toStripeImage(image) {
   if (!image) return null;
   try {
@@ -26,7 +30,7 @@ function toStripeImage(image) {
  * @param {string} [customerEmail]
  * @returns {Promise<{id:string, url:string}>}
  */
-async function createCheckoutSession(items, metadata, successUrl, cancelUrl, customerEmail) {
+async function createCheckoutSession(items, metadata, successUrl, cancelUrl, customerEmail, zeroChargePromoId) {
   const lineItems = items.map((item) => {
     const imageUrl = toStripeImage(item.image);
     return {
@@ -45,13 +49,12 @@ async function createCheckoutSession(items, metadata, successUrl, cancelUrl, cus
   // Calculate subtotal (cents) to determine whether free shipping applies.
   const subtotal = items.reduce((sum, item) => sum + Math.round(item.price) * item.qty, 0);
   const FREE_SHIPPING_THRESHOLD = 4000; // $40.00 in cents
-  const shippingAmount = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 499; // $4.99 under threshold
+  const shippingAmount = (zeroChargePromoId || subtotal >= FREE_SHIPPING_THRESHOLD) ? 0 : 499; // $4.99 under threshold
 
   const sessionParams = {
     payment_method_types: ['card'],
     mode: 'payment',
     line_items: lineItems,
-    allow_promotion_codes: true,
     shipping_options: [
       {
         shipping_rate_data: {
@@ -65,6 +68,14 @@ async function createCheckoutSession(items, metadata, successUrl, cancelUrl, cus
     success_url: successUrl,
     cancel_url: cancelUrl,
   };
+
+  if (zeroChargePromoId) {
+    // Pre-apply the zero-charge promotion code so the customer sees $0 total
+    // immediately. Cannot combine with allow_promotion_codes.
+    sessionParams.discounts = [{ promotion_code: zeroChargePromoId }];
+  } else {
+    sessionParams.allow_promotion_codes = true;
+  }
 
   if (customerEmail) sessionParams.customer_email = customerEmail;
 
@@ -92,4 +103,4 @@ function constructEvent(rawBody, sig) {
   return stripe.webhooks.constructEvent(rawBody, sig, config.stripe.webhookSecret);
 }
 
-module.exports = { createCheckoutSession, retrieveSession, constructEvent };
+module.exports = { stripeClient: stripe, createCheckoutSession, retrieveSession, constructEvent };

@@ -93,9 +93,33 @@ async function createCheckout(req, res) {
   const cancelUrl = config.stripe.cancelUrl;
   const customerEmail = req.user?.email || undefined;
 
+  // ── Zero-charge promo detection ─────────────────────────────────────────────
+  // If the client supplied a promo code, look it up. If its underlying coupon
+  // carries zero_charge:'true' metadata the session will pre-apply it AND use
+  // $0 shipping so the entire order totals $0 (for test/admin use).
+  let zeroChargePromoId = null;
+  const rawPromoCode = typeof req.body.promoCode === 'string' ? req.body.promoCode.trim().toUpperCase() : null;
+  if (rawPromoCode) {
+    try {
+      const stripe = stripeSvc.stripeClient;
+      const results = await stripe.promotionCodes.list({
+        code: rawPromoCode,
+        limit: 1,
+        active: true,
+        expand: ['data.coupon'],
+      });
+      if (results.data.length && results.data[0].coupon?.metadata?.zero_charge === 'true') {
+        zeroChargePromoId = results.data[0].id;
+      }
+    } catch (lookupErr) {
+      // Non-fatal: fall through to normal checkout with allow_promotion_codes
+      console.warn('[checkout] promo lookup failed:', lookupErr.message);
+    }
+  }
+
   try {
     const session = await stripeSvc.createCheckoutSession(
-      sanitised, metadata, successUrl, cancelUrl, customerEmail
+      sanitised, metadata, successUrl, cancelUrl, customerEmail, zeroChargePromoId
     );
     return res.json({ url: session.url });
   } catch (err) {

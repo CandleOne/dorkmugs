@@ -136,6 +136,10 @@ var Cart = (function () {
     var btn = document.getElementById('checkout-btn') || document.querySelector('.cart-checkout-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Redirecting…'; }
 
+    // Read any promo / zero-charge code entered in the cart drawer
+    var promoInput = document.getElementById('cart-promo-code');
+    var promoCode = promoInput ? promoInput.value.trim().toUpperCase() : '';
+
     var payload = items.map(function (i) {
       return {
         id: i.id || undefined,
@@ -149,11 +153,14 @@ var Cart = (function () {
       };
     });
 
+    var body = { items: payload };
+    if (promoCode) body.promoCode = promoCode;
+
     fetch(API + '/checkout', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: payload }),
+      body: JSON.stringify(body),
     })
     .then(function (r) {
       return r.text().then(function (raw) {
@@ -232,15 +239,20 @@ var Cart = (function () {
     if (overlay) overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // Inject promo code hint once (Stripe Checkout accepts promo codes natively)
+    // Inject promo code input once into the cart footer
     var footer = drawer && drawer.querySelector('.cart-drawer-footer');
-    if (footer && !footer.querySelector('.cart-promo-hint')) {
-      var hint = document.createElement('p');
-      hint.className = 'cart-promo-hint';
-      hint.innerHTML = '<i class="fas fa-tag"></i> Have a promo code? Enter it at checkout.';
+    if (footer && !footer.querySelector('.cart-promo-wrap')) {
+      var promoWrap = document.createElement('div');
+      promoWrap.className = 'cart-promo-wrap';
+      promoWrap.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
+      promoWrap.innerHTML =
+        '<i class="fas fa-tag" style="color:#1a6fc4;font-size:.85rem;flex-shrink:0"></i>' +
+        '<input type="text" id="cart-promo-code" placeholder="Promo or test code" autocomplete="off" ' +
+          'style="flex:1;padding:7px 10px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.85rem;' +
+          'box-sizing:border-box;text-transform:uppercase;outline:none" />';
       var checkoutBtn = footer.querySelector('.cart-checkout-btn');
-      if (checkoutBtn) footer.insertBefore(hint, checkoutBtn);
-      else footer.appendChild(hint);
+      if (checkoutBtn) footer.insertBefore(promoWrap, checkoutBtn);
+      else footer.appendChild(promoWrap);
     }
   }
 

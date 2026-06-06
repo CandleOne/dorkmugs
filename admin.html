@@ -219,7 +219,16 @@
         <!-- Create form -->
         <div class="panel-section" style="background:#fff;border:1px solid #e0e6f2;border-radius:10px;padding:22px 24px;margin-bottom:28px">
           <h2 style="margin:0 0 18px;font-size:1rem"><i class="fas fa-plus-circle" style="color:#1a6fc4;margin-right:6px"></i>Create New Coupon</h2>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px 16px;align-items:end">
+          <!-- Zero Charge toggle -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:#f0f7ff;border:1.5px solid #b8d4f5;border-radius:8px">
+            <input type="checkbox" id="cp-zero-charge" style="width:16px;height:16px;cursor:pointer;accent-color:#1a6fc4" />
+            <label for="cp-zero-charge" style="font-size:.88rem;font-weight:600;cursor:pointer;margin:0">
+              Zero Charge <span style="font-weight:400;color:#1a6fc4">(Test Mode)</span>
+            </label>
+            <span style="font-size:.8rem;color:#5a6a80;margin-left:4px">— 100% off products + $0 shipping. Enter this code before checkout to test a full order flow for free.</span>
+          </div>
+
+          <div id="cp-normal-fields" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px 16px;align-items:end">
             <div>
               <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Code (e.g. DORK10)</label>
               <input type="text" id="cp-code" placeholder="DORK10" maxlength="50"
@@ -259,6 +268,15 @@
               <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Expires <span style="font-weight:400;color:#888">(optional)</span></label>
               <input type="date" id="cp-expires"
                 style="width:100%;padding:8px 11px;border:1.5px solid #d1dae6;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+          </div>
+
+          <!-- Zero charge code-only row (shown when toggle is on) -->
+          <div id="cp-zero-fields" style="display:none;margin-top:4px">
+            <div style="max-width:280px">
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:4px">Code (e.g. TESTFREE)</label>
+              <input type="text" id="cp-zero-code" placeholder="TESTFREE" maxlength="50"
+                style="width:100%;padding:8px 11px;border:1.5px solid #b8d4f5;border-radius:6px;font-size:.9rem;box-sizing:border-box;text-transform:uppercase" />
             </div>
           </div>
           <div style="margin-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -1620,6 +1638,14 @@ function bindCouponActions() {
 
 document.getElementById('cp-refresh-btn').addEventListener('click', loadCoupons);
 
+// ─── Zero Charge toggle ──────────────────────────────────────────────────────
+
+document.getElementById('cp-zero-charge').addEventListener('change', function () {
+  var on = this.checked;
+  document.getElementById('cp-normal-fields').style.display = on ? 'none' : '';
+  document.getElementById('cp-zero-fields').style.display  = on ? ''     : 'none';
+});
+
 // ─── Duration select: show months input when "repeating" ─────────────────────
 
 document.getElementById('cp-duration').addEventListener('change', function () {
@@ -1634,29 +1660,44 @@ document.getElementById('cp-create-btn').addEventListener('click', function () {
   errEl.style.display = 'none';
   okEl.style.display  = 'none';
 
-  var code      = (document.getElementById('cp-code').value || '').trim().toUpperCase();
-  var type      = document.getElementById('cp-type').value;
-  var value     = document.getElementById('cp-value').value;
-  var duration  = document.getElementById('cp-duration').value;
-  var months    = document.getElementById('cp-months').value;
-  var maxRed    = document.getElementById('cp-max').value;
-  var expires   = document.getElementById('cp-expires').value;
-
-  if (!code) { errEl.textContent = 'Code is required.'; errEl.style.display = 'block'; return; }
-  if (!value || parseFloat(value) <= 0) { errEl.textContent = 'Discount value must be greater than 0.'; errEl.style.display = 'block'; return; }
-  if (duration === 'repeating' && (!months || parseInt(months) < 1)) {
-    errEl.textContent = 'Enter the number of months for a repeating coupon.';
-    errEl.style.display = 'block';
-    return;
-  }
+  var isZeroCharge = document.getElementById('cp-zero-charge').checked;
 
   var btn = document.getElementById('cp-create-btn');
   btn.disabled = true;
   btn.textContent = 'Creating…';
 
-  apiFetch('/admin/coupons', {
-    method: 'POST',
-    body: JSON.stringify({
+  var payload;
+
+  if (isZeroCharge) {
+    var code = (document.getElementById('cp-zero-code').value || '').trim().toUpperCase();
+    if (!code) {
+      errEl.textContent = 'Code is required.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Create Coupon';
+      return;
+    }
+    payload = { code: code, zeroCharge: true };
+  } else {
+    var code      = (document.getElementById('cp-code').value || '').trim().toUpperCase();
+    var type      = document.getElementById('cp-type').value;
+    var value     = document.getElementById('cp-value').value;
+    var duration  = document.getElementById('cp-duration').value;
+    var months    = document.getElementById('cp-months').value;
+    var maxRed    = document.getElementById('cp-max').value;
+    var expires   = document.getElementById('cp-expires').value;
+
+    if (!code) { errEl.textContent = 'Code is required.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Coupon'; return; }
+    if (!value || parseFloat(value) <= 0) { errEl.textContent = 'Discount value must be greater than 0.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Coupon'; return; }
+    if (duration === 'repeating' && (!months || parseInt(months) < 1)) {
+      errEl.textContent = 'Enter the number of months for a repeating coupon.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Create Coupon';
+      return;
+    }
+
+    payload = {
       code: code,
       discountType: type,
       discountValue: parseFloat(value),
@@ -1664,19 +1705,28 @@ document.getElementById('cp-create-btn').addEventListener('click', function () {
       durationMonths: months ? parseInt(months) : undefined,
       maxRedemptions: maxRed ? parseInt(maxRed) : undefined,
       expiresAt: expires || undefined,
-    }),
+    };
+  }
+
+  apiFetch('/admin/coupons', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   }).then(function (result) {
     okEl.textContent = 'Coupon "' + result.code + '" created successfully!';
     okEl.style.display = 'block';
     // Reset form
-    document.getElementById('cp-code').value    = '';
-    document.getElementById('cp-value').value   = '';
-    document.getElementById('cp-max').value     = '';
-    document.getElementById('cp-expires').value = '';
-    document.getElementById('cp-months').value  = '';
-    document.getElementById('cp-months-wrap').style.display = 'none';
-    document.getElementById('cp-duration').value = 'once';
-    document.getElementById('cp-type').value     = 'percent';
+    document.getElementById('cp-code').value      = '';
+    document.getElementById('cp-value').value     = '';
+    document.getElementById('cp-max').value       = '';
+    document.getElementById('cp-expires').value   = '';
+    document.getElementById('cp-months').value    = '';
+    document.getElementById('cp-zero-code').value = '';
+    document.getElementById('cp-months-wrap').style.display  = 'none';
+    document.getElementById('cp-duration').value  = 'once';
+    document.getElementById('cp-type').value      = 'percent';
+    document.getElementById('cp-zero-charge').checked        = false;
+    document.getElementById('cp-normal-fields').style.display = '';
+    document.getElementById('cp-zero-fields').style.display   = 'none';
     loadCoupons();
   }).catch(function (e) {
     errEl.textContent = e.message;
