@@ -297,7 +297,13 @@
 
       <!-- Email Tools -->
       <div id="section-email-tools" class="admin-section section-inactive">
-        <h1 style="margin:0 0 4px">Email Tools</h1>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+          <h1 style="margin:0">Email Tools</h1>
+          <a id="et-inbox-link" href="#" target="_blank" rel="noopener noreferrer"
+            style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:#1a6fc4;color:#fff;border-radius:7px;font-size:.875rem;font-weight:600;text-decoration:none;line-height:1">
+            <i class="fas fa-inbox"></i> Open Inbox
+          </a>
+        </div>
         <p style="color:#5a6a80;margin:0 0 24px;font-size:.9rem">Send transactional or custom emails to customers directly from the admin panel.</p>
 
         <!-- Template quick-sends -->
@@ -746,7 +752,7 @@ function showSection(name) {
   else if (name === 'collections') loadCollections();
   else if (name === 'featured') loadFeatured();
   else if (name === 'coupons') loadCoupons();
-  else if (name === 'email-tools') { /* section is static, nothing to load */ }
+  else if (name === 'email-tools') { loadEmailInboxUrl(); }
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
   else if (name === 'shop-manager') loadShopManager();
 }
@@ -1915,6 +1921,24 @@ document.getElementById('cp-create-btn').addEventListener('click', function () {
 
 <!-- ─── Email Tools ─────────────────────────────────────────────────────── -->
 <script>
+// ─── Inbox link ───────────────────────────────────────────────────────────────
+function loadEmailInboxUrl() {
+  apiFetch('/admin/email/inbox-url').then(function (data) {
+    var el = document.getElementById('et-inbox-link');
+    if (!el) return;
+    if (data.url) {
+      el.href = data.url;
+      el.innerHTML = '<i class="fas fa-inbox"></i> Open Inbox (' + esc(data.label || 'Webmail') + ')';
+      el.style.display = 'inline-flex';
+    } else {
+      el.style.display = 'none';
+    }
+  }).catch(function () {
+    var el = document.getElementById('et-inbox-link');
+    if (el) el.style.display = 'none';
+  });
+}
+
 // ─── Template email send ─────────────────────────────────────────────────────
 document.getElementById('et-tmpl-send-btn').addEventListener('click', function () {
   var errEl  = document.getElementById('et-tmpl-error');

@@ -21,6 +21,7 @@ router.patch('/orders/:id/status', ctrl.updateOrderStatus);
 router.post('/orders/:id/backfill-shipping', ctrl.backfillOrderShipping);
 
 // Email
+router.get('/email/inbox-url', ctrl.getEmailInboxUrl);
 router.post('/email/send', ctrl.sendAdminEmail);
 
 // Printify

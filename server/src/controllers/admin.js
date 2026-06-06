@@ -484,6 +484,32 @@ async function listImageAssets(req, res) {
   }
 }
 
+// GET /api/admin/email/inbox-url
+function getEmailInboxUrl(req, res) {
+  // Allow explicit override via env var
+  if (process.env.WEBMAIL_URL) {
+    return res.json({ url: process.env.WEBMAIL_URL, label: 'Webmail' });
+  }
+  const host = (config.email.host || '').toLowerCase();
+  let url, label;
+  if (host.includes('zoho'))                                      { url = 'https://mail.zoho.com';         label = 'Zoho Mail'; }
+  else if (host.includes('google') || host.includes('gmail'))     { url = 'https://mail.google.com';       label = 'Gmail'; }
+  else if (host.includes('outlook') || host.includes('office365') || host.includes('hotmail')) {
+                                                                    url = 'https://outlook.live.com';      label = 'Outlook'; }
+  else if (host.includes('privateemail') || host.includes('namecheap')) { url = 'https://privateemail.com'; label = 'Private Email'; }
+  else if (host.includes('mailgun'))                              { url = 'https://app.mailgun.com';       label = 'Mailgun'; }
+  else if (host.includes('sendgrid'))                             { url = 'https://app.sendgrid.com';      label = 'SendGrid'; }
+  else if (host.includes('fastmail'))                             { url = 'https://www.fastmail.com';      label = 'Fastmail'; }
+  else if (host.includes('protonmail') || host.includes('proton.me')) { url = 'https://mail.proton.me'; label = 'Proton Mail'; }
+  else {
+    // Fallback: webmail subdomain convention
+    const domain = config.email.user ? config.email.user.split('@')[1] : null;
+    url  = domain ? `https://webmail.${domain}` : null;
+    label = 'Webmail';
+  }
+  res.json({ url, label });
+}
+
 module.exports = {
   getStats,
   listUsers,
@@ -517,6 +543,7 @@ module.exports = {
   deleteCoupon,
   backfillOrderShipping,
   sendAdminEmail,
+  getEmailInboxUrl,
 };
 
 // ─── Coupons ──────────────────────────────────────────────────────────────────
