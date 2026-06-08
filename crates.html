@@ -76,13 +76,31 @@
   .rarity-rare       { background: #fff3cd; color: #996600; }
   .rarity-legendary  { background: #fde8ff; color: #8a00c0; }
 
-  .btn-buy-crate {
-    width: 100%; padding: 10px; background: #1a6fc4; color: #fff;
+  .btn-buy-crate { width: 100%; padding: 10px; background: #1a6fc4; color: #fff;
     border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
     cursor: pointer; transition: background 0.2s;
   }
   .btn-buy-crate:hover { background: #155da0; }
   .btn-buy-crate:disabled { background: #aac4e0; cursor: default; }
+
+  /* Quantity picker inside crate card */
+  .qty-row {
+    display: flex; align-items: center; gap: 6px; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .qty-row label { font-size: 0.82rem; color: #666; }
+  .qty-btn {
+    width: 28px; height: 28px; border: 1px solid #c0d0f0; background: #f0f4ff;
+    border-radius: 6px; font-size: 1rem; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #1a3a5c;
+    font-weight: 700; transition: background 0.15s;
+  }
+  .qty-btn:hover { background: #dde7f5; }
+  .qty-input {
+    width: 40px; text-align: center; border: 1px solid #c0d0f0;
+    border-radius: 6px; padding: 4px 0; font-size: 0.95rem; font-weight: 700;
+    color: #1a3a5c;
+  }
 
   /* ── My Crates inventory ──────────────────────────────────────────── */
   .section-title {
@@ -574,6 +592,15 @@
         grid.querySelectorAll('.btn-buy-crate').forEach(function (btn) {
           btn.addEventListener('click', function () { buyCrate(btn); });
         });
+        // Qty +/- buttons
+        grid.querySelectorAll('.qty-btn').forEach(function (qBtn) {
+          qBtn.addEventListener('click', function () {
+            var input = qBtn.closest('.qty-row').querySelector('.qty-input');
+            var val = parseInt(input.value, 10) || 1;
+            var dir = parseInt(qBtn.dataset.dir, 10);
+            input.value = Math.min(20, Math.max(1, val + dir));
+          });
+        });
       })
       .catch(function () {
         document.getElementById('crates-loading').style.display = 'none';
@@ -597,7 +624,13 @@
         '<div class="crate-card-name">' + esc(c.name) + '</div>' +
         '<div class="crate-card-desc">' + esc(c.description || 'Open for a chance to win a mug at a discounted price.') + '</div>' +
         '<div class="crate-prize-preview">' + badgeHtml + '</div>' +
-        '<div class="crate-card-price">$' + parseFloat(c.price).toFixed(2) + '</div>' +
+        '<div class="crate-card-price">$' + parseFloat(c.price).toFixed(2) + ' / key</div>' +
+        '<div class="qty-row">' +
+          '<label>Qty:</label>' +
+          '<button class="qty-btn" data-dir="-1" aria-label="Decrease">&#8722;</button>' +
+          '<input class="qty-input" type="number" min="1" max="20" value="1" aria-label="Quantity" />' +
+          '<button class="qty-btn" data-dir="1" aria-label="Increase">&#43;</button>' +
+        '</div>' +
         '<button class="btn-buy-crate" data-crate-id="' + esc(c.id) + '" data-crate-price="' + esc(String(Math.round(c.price * 100))) + '" data-crate-name="' + esc(c.name) + '">' +
           '<i class="fas fa-key"></i> Buy Key' +
         '</button>' +
@@ -609,6 +642,8 @@
     var crateId    = btn.dataset.crateId;
     var crateName  = btn.dataset.crateName;
     var cratePrice = parseInt(btn.dataset.cratePrice, 10);
+    var qtyInput   = btn.closest('.crate-card-body').querySelector('.qty-input');
+    var qty        = qtyInput ? Math.min(20, Math.max(1, parseInt(qtyInput.value, 10) || 1)) : 1;
 
     // Check login
     var user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
@@ -630,7 +665,7 @@
         items: [{
           name:    crateName + ' Key',
           price:   cratePrice,
-          qty:     1,
+          qty:     qty,
           crateId: crateId,
         }],
       }),
@@ -743,6 +778,33 @@
       });
   }
 
+  // Map itemType → emoji + display label for reel
+  var ITEM_TYPE_META = {
+    SHARD:            { icon: '🧩', label: 'Shard' },
+    WILDCARD_SHARD:   { icon: '🃏', label: 'Wildcard Shard' },
+    DORK_COIN:        { icon: '🪙', label: 'Dork Coins' },
+    DISCOUNT_VOUCHER: { icon: '🏷️', label: 'Discount Voucher' },
+    MUG_VOUCHER:      { icon: '🎟️', label: 'Free Mug Voucher' },
+  };
+
+  function prizeDisplayInfo(prize, product) {
+    var itemType = prize ? prize.itemType : 'SHARD';
+    var meta = ITEM_TYPE_META[itemType] || { icon: '🎁', label: itemType };
+    if (itemType === 'SHARD' && product) {
+      return { img: product.imageLeft || '', name: product.pname + ' Shard', icon: null };
+    }
+    if (itemType === 'MUG_VOUCHER' && product) {
+      return { img: product.imageLeft || '', name: 'Free ' + product.pname, icon: null };
+    }
+    if (itemType === 'DORK_COIN') {
+      return { img: '', name: (prize.coinAmount || 0) + ' Dork Coins', icon: meta.icon };
+    }
+    if (itemType === 'DISCOUNT_VOUCHER') {
+      return { img: '', name: (prize.itemValue || 0) + '% Discount', icon: meta.icon };
+    }
+    return { img: '', name: meta.label, icon: meta.icon };
+  }
+
   // ── Opening modal / reel animation ───────────────────────────────────────
   function showOpeningModal(opening) {
     var modal = document.getElementById('crate-modal');
@@ -759,28 +821,31 @@
 
     var prize = opening.prize;
     var product = opening.product;
+    var winnerInfo = prizeDisplayInfo(prize, product);
 
     // Build a reel of fake items + the winning item interspersed
     var fakeCount = 30;
     var itemW = 140;
     var items = [];
 
-    // Populate reel items (mix of available prizes/products for visual effect)
+    // Populate reel items
     for (var i = 0; i < fakeCount; i++) {
-      items.push({ img: product ? product.imageLeft : '', name: product ? product.pname : '?', rarity: prize ? prize.rarity : 'common' });
+      items.push(winnerInfo);
     }
     // Place the winner near the end
     var winnerIdx = fakeCount - 5;
-    items[winnerIdx] = { img: product ? product.imageLeft : '', name: product ? product.pname : 'Prize', rarity: prize ? prize.rarity : 'common', isWinner: true };
+    items[winnerIdx] = Object.assign({}, winnerInfo, { isWinner: true });
 
     items.forEach(function (item) {
       var div = document.createElement('div');
       div.className = 'reel-item';
-      var color = RARITY_COLORS[item.rarity] || '#1a6fc4';
+      var color = RARITY_COLORS[(prize && prize.rarity) || 'common'] || '#1a6fc4';
       div.style.background = item.isWinner ? 'rgba(255,215,0,0.12)' : 'transparent';
-      div.innerHTML = item.img
-        ? '<img src="' + esc(item.img) + '" alt="' + esc(item.name) + '" />'
-        : '<span style="font-size:2.5rem">☕</span>';
+      if (item.img) {
+        div.innerHTML = '<img src="' + esc(item.img) + '" alt="' + esc(item.name) + '" />';
+      } else {
+        div.innerHTML = '<span style="font-size:2.5rem">' + (item.icon || '🎁') + '</span>';
+      }
       div.innerHTML += '<span style="color:' + color + '">' + esc(item.name) + '</span>';
       strip.appendChild(div);
     });
@@ -812,23 +877,61 @@
   }
 
   function showPrizeReveal(opening) {
-    var prize = opening.prize;
-    var product = opening.product;
-    var revCard = document.getElementById('reveal-card');
+    var prize    = opening.prize;
+    var product  = opening.product;
+    var itemType = prize ? prize.itemType : 'SHARD';
+    var info     = prizeDisplayInfo(prize, product);
+    var revCard  = document.getElementById('reveal-card');
 
     document.getElementById('modal-title').textContent = '🎉 You won!';
-    document.getElementById('modal-sub').textContent = 'Here\'s your prize:';
+    document.getElementById('modal-sub').textContent   = 'Here\'s your prize:';
 
-    document.getElementById('reveal-img').src = product ? (product.imageLeft || '') : '';
-    document.getElementById('reveal-img').alt = product ? product.pname : 'Prize';
+    var revImg = document.getElementById('reveal-img');
+    if (info.img) {
+      revImg.src = info.img; revImg.alt = info.name; revImg.style.display = '';
+    } else {
+      revImg.style.display = 'none';
+      // Show large emoji in its place
+      var emojiEl = revCard.querySelector('.reveal-emoji');
+      if (!emojiEl) {
+        emojiEl = document.createElement('div');
+        emojiEl.className = 'reveal-emoji';
+        emojiEl.style.cssText = 'font-size:4rem;line-height:1;margin-bottom:12px';
+        revImg.parentNode.insertBefore(emojiEl, revImg);
+      }
+      emojiEl.textContent = info.icon || '🎁';
+    }
+
     document.getElementById('reveal-rarity').innerHTML = rarityBadge(prize ? prize.rarity : 'common');
-    document.getElementById('reveal-name').textContent = product ? product.pname : 'Mystery Mug';
-    document.getElementById('reveal-price').textContent = '$' + parseFloat(opening.wonPrice).toFixed(2);
-    document.getElementById('reveal-orig').textContent = product ? 'Retail: $' + parseFloat(product.price).toFixed(2) : '';
+    document.getElementById('reveal-name').textContent = info.name;
+
+    // Price/value line differs by type
+    var priceLine = '', origLine = '';
+    if (itemType === 'SHARD') {
+      var qty = opening.itemQuantity || 1;
+      priceLine = qty + ' shard' + (qty !== 1 ? 's' : '') + ' added to your inventory';
+    } else if (itemType === 'WILDCARD_SHARD') {
+      priceLine = 'Wildcard shard added to your inventory';
+    } else if (itemType === 'DORK_COIN') {
+      priceLine = '🪙 ' + (prize.coinAmount || 0) + ' Dork Coins earned';
+    } else if (itemType === 'DISCOUNT_VOUCHER') {
+      priceLine = (prize.itemValue || 0) + '% off your next order — see My Inventory';
+    } else if (itemType === 'MUG_VOUCHER') {
+      priceLine = 'Free mug voucher — redeem in My Inventory';
+    } else {
+      priceLine = '$' + parseFloat(opening.wonPrice || 0).toFixed(2);
+      origLine  = product ? 'Retail: $' + parseFloat(product.price).toFixed(2) : '';
+    }
+    document.getElementById('reveal-price').textContent = priceLine;
+    document.getElementById('reveal-orig').textContent  = origLine;
 
     revCard.classList.add('show');
 
-    document.getElementById('btn-modal-claim').dataset.claimToken = opening.claimToken || '';
+    // Only show Claim button for legacy direct-prize openings
+    var claimBtn = document.getElementById('btn-modal-claim');
+    claimBtn.dataset.claimToken = opening.claimToken || '';
+    var isInventoryItem = ['SHARD','WILDCARD_SHARD','DORK_COIN','DISCOUNT_VOUCHER','MUG_VOUCHER'].indexOf(itemType) > -1;
+    claimBtn.style.display = isInventoryItem ? 'none' : '';
     document.getElementById('modal-actions').style.display = 'flex';
   }
 

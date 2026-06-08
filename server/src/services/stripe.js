@@ -28,11 +28,13 @@ function toStripeImage(image) {
  * @param {string} successUrl
  * @param {string} cancelUrl
  * @param {string} [customerEmail]
+ * @param {string|null} [promoOrCouponId]  Stripe promotion_code ID (promo_xxx) or coupon ID (other)
  * @returns {Promise<{id:string, url:string}>}
  */
-async function createCheckoutSession(items, metadata, successUrl, cancelUrl, customerEmail, zeroChargePromoId) {
+async function createCheckoutSession(items, metadata, successUrl, cancelUrl, customerEmail, promoOrCouponId) {
   const lineItems = items.map((item) => {
     const imageUrl = toStripeImage(item.image);
+    const unitAmount = Math.max(0, Math.round(item.price)); // allow $0 for voucher redemptions
     return {
       price_data: {
         currency: 'usd',
@@ -40,39 +42,62 @@ async function createCheckoutSession(items, metadata, successUrl, cancelUrl, cus
           name: item.name,
           ...(imageUrl ? { images: [imageUrl] } : {}),
         },
-        unit_amount: Math.round(item.price), // already in cents
+        unit_amount: unitAmount,
       },
       quantity: item.qty,
     };
   });
 
-  // Calculate subtotal (cents) to determine whether free shipping applies.
-  const subtotal = items.reduce((sum, item) => sum + Math.round(item.price) * item.qty, 0);
+  // Calculate subtotal (cents)
+  const subtotal = items.reduce((sum, item) => sum + Math.max(0, Math.round(item.price)) * item.qty, 0);
   const FREE_SHIPPING_THRESHOLD = 4000; // $40.00 in cents
-  const shippingAmount = (zeroChargePromoId || subtotal >= FREE_SHIPPING_THRESHOLD) ? 0 : 499; // $4.99 under threshold
+
+  // Detect if this is a digital-only order (all crate keys, no printify products)
+  const hasPhysical = items.some((i) => i.printifyProductId);
+  const allDigital  = !hasPhysical;
+
+  const shippingOptions = allDigital
+    ? [] // no shipping for digital orders
+    : [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: {
+              amount: (promoOrCouponId || subtotal >= FREE_SHIPPING_THRESHOLD) ? 0 : 499,
+              currency: 'usd',
+            },
+            display_name: (promoOrCouponId || subtotal >= FREE_SHIPPING_THRESHOLD) ? 'Free Shipping' : 'Standard Shipping',
+          },
+        },
+      ];
 
   const sessionParams = {
     payment_method_types: ['card'],
     mode: 'payment',
     line_items: lineItems,
-    shipping_options: [
-      {
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          fixed_amount: { amount: shippingAmount, currency: 'usd' },
-          display_name: shippingAmount === 0 ? 'Free Shipping' : 'Standard Shipping',
-        },
-      },
-    ],
     metadata,
     success_url: successUrl,
     cancel_url: cancelUrl,
   };
 
-  if (zeroChargePromoId) {
-    // Pre-apply the zero-charge promotion code so the customer sees $0 total
-    // immediately. Cannot combine with allow_promotion_codes.
-    sessionParams.discounts = [{ promotion_code: zeroChargePromoId }];
+  // Only add shipping_options when there are physical items
+  if (shippingOptions.length > 0) {
+    sessionParams.shipping_options = shippingOptions;
+    sessionParams.shipping_address_collection = { allowed_countries: ['US', 'CA', 'GB', 'AU'] };
+  }
+
+  // Support $0 totals (e.g. voucher redemptions)
+  if (subtotal === 0) {
+    sessionParams.payment_method_collection = 'if_required';
+  }
+
+  if (promoOrCouponId) {
+    // Promotion code IDs start with "promo_"; coupon IDs start with anything else
+    if (String(promoOrCouponId).startsWith('promo_')) {
+      sessionParams.discounts = [{ promotion_code: promoOrCouponId }];
+    } else {
+      sessionParams.discounts = [{ coupon: promoOrCouponId }];
+    }
   } else {
     sessionParams.allow_promotion_codes = true;
   }
