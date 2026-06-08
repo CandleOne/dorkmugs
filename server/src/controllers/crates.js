@@ -568,7 +568,7 @@ async function mergeShards(req, res) {
 
 /**
  * POST /api/crates/redeem/:voucherId
- * Convert a MUG_VOUCHER into a $0 Stripe checkout session.
+ * Convert a MUG_VOUCHER into a 100%-off Stripe checkout session.
  */
 async function redeemVoucher(req, res) {
   const { voucherId } = req.params;
@@ -580,16 +580,17 @@ async function redeemVoucher(req, res) {
 
     const product = await prisma.shopProduct.findUnique({
       where: { id: voucher.productId },
-      select: { id: true, pname: true, imageLeft: true, printifyIdLeft: true, variantIdLeft: true },
+      select: { id: true, pname: true, price: true, imageLeft: true, printifyIdLeft: true, variantIdLeft: true },
     });
     if (!product) return res.status(404).json({ error: 'Voucher product not found.' });
 
     const successUrl = config.stripe.successUrl + '?session_id={CHECKOUT_SESSION_ID}';
     const cancelUrl  = config.stripe.cancelUrl;
+    const priceInCents = Math.round(product.price * 100);
 
     const items = [{
-      name:              product.pname,
-      price:             0,
+      name:              product.pname + ' (Voucher Redemption)',
+      price:             priceInCents,
       qty:               1,
       image:             product.imageLeft || undefined,
       printifyProductId: product.printifyIdLeft || undefined,
@@ -609,6 +610,14 @@ async function redeemVoucher(req, res) {
       voucherId,
     };
 
+    // Create a 100%-off one-time Stripe coupon
+    const stripe = stripeSvc.stripeClient;
+    const coupon = await stripe.coupons.create({
+      percent_off: 100,
+      duration:    'once',
+      name:        'Mug Voucher Redemption',
+    });
+
     // Mark redeemed and create session atomically
     let session;
     await prisma.$transaction(async (tx) => {
@@ -617,7 +626,7 @@ async function redeemVoucher(req, res) {
         data:  { redeemed: true, redeemedAt: new Date() },
       });
       session = await stripeSvc.createCheckoutSession(
-        items, metadata, successUrl, cancelUrl, req.user.email, null
+        items, metadata, successUrl, cancelUrl, req.user.email, coupon.id
       );
     });
 

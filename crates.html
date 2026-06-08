@@ -740,16 +740,10 @@
     if (!uc.opened) {
       statusHtml = '<div class="inv-card-status">Unopened</div>';
       actionHtml = '<button class="btn-open-crate" data-uc-id="' + esc(uc.id) + '" data-crate-name="' + esc(uc.crate ? uc.crate.name : 'Crate') + '">Open <i class="fas fa-box-open"></i></button>';
-    } else if (uc.opening && !uc.opening.claimed) {
-      var prod = uc.opening.product;
-      statusHtml = '<div class="inv-card-status">Prize awaiting claim!</div>' +
-        (prod ? '<div class="won-price">Won: $' + parseFloat(uc.opening.wonPrice).toFixed(2) + '</div>' +
-          '<div class="orig-price">Retail: $' + parseFloat(prod.price).toFixed(2) + '</div>' : '');
-      actionHtml = '<button class="btn-claim-prize" data-claim-token="' + esc(uc.opening.claimToken) + '">🏷️ Claim Prize</button>';
-    } else if (uc.opening && uc.opening.claimed) {
-      statusHtml = '<div class="inv-card-status">Prize claimed ✓</div>';
     } else {
-      statusHtml = '<div class="inv-card-status">Opened</div>';
+      // Opened — prize already in inventory, no claim needed
+      statusHtml = '<div class="inv-card-status" style="color:#2daa55">Opened ✓</div>' +
+        '<div style="font-size:0.75rem;color:#888;margin-top:2px">Prize added to inventory</div>';
     }
 
     return '<div class="inv-card' + (uc.opened ? ' opened' : '') + '">' +
