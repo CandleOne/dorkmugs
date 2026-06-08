@@ -152,11 +152,11 @@ async function fulfillCrateKeys(session, cartItems, userId) {
     if (!crate) { console.warn(`[orderService] crateId ${item.crateId} not found — skipping`); continue; }
 
     for (let i = 0; i < qty; i++) {
-      // Skip if we already created this key (re-entrancy guard)
-      const existing = await prisma.userCrate.findFirst({
+      // Idempotency: count how many keys we've already created for this session+crate
+      const alreadyCreated = await prisma.userCrate.count({
         where: { userId, crateId: item.crateId, stripeSessionId: session.id },
       });
-      if (existing) break;
+      if (alreadyCreated >= qty) break;
 
       await prisma.userCrate.create({
         data: { userId, crateId: item.crateId, stripeSessionId: session.id },
