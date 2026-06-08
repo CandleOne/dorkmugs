@@ -7,6 +7,7 @@ const { PrismaClient } = require('@prisma/client');
 const stripeSvc = require('../services/stripe');
 const { ensureOrderFromSession } = require('../services/orderService');
 const config = require('../config');
+const { COIN_TO_DOLLAR, MAX_COIN_DISCOUNT_PCT } = require('../config/crateDrops');
 
 const prisma = new PrismaClient();
 
@@ -137,9 +138,86 @@ async function createCheckout(req, res) {
     }
   }
 
+  // ── Dork Coin discount ──────────────────────────────────────────────────────
+  // If coinDiscount is provided, validate the user has enough coins and create
+  // a one-time Stripe coupon for the dollar-equivalent discount.
+  let coinCouponId = null;
+  const rawCoinDiscount = req.body.coinDiscount;
+  if (rawCoinDiscount && req.user) {
+    const coinDiscount = Math.max(0, parseInt(rawCoinDiscount, 10) || 0);
+    if (coinDiscount > 0) {
+      // Compute subtotal in cents
+      const subtotalCents = sanitised.reduce((sum, i) => sum + i.price * i.qty, 0);
+      const maxDiscountCents = Math.floor(subtotalCents * MAX_COIN_DISCOUNT_PCT / 100);
+      const dollarDiscount = Math.min(
+        Math.floor(coinDiscount / COIN_TO_DOLLAR),
+        Math.floor(maxDiscountCents / 100)
+      );
+
+      if (dollarDiscount > 0) {
+        // Validate user coin balance
+        const coinItems = await prisma.inventoryItem.findMany({
+          where: { userId: req.user.id, type: 'DORK_COIN', redeemed: false },
+          orderBy: { createdAt: 'asc' },
+        });
+        const balance = coinItems.reduce((s, i) => s + (i.value || 0) * i.quantity, 0);
+        const coinsNeeded = dollarDiscount * COIN_TO_DOLLAR;
+        if (balance < coinsNeeded) {
+          return res.status(422).json({ error: 'Not enough Dork Coins for that discount.' });
+        }
+
+        // Mark coin items as redeemed up to coinsNeeded
+        let remaining = coinsNeeded;
+        for (const item of coinItems) {
+          if (remaining <= 0) break;
+          const itemCoins = (item.value || 0) * item.quantity;
+          if (itemCoins <= remaining) {
+            await prisma.inventoryItem.update({
+              where: { id: item.id },
+              data:  { redeemed: true, redeemedAt: new Date() },
+            });
+            remaining -= itemCoins;
+          } else {
+            // Partial: split item — mark enough as redeemed
+            const consumeQty = Math.ceil(remaining / (item.value || 1));
+            const keepQty    = item.quantity - consumeQty;
+            await prisma.inventoryItem.update({ where: { id: item.id }, data: { quantity: keepQty } });
+            await prisma.inventoryItem.create({
+              data: {
+                userId:    req.user.id,
+                type:      'DORK_COIN',
+                value:     item.value,
+                quantity:  consumeQty,
+                redeemed:  true,
+                redeemedAt: new Date(),
+                source:    'CRATE',
+              },
+            });
+            remaining = 0;
+          }
+        }
+
+        // Create a one-time Stripe coupon
+        try {
+          const stripe = stripeSvc.stripeClient;
+          const coupon = await stripe.coupons.create({
+            amount_off: dollarDiscount * 100,
+            currency:   'usd',
+            duration:   'once',
+          });
+          coinCouponId = coupon.id;
+        } catch (couponErr) {
+          console.error('[checkout] coin coupon creation failed:', couponErr.message);
+          // Non-fatal: proceed without coin discount
+        }
+      }
+    }
+  }
+
   try {
     const session = await stripeSvc.createCheckoutSession(
-      sanitised, metadata, successUrl, cancelUrl, customerEmail, zeroChargePromoId
+      sanitised, metadata, successUrl, cancelUrl, customerEmail,
+      coinCouponId || zeroChargePromoId
     );
     return res.json({ url: session.url });
   } catch (err) {

@@ -37,6 +37,8 @@ model User {
   passwordResets PasswordReset[]
   reviews        Review[]
   userCrates     UserCrate[]
+  inventoryItems InventoryItem[]
+  shardMerges    ShardMerge[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -242,6 +244,9 @@ model CratePrize {
   discountedPrice Float  // winning price in dollars
   weight          Int    @default(100) // relative probability weight
   rarity          String @default("common") // "common" | "uncommon" | "rare" | "legendary"
+  itemType        String @default("SHARD")  // SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN
+  itemValue       Float  @default(0)        // DISCOUNT_VOUCHER: percent off. Otherwise 0.
+  coinAmount      Int    @default(0)        // bonus coins dropped alongside any item type
   createdAt       DateTime @default(now())
 }
 
@@ -272,5 +277,47 @@ model CrateOpening {
   claimToken  String    @unique @default(cuid())
   claimed     Boolean   @default(false)
   claimedAt   DateTime?
+  itemType    String    @default("SHARD") // item type awarded
+  itemQuantity Int      @default(1)
   createdAt   DateTime  @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inventory
+// Stores all items a user owns: shards, wildcards, vouchers, coins.
+// type values: SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN
+// ─────────────────────────────────────────────────────────────────────────────
+model InventoryItem {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String    // SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN
+  productId   String?   // mug design this item is tied to (null for coins/wildcards)
+  quantity    Int       @default(1)
+  value       Float?    // DORK_COIN: coin amount. DISCOUNT_VOUCHER: percent off (e.g. 15)
+  redeemed    Boolean   @default(false)
+  redeemedAt  DateTime?
+  source      String    @default("CRATE") // CRATE | MERGE | ADMIN
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([userId, type])
+  @@index([userId, productId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shard merges
+// Records every time a user burns 10 shards into a mug voucher.
+// ─────────────────────────────────────────────────────────────────────────────
+model ShardMerge {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId     String
+  shardsUsed    Int      @default(10)
+  wildcardCount Int      @default(0)
+  voucherItemId String   @unique
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
 }

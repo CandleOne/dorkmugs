@@ -212,6 +212,55 @@
 
   .empty-inv { text-align: center; color: #888; padding: 30px 0; font-size: 0.95rem; }
 
+  /* ── Item Inventory section ──────────────────────────────────────────── */
+  .coin-banner {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(90deg, #1a3a5c 0%, #0d1b2a 100%);
+    color: #f0c040; border-radius: 10px; padding: 14px 20px;
+    font-weight: 700; font-size: 1rem; margin-bottom: 24px;
+  }
+  .coin-banner .coin-note { font-size: 0.78rem; color: rgba(255,255,255,0.65); font-weight: 400; margin-left: 8px; }
+
+  .shard-progress {
+    width: 100%; height: 8px; background: #dde7f5; border-radius: 99px; overflow: hidden; margin: 6px 0;
+  }
+  .shard-progress-fill { height: 100%; background: #1a6fc4; border-radius: 99px; transition: width 0.4s; }
+  .shard-progress-fill.ready { background: #2daa55; }
+
+  .btn-merge {
+    width: 100%; padding: 8px; background: #2daa55; color: #fff;
+    border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s;
+    box-shadow: 0 0 0 3px rgba(45,170,85,0.25);
+    animation: mergeGlow 1.8s ease-in-out infinite;
+  }
+  @keyframes mergeGlow {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(45,170,85,0.25); }
+    50%       { box-shadow: 0 0 0 6px rgba(45,170,85,0.55); }
+  }
+  .btn-merge:hover    { background: #24883e; }
+  .btn-merge:disabled { background: #aac4e0; animation: none; box-shadow: none; cursor: default; }
+
+  .btn-redeem-voucher {
+    width: 100%; padding: 8px; background: #7c3aed; color: #fff;
+    border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-redeem-voucher:hover    { background: #5b21b6; }
+  .btn-redeem-voucher:disabled { background: #aac4e0; cursor: default; }
+
+  .btn-copy-code {
+    padding: 6px 14px; background: #f0f4ff; color: #1a3a5c; border: 1px solid #c0d0f0;
+    border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  }
+  .btn-copy-code:hover { background: #dde7f5; }
+
+  .inv-product-img {
+    width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin-bottom: 6px;
+  }
+  .voucher-pct { font-size: 1.5rem; font-weight: 800; color: #2daa55; line-height: 1; }
+  .voucher-sub { font-size: 0.78rem; color: #666; }
+
   @media (max-width: 600px) {
     .crates-hero h1 { font-size: 1.5rem; }
     .how-step { width: 150px; }
@@ -343,6 +392,51 @@
     <div id="inventory-grid" class="inventory-grid" style="display:none"></div>
     <div id="inv-empty" class="empty-inv" style="display:none">
       You don't own any crate keys yet. Buy one above!
+    </div>
+
+    <!-- ── My Inventory (shards, vouchers, coins) ────────────────────────── -->
+    <h2 class="section-title" style="margin-top:48px" id="item-inventory-title">
+      <i class="fas fa-layer-group"></i> My Inventory
+    </h2>
+    <div id="item-inv-login-prompt" class="login-prompt" style="display:none">
+      <p><i class="fas fa-lock"></i> Log in to view your shards, vouchers, and Dork Coins.</p>
+      <a href="login.html" class="btn-buy-crate" style="display:inline-block;width:auto;padding:10px 28px;text-decoration:none">Log In</a>
+    </div>
+    <div id="item-inv-loading" style="text-align:center;padding:30px 0;color:#888;display:none">
+      <i class="fas fa-circle-notch fa-spin" style="font-size:1.8rem;color:#1a6fc4"></i>
+    </div>
+    <div id="item-inv-content" style="display:none">
+      <!-- Coin banner -->
+      <div class="coin-banner" id="coin-banner">
+        <span style="font-size:1.5rem">🪙</span>
+        <span id="coin-balance-label">0 Dork Coins</span>
+        <span class="coin-note">100 coins = $1 off at checkout</span>
+      </div>
+
+      <!-- Shards -->
+      <h3 style="font-size:1rem;font-weight:700;margin:0 0 12px;color:#555">
+        <i class="fas fa-puzzle-piece" style="color:#1a6fc4"></i> Shards
+        <span id="wildcard-badge" style="display:none;margin-left:10px;font-size:0.8rem;background:#e8f0ff;color:#1a5ccc;padding:2px 10px;border-radius:99px;font-weight:600"></span>
+      </h3>
+      <div id="shard-grid" class="inventory-grid"></div>
+      <div id="shard-empty" class="empty-inv" style="display:none">No shards yet. Open a crate to start collecting!</div>
+
+      <!-- Mug Vouchers -->
+      <h3 style="font-size:1rem;font-weight:700;margin:24px 0 12px;color:#555">
+        <i class="fas fa-ticket-alt" style="color:#7c3aed"></i> Mug Vouchers
+      </h3>
+      <div id="voucher-grid" class="inventory-grid"></div>
+      <div id="voucher-empty" class="empty-inv" style="display:none">No mug vouchers. Merge 10 shards to create one!</div>
+
+      <!-- Discount Vouchers -->
+      <h3 style="font-size:1rem;font-weight:700;margin:24px 0 12px;color:#555">
+        <i class="fas fa-percent" style="color:#2daa55"></i> Discount Vouchers
+      </h3>
+      <div id="discount-grid" class="inventory-grid"></div>
+      <div id="discount-empty" class="empty-inv" style="display:none">No discount vouchers yet.</div>
+    </div>
+    <div id="item-inv-empty" class="empty-inv" style="display:none">
+      Your inventory is empty. Open some crates!
     </div>
 
   </div>
@@ -792,15 +886,188 @@
     }
   });
 
+  // ── Item Inventory (shards, vouchers, coins) ─────────────────────────────
+  function loadItemInventory() {
+    var user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+    if (!user) {
+      document.getElementById('item-inv-login-prompt').style.display = 'block';
+      return;
+    }
+    document.getElementById('item-inv-loading').style.display = 'block';
+
+    fetch(API + '/crates/inventory', { credentials: 'include' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.getElementById('item-inv-loading').style.display = 'none';
+        var hasAnything = (data.shards && data.shards.length) ||
+                          data.wildcardShards > 0 ||
+                          (data.mugVouchers && data.mugVouchers.length) ||
+                          (data.discountVouchers && data.discountVouchers.length) ||
+                          data.coinBalance > 0;
+        if (!hasAnything) {
+          document.getElementById('item-inv-empty').style.display = 'block';
+          return;
+        }
+        document.getElementById('item-inv-content').style.display = 'block';
+
+        // Coin banner
+        document.getElementById('coin-balance-label').textContent =
+          Math.round(data.coinBalance || 0) + ' Dork Coins';
+
+        // Wildcard badge
+        var wcBadge = document.getElementById('wildcard-badge');
+        if (data.wildcardShards > 0) {
+          wcBadge.textContent = '🃏 ' + data.wildcardShards + ' Wildcard' + (data.wildcardShards !== 1 ? 's' : '');
+          wcBadge.title = 'Wildcards count as any shard when merging';
+          wcBadge.style.display = '';
+        }
+
+        // Shard cards
+        var shardGrid = document.getElementById('shard-grid');
+        shardGrid.innerHTML = '';
+        if (data.shards && data.shards.length) {
+          data.shards.forEach(function (s) {
+            var pct = Math.min(100, Math.round((s.count / s.needed) * 100));
+            var readyCls = s.ready ? ' ready' : '';
+            var card = document.createElement('div');
+            card.className = 'inv-card';
+            card.innerHTML =
+              (s.productImage ? '<img class="inv-product-img" src="' + esc(s.productImage) + '" alt="' + esc(s.productName) + '" />' : '<div class="inv-card-icon">🧩</div>') +
+              '<div class="inv-card-name">' + esc(s.productName) + '</div>' +
+              '<div class="inv-card-status">' + s.count + ' / ' + s.needed + ' shards</div>' +
+              '<div class="shard-progress"><div class="shard-progress-fill' + readyCls + '" style="width:' + pct + '%"></div></div>' +
+              (s.ready
+                ? '<button class="btn-merge" data-product-id="' + esc(s.productId) + '"><i class="fas fa-fire-alt"></i> Merge into Voucher</button>'
+                : '');
+            shardGrid.appendChild(card);
+          });
+          shardGrid.querySelectorAll('.btn-merge').forEach(function (btn) {
+            btn.addEventListener('click', function () { doMergeShards(btn); });
+          });
+        } else {
+          document.getElementById('shard-empty').style.display = 'block';
+        }
+
+        // Mug voucher cards
+        var voucherGrid = document.getElementById('voucher-grid');
+        voucherGrid.innerHTML = '';
+        if (data.mugVouchers && data.mugVouchers.length) {
+          data.mugVouchers.forEach(function (v) {
+            var card = document.createElement('div');
+            card.className = 'inv-card';
+            card.innerHTML =
+              (v.productImage ? '<img class="inv-product-img" src="' + esc(v.productImage) + '" alt="' + esc(v.productName) + '" />' : '<div class="inv-card-icon">🎟️</div>') +
+              '<div class="inv-card-name">' + esc(v.productName) + '</div>' +
+              '<div class="inv-card-status" style="color:#7c3aed;font-weight:600">Free Mug Voucher</div>' +
+              '<button class="btn-redeem-voucher" data-voucher-id="' + esc(v.id) + '"><i class="fas fa-gift"></i> Redeem — Get This Mug Free</button>';
+            voucherGrid.appendChild(card);
+          });
+          voucherGrid.querySelectorAll('.btn-redeem-voucher').forEach(function (btn) {
+            btn.addEventListener('click', function () { doRedeemVoucher(btn); });
+          });
+        } else {
+          document.getElementById('voucher-empty').style.display = 'block';
+        }
+
+        // Discount voucher cards
+        var discountGrid = document.getElementById('discount-grid');
+        discountGrid.innerHTML = '';
+        if (data.discountVouchers && data.discountVouchers.length) {
+          data.discountVouchers.forEach(function (v) {
+            var card = document.createElement('div');
+            card.className = 'inv-card';
+            card.innerHTML =
+              '<div class="voucher-pct">' + Math.round(v.value || 0) + '%</div>' +
+              '<div class="inv-card-name">Discount Voucher</div>' +
+              '<div class="voucher-sub">' + Math.round(v.value || 0) + '% off your next order</div>' +
+              '<div style="margin-top:6px;font-size:0.72rem;color:#999;word-break:break-all">' + esc(v.id) + '</div>' +
+              '<button class="btn-copy-code" data-code="' + esc(v.id) + '" style="margin-top:8px"><i class="fas fa-copy"></i> Copy Code</button>';
+            discountGrid.appendChild(card);
+          });
+          discountGrid.querySelectorAll('.btn-copy-code').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              navigator.clipboard && navigator.clipboard.writeText(btn.dataset.code);
+              btn.textContent = 'Copied!';
+              setTimeout(function () { btn.innerHTML = '<i class="fas fa-copy"></i> Copy Code'; }, 1800);
+            });
+          });
+        } else {
+          document.getElementById('discount-empty').style.display = 'block';
+        }
+      })
+      .catch(function () {
+        document.getElementById('item-inv-loading').style.display = 'none';
+        document.getElementById('item-inv-empty').style.display = 'block';
+      });
+  }
+
+  function doMergeShards(btn) {
+    var productId = btn.dataset.productId;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Merging…';
+    fetch(API + '/crates/merge', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: productId }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        if (res.ok) {
+          // Refresh inventory
+          document.getElementById('item-inv-content').style.display = 'none';
+          document.getElementById('item-inv-empty').style.display = 'none';
+          loadItemInventory();
+        } else {
+          alert(res.data.error || 'Could not merge shards.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-fire-alt"></i> Merge into Voucher';
+        }
+      })
+      .catch(function () {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-fire-alt"></i> Merge into Voucher';
+      });
+  }
+
+  function doRedeemVoucher(btn) {
+    var voucherId = btn.dataset.voucherId;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Redirecting…';
+    fetch(API + '/crates/redeem/' + encodeURIComponent(voucherId), {
+      method: 'POST', credentials: 'include',
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.url) { location.href = data.url; }
+        else {
+          alert(data.error || 'Could not redeem voucher.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-gift"></i> Redeem — Get This Mug Free';
+        }
+      })
+      .catch(function () {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-gift"></i> Redeem — Get This Mug Free';
+      });
+  }
+
   // ── Init ──────────────────────────────────────────────────────────────────
   loadCrates();
   // Wait for Auth to be ready before loading inventory
   window.addEventListener('DOMContentLoaded', function () {
     // Give auth.js a tick to initialize
-    setTimeout(loadInventory, 50);
+    setTimeout(function () {
+      loadInventory();
+      loadItemInventory();
+    }, 50);
   });
   if (document.readyState !== 'loading') {
-    setTimeout(loadInventory, 50);
+    setTimeout(function () {
+      loadInventory();
+      loadItemInventory();
+    }, 50);
   }
 
 })();

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const stripeSvc = require('../services/stripe');
 const config    = require('../config');
+const { SHARDS_TO_MERGE } = require('../config/crateDrops');
 
 const prisma = new PrismaClient();
 
@@ -113,7 +114,7 @@ async function myInventory(req, res) {
 
 /**
  * POST /api/crates/open/:userCrateId
- * Open a crate the user owns. Returns the prize.
+ * Open a crate the user owns. Returns the prize and created inventory items.
  */
 async function openCrate(req, res) {
   const { userCrateId } = req.params;
@@ -133,9 +134,42 @@ async function openCrate(req, res) {
     if (!prizes.length) return res.status(422).json({ error: 'This crate has no prizes configured.' });
 
     const prize = pickPrize(prizes);
+    const itemQuantity = (prize.itemType === 'SHARD' && prize.quantity > 1) ? prize.quantity : 1;
 
-    // Create opening record, mark crate as opened — atomically
-    const [, opening] = await prisma.$transaction([
+    // Build inventory item creates for the transaction
+    const inventoryCreates = [];
+
+    // Primary item
+    const primaryData = {
+      userId: req.user.id,
+      type:   prize.itemType,
+      source: 'CRATE',
+    };
+    if (prize.itemType === 'SHARD') {
+      primaryData.productId = prize.productId || null;
+      primaryData.quantity  = itemQuantity;
+    } else if (prize.itemType === 'WILDCARD_SHARD') {
+      primaryData.quantity = 1;
+    } else if (prize.itemType === 'DORK_COIN') {
+      primaryData.value    = prize.coinAmount;
+      primaryData.quantity = 1;
+    } else if (prize.itemType === 'DISCOUNT_VOUCHER') {
+      primaryData.value    = prize.itemValue;
+      primaryData.quantity = 1;
+    } else if (prize.itemType === 'MUG_VOUCHER') {
+      primaryData.productId = prize.productId || null;
+      primaryData.quantity  = 1;
+    }
+    inventoryCreates.push(prisma.inventoryItem.create({ data: primaryData }));
+
+    // Bonus coins (if prize has coinAmount and is not already a DORK_COIN prize)
+    if (prize.coinAmount > 0 && prize.itemType !== 'DORK_COIN') {
+      inventoryCreates.push(prisma.inventoryItem.create({
+        data: { userId: req.user.id, type: 'DORK_COIN', value: prize.coinAmount, quantity: 1, source: 'CRATE' },
+      }));
+    }
+
+    const [, opening, ...createdItems] = await prisma.$transaction([
       prisma.userCrate.update({
         where: { id: userCrateId },
         data: { opened: true, openedAt: new Date() },
@@ -143,23 +177,29 @@ async function openCrate(req, res) {
       prisma.crateOpening.create({
         data: {
           userCrateId,
-          userId:    req.user.id,
-          prizeId:   prize.id,
-          productId: prize.productId,
-          wonPrice:  prize.discountedPrice,
-          claimToken: crypto.randomUUID(),
+          userId:       req.user.id,
+          prizeId:      prize.id,
+          productId:    prize.productId || '',
+          wonPrice:     prize.discountedPrice,
+          claimToken:   crypto.randomUUID(),
+          itemType:     prize.itemType,
+          itemQuantity,
         },
       }),
+      ...inventoryCreates,
     ]);
 
-    // Enrich with product info
-    const product = await prisma.shopProduct.findUnique({
-      where: { id: prize.productId },
-      select: { id: true, pname: true, imageLeft: true, price: true },
-    });
+    // Enrich with product info when relevant
+    let product = null;
+    if (prize.productId) {
+      product = await prisma.shopProduct.findUnique({
+        where: { id: prize.productId },
+        select: { id: true, pname: true, imageLeft: true, price: true },
+      });
+    }
 
     return res.json({
-      opening: { ...opening, prize, product },
+      opening: { ...opening, prize, product, inventoryItems: createdItems },
     });
   } catch (err) {
     console.error('[crates] openCrate error', err.message);
@@ -359,11 +399,243 @@ async function adminListOpenings(req, res) {
   }
 }
 
+// ── Inventory routes ──────────────────────────────────────────────────────────
+
+/**
+ * GET /api/crates/inventory
+ * Returns the authenticated user's full inventory grouped by type.
+ */
+async function getInventory(req, res) {
+  try {
+    const items = await prisma.inventoryItem.findMany({
+      where: { userId: req.user.id, redeemed: false },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Collect all productIds we need
+    const productIds = [...new Set(items.map(i => i.productId).filter(Boolean))];
+    const products = productIds.length
+      ? await prisma.shopProduct.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, pname: true, imageLeft: true, price: true },
+        })
+      : [];
+    const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+
+    // Group shards by productId
+    const shardMap = {};
+    for (const item of items.filter(i => i.type === 'SHARD')) {
+      const pid = item.productId || '__unknown__';
+      if (!shardMap[pid]) shardMap[pid] = 0;
+      shardMap[pid] += item.quantity;
+    }
+    const shards = Object.entries(shardMap).map(([pid, count]) => {
+      const prod = productMap[pid];
+      return {
+        productId:    pid,
+        productName:  prod ? prod.pname  : 'Unknown Mug',
+        productImage: prod ? prod.imageLeft : '',
+        count,
+        needed: SHARDS_TO_MERGE,
+        ready:  count >= SHARDS_TO_MERGE,
+      };
+    });
+
+    // Wildcard total
+    const wildcardShards = items
+      .filter(i => i.type === 'WILDCARD_SHARD')
+      .reduce((sum, i) => sum + i.quantity, 0);
+
+    // Discount vouchers
+    const discountVouchers = items
+      .filter(i => i.type === 'DISCOUNT_VOUCHER')
+      .map(i => ({ id: i.id, value: i.value, redeemed: i.redeemed }));
+
+    // Mug vouchers
+    const mugVouchers = items
+      .filter(i => i.type === 'MUG_VOUCHER')
+      .map(i => {
+        const prod = productMap[i.productId];
+        return {
+          id:           i.id,
+          productId:    i.productId,
+          productName:  prod ? prod.pname    : 'Unknown Mug',
+          productImage: prod ? prod.imageLeft : '',
+          redeemed:     i.redeemed,
+        };
+      });
+
+    // Coin balance
+    const coinBalance = items
+      .filter(i => i.type === 'DORK_COIN')
+      .reduce((sum, i) => sum + (i.value || 0) * i.quantity, 0);
+
+    return res.json({ shards, wildcardShards, discountVouchers, mugVouchers, coinBalance, raw: items });
+  } catch (err) {
+    console.error('[crates] getInventory error', err.message);
+    return res.status(500).json({ error: 'Could not fetch inventory.' });
+  }
+}
+
+/**
+ * POST /api/crates/merge
+ * Body: { productId }
+ * Burns 10 shards (regular + wildcard) into a MUG_VOUCHER.
+ */
+async function mergeShards(req, res) {
+  const { productId } = req.body;
+  if (!productId) return res.status(422).json({ error: 'productId is required.' });
+
+  const product = await prisma.shopProduct.findUnique({ where: { id: String(productId) } });
+  if (!product) return res.status(404).json({ error: 'Product not found.' });
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const regularShards = await tx.inventoryItem.findMany({
+        where: { userId: req.user.id, type: 'SHARD', productId: String(productId), redeemed: false },
+        orderBy: { createdAt: 'asc' },
+      });
+      const wildcardShards = await tx.inventoryItem.findMany({
+        where: { userId: req.user.id, type: 'WILDCARD_SHARD', redeemed: false },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      const regularTotal  = regularShards.reduce((s, i) => s + i.quantity, 0);
+      const wildcardTotal = wildcardShards.reduce((s, i) => s + i.quantity, 0);
+
+      if (regularTotal + wildcardTotal < SHARDS_TO_MERGE) {
+        throw Object.assign(new Error('Not enough shards to merge.'), { status: 422 });
+      }
+
+      let needed = SHARDS_TO_MERGE;
+      let shardsUsed = 0;
+      let wildcardsUsed = 0;
+
+      // Consume regular shards first
+      for (const item of regularShards) {
+        if (needed <= 0) break;
+        const consume = Math.min(item.quantity, needed);
+        const remaining = item.quantity - consume;
+        if (remaining === 0) {
+          await tx.inventoryItem.update({ where: { id: item.id }, data: { redeemed: true, redeemedAt: new Date() } });
+        } else {
+          await tx.inventoryItem.update({ where: { id: item.id }, data: { quantity: remaining } });
+        }
+        needed    -= consume;
+        shardsUsed += consume;
+      }
+
+      // Fill gap with wildcards
+      for (const item of wildcardShards) {
+        if (needed <= 0) break;
+        const consume = Math.min(item.quantity, needed);
+        const remaining = item.quantity - consume;
+        if (remaining === 0) {
+          await tx.inventoryItem.update({ where: { id: item.id }, data: { redeemed: true, redeemedAt: new Date() } });
+        } else {
+          await tx.inventoryItem.update({ where: { id: item.id }, data: { quantity: remaining } });
+        }
+        needed       -= consume;
+        wildcardsUsed += consume;
+      }
+
+      // Create the voucher
+      const voucher = await tx.inventoryItem.create({
+        data: { userId: req.user.id, type: 'MUG_VOUCHER', productId: String(productId), source: 'MERGE' },
+      });
+
+      // Record the merge
+      await tx.shardMerge.create({
+        data: {
+          userId:        req.user.id,
+          productId:     String(productId),
+          shardsUsed,
+          wildcardCount: wildcardsUsed,
+          voucherItemId: voucher.id,
+        },
+      });
+
+      return { voucher, shardsUsed, wildcardsUsed };
+    });
+
+    return res.status(201).json(result);
+  } catch (err) {
+    if (err.status === 422) return res.status(422).json({ error: err.message });
+    console.error('[crates] mergeShards error', err.message);
+    return res.status(500).json({ error: 'Could not merge shards.' });
+  }
+}
+
+/**
+ * POST /api/crates/redeem/:voucherId
+ * Convert a MUG_VOUCHER into a $0 Stripe checkout session.
+ */
+async function redeemVoucher(req, res) {
+  const { voucherId } = req.params;
+  try {
+    const voucher = await prisma.inventoryItem.findFirst({
+      where: { id: voucherId, userId: req.user.id, type: 'MUG_VOUCHER', redeemed: false },
+    });
+    if (!voucher) return res.status(404).json({ error: 'Voucher not found or already redeemed.' });
+
+    const product = await prisma.shopProduct.findUnique({
+      where: { id: voucher.productId },
+      select: { id: true, pname: true, imageLeft: true, printifyIdLeft: true, variantIdLeft: true },
+    });
+    if (!product) return res.status(404).json({ error: 'Voucher product not found.' });
+
+    const successUrl = config.stripe.successUrl + '?session_id={CHECKOUT_SESSION_ID}';
+    const cancelUrl  = config.stripe.cancelUrl;
+
+    const items = [{
+      name:              product.pname,
+      price:             0,
+      qty:               1,
+      image:             product.imageLeft || undefined,
+      printifyProductId: product.printifyIdLeft || undefined,
+      variantId:         product.variantIdLeft  || undefined,
+      placement:         'left',
+    }];
+
+    const metadata = {
+      items: JSON.stringify([{
+        printifyProductId: product.printifyIdLeft || null,
+        variantId:         product.variantIdLeft  || null,
+        qty:               1,
+        placement:         'left',
+      }]),
+      userId:    req.user.id,
+      userEmail: req.user.email,
+      voucherId,
+    };
+
+    // Mark redeemed and create session atomically
+    let session;
+    await prisma.$transaction(async (tx) => {
+      await tx.inventoryItem.update({
+        where: { id: voucherId },
+        data:  { redeemed: true, redeemedAt: new Date() },
+      });
+      session = await stripeSvc.createCheckoutSession(
+        items, metadata, successUrl, cancelUrl, req.user.email, null
+      );
+    });
+
+    return res.json({ url: session.url });
+  } catch (err) {
+    console.error('[crates] redeemVoucher error', err.message);
+    return res.status(500).json({ error: 'Could not redeem voucher.' });
+  }
+}
+
 module.exports = {
   listCrates,
   myInventory,
   openCrate,
   claimPrize,
+  getInventory,
+  mergeShards,
+  redeemVoucher,
   adminListCrates,
   adminCreateCrate,
   adminUpdateCrate,
