@@ -516,7 +516,7 @@
       <button class="mkt-back-btn" onclick="goToStep1()"><i class="fas fa-arrow-left"></i> Back</button>
       <!-- Selected item strip -->
       <div class="inv-selected-strip" id="selected-strip">
-        <div class="strip-icon" id="strip-img-wrap"></div>
+        <div class="strip-icon" id="strip-img-wrap" style="overflow:hidden"></div>
         <div class="inv-selected-strip-info">
           <div class="inv-selected-strip-label" id="strip-label"></div>
           <div class="inv-selected-strip-type"  id="strip-type"></div>
@@ -909,11 +909,13 @@
   // Store loaded items globally for picker
   var _invPickerItems = [];
 
+  // pickInvItem kept as fallback (no longer used by renderInvPicker)
   window.pickInvItem = function (idx) {
-    document.querySelectorAll('.inv-pick-card').forEach(function (c) { c.classList.remove('chosen'); });
     var card = document.querySelector('.inv-pick-card[data-idx="' + idx + '"]');
-    if (card) card.classList.add('chosen');
-    setTimeout(function () { goToStep2(_invPickerItems[idx]); }, 160);
+    if (!card) return;
+    document.querySelectorAll('.inv-pick-card').forEach(function (c) { c.classList.remove('chosen'); });
+    card.classList.add('chosen');
+    setTimeout(function () { goToStep2(_invPickerItems[idx]); }, 150);
   };
 
   window.openCreateModal = function () {
