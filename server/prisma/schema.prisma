@@ -283,6 +283,12 @@ model MarketListing {
   category    String   @default("other")  // "mugs" | "accessories" | "art" | "other"
   imageUrl    String   @default("")
   status      String   @default("ACTIVE") // "ACTIVE" | "SOLD" | "REMOVED"
+
+  // Source inventory linkage (populated when seller picks from their inventory)
+  sourceType            String  @default("MANUAL") // "MANUAL" | "INVENTORY_ITEM" | "CRATE_KEY"
+  sourceInventoryItemId String? // InventoryItem.id
+  sourceUserCrateId     String? // UserCrate.id
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

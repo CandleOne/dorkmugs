@@ -217,11 +217,75 @@
   .mkt-login-cta a { color: #a259e6; font-weight: 700; text-decoration: none; }
   .mkt-login-cta a:hover { text-decoration: underline; }
 
+  /* ── Inventory picker (step 1) ────────────────────────────────────────── */
+  .inv-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px; max-height: 360px; overflow-y: auto;
+    padding: 4px 2px; margin-bottom: 16px;
+  }
+  .inv-pick-card {
+    border: 2px solid #e5daf5; border-radius: 10px;
+    padding: 12px 10px; cursor: pointer; text-align: center;
+    background: #fdfaff; transition: border-color 0.15s, background 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+  }
+  .inv-pick-card:hover  { border-color: #c58af5; background: #f7eeff; }
+  .inv-pick-card.chosen { border-color: #a259e6; background: #f0e0ff; }
+  .inv-pick-card img {
+    width: 72px; height: 72px; object-fit: cover; border-radius: 6px;
+    background: #ede0ff;
+  }
+  .inv-pick-card-icon {
+    width: 72px; height: 72px; background: #ede0ff; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: #c58af5;
+  }
+  .inv-pick-card-label { font-size: 0.78rem; font-weight: 700; color: #1a0a2e; line-height: 1.3; }
+  .inv-pick-card-type  { font-size: 0.7rem; color: #a259e6; font-weight: 600; }
+
+  /* Step indicator */
+  .mkt-steps {
+    display: flex; gap: 0; margin-bottom: 22px; border-bottom: 2px solid #f0e8ff;
+  }
+  .mkt-step {
+    flex: 1; text-align: center; padding: 8px 0; font-size: 0.82rem;
+    font-weight: 700; color: #bbb; cursor: default;
+  }
+  .mkt-step.active { color: #a259e6; border-bottom: 2px solid #a259e6; margin-bottom: -2px; }
+  .mkt-step.done   { color: #2a7a4b; }
+
+  .mkt-step-pane { display: none; }
+  .mkt-step-pane.active { display: block; }
+
+  /* Selected item summary strip */
+  .inv-selected-strip {
+    display: flex; align-items: center; gap: 12px;
+    background: #f7eeff; border: 1.5px solid #e0ccff; border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 18px;
+  }
+  .inv-selected-strip img,
+  .inv-selected-strip .strip-icon {
+    width: 44px; height: 44px; object-fit: cover; border-radius: 6px;
+    background: #ede0ff; display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; color: #c58af5; flex-shrink: 0;
+  }
+  .inv-selected-strip-info { flex: 1; }
+  .inv-selected-strip-label { font-size: 0.9rem; font-weight: 700; color: #1a0a2e; }
+  .inv-selected-strip-type  { font-size: 0.75rem; color: #a259e6; }
+
+  .mkt-back-btn {
+    background: none; border: none; color: #a259e6; font-size: 0.85rem;
+    font-weight: 700; cursor: pointer; padding: 0 0 14px; display: inline-flex;
+    align-items: center; gap: 5px;
+  }
+
   @media (max-width: 600px) {
     .market-hero h1 { font-size: 1.5rem; }
     .market-filters { flex-direction: column; align-items: stretch; }
     .market-search-input { max-width: 100%; }
     .mkt-modal { padding: 22px; }
+    .inv-picker-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
   }
 </style>
 </head>
@@ -426,49 +490,51 @@
 <!-- Toast -->
 <div id="cart-toast" class="cart-toast"></div>
 
-<!-- ─── Create / Edit Listing Modal ────────────────────────────────────────── -->
+<!-- ─── Create Listing Modal (2-step: pick from inventory → set price) ─────── -->
 <div class="mkt-modal-overlay" id="create-modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
   <div class="mkt-modal">
     <button class="mkt-modal-close" onclick="closeModal('create-modal')" aria-label="Close">&times;</button>
     <h3 id="create-modal-title">Post a Listing</h3>
-    <form id="create-form" onsubmit="submitListing(event)">
-      <div class="mkt-field">
-        <label for="f-title">Title *</label>
-        <input type="text" id="f-title" maxlength="120" placeholder="What are you selling?" required />
+
+    <!-- Step indicator -->
+    <div class="mkt-steps">
+      <div class="mkt-step active" id="step-ind-1">1 · Choose Item</div>
+      <div class="mkt-step"        id="step-ind-2">2 · Set Price &amp; Details</div>
+    </div>
+
+    <!-- Step 1: inventory picker -->
+    <div class="mkt-step-pane active" id="step-pane-1">
+      <p style="font-size:0.88rem;color:#666;margin:0 0 14px">Select an item from your inventory to list for sale.</p>
+      <div id="inv-picker-body">
+        <div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i> Loading inventory…</div>
       </div>
-      <div class="mkt-field">
-        <label for="f-price">Price ($) *</label>
-        <input type="number" id="f-price" min="0.01" max="99999" step="0.01" placeholder="0.00" required />
+      <div id="inv-picker-err" class="mkt-err"></div>
+    </div>
+
+    <!-- Step 2: price / details form -->
+    <div class="mkt-step-pane" id="step-pane-2">
+      <button class="mkt-back-btn" onclick="goToStep1()"><i class="fas fa-arrow-left"></i> Back</button>
+      <!-- Selected item strip -->
+      <div class="inv-selected-strip" id="selected-strip">
+        <div class="strip-icon" id="strip-img-wrap"></div>
+        <div class="inv-selected-strip-info">
+          <div class="inv-selected-strip-label" id="strip-label"></div>
+          <div class="inv-selected-strip-type"  id="strip-type"></div>
+        </div>
       </div>
-      <div class="mkt-field">
-        <label for="f-category">Category</label>
-        <select id="f-category">
-          <option value="mugs">Mugs</option>
-          <option value="accessories">Accessories</option>
-          <option value="art">Art</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div class="mkt-field">
-        <label for="f-condition">Condition</label>
-        <select id="f-condition">
-          <option value="new">New</option>
-          <option value="like-new">Like New</option>
-          <option value="used" selected>Used</option>
-          <option value="for-parts">For Parts</option>
-        </select>
-      </div>
-      <div class="mkt-field">
-        <label for="f-image">Image URL (https://…)</label>
-        <input type="url" id="f-image" maxlength="500" placeholder="https://example.com/photo.jpg" />
-      </div>
-      <div class="mkt-field">
-        <label for="f-desc">Description</label>
-        <textarea id="f-desc" maxlength="2000" placeholder="Describe your item — condition details, size, any defects…"></textarea>
-      </div>
-      <div id="create-err" class="mkt-err"></div>
-      <button type="submit" class="mkt-submit-btn" id="create-submit-btn">Post Listing</button>
-    </form>
+      <form id="create-form" onsubmit="submitListing(event)">
+        <div class="mkt-field">
+          <label for="f-price">Your asking price ($) *</label>
+          <input type="number" id="f-price" min="0.01" max="99999" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="mkt-field">
+          <label for="f-desc">Add a note (optional)</label>
+          <textarea id="f-desc" maxlength="2000" rows="3" placeholder="Any extra details for the buyer…"></textarea>
+        </div>
+        <div id="create-err" class="mkt-err"></div>
+        <button type="submit" class="mkt-submit-btn" id="create-submit-btn">Post Listing</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -765,32 +831,136 @@
       });
   };
 
-  /* ── Create listing ───────────────────────────────────────────────────────── */
-  window.openCreateModal = function () {
-    var user = Auth.getUser && Auth.getUser();
-    if (!user) { window.location.href = 'login.html'; return; }
-    document.getElementById('create-form').reset();
+  /* ── Create listing — inventory picker ──────────────────────────────────── */
+  var selectedInvItem = null; // the chosen inventory item object
+
+  var INV_TYPE_LABELS = {
+    CRATE_KEY:        'Crate Key',
+    MUG_VOUCHER:      'Mug Voucher',
+    SHARD:            'Mug Shard',
+    WILDCARD_SHARD:   'Wildcard Shard',
+    DISCOUNT_VOUCHER: 'Discount Voucher',
+  };
+  var INV_TYPE_ICONS = {
+    CRATE_KEY:        'fas fa-box',
+    MUG_VOUCHER:      'fas fa-mug-hot',
+    SHARD:            'fas fa-puzzle-piece',
+    WILDCARD_SHARD:   'fas fa-star',
+    DISCOUNT_VOUCHER: 'fas fa-tag',
+  };
+
+  function goToStep1() {
+    selectedInvItem = null;
+    document.getElementById('step-pane-1').classList.add('active');
+    document.getElementById('step-pane-2').classList.remove('active');
+    document.getElementById('step-ind-1').classList.add('active');
+    document.getElementById('step-ind-1').classList.remove('done');
+    document.getElementById('step-ind-2').classList.remove('active');
+  }
+
+  function goToStep2(item) {
+    selectedInvItem = item;
+
+    // Fill selected strip
+    var imgWrap = document.getElementById('strip-img-wrap');
+    if (item.image) {
+      imgWrap.outerHTML = '<img id="strip-img-wrap" class="strip-icon" src="' + esc(item.image) + '" alt="' + esc(item.label) + '" onerror="this.outerHTML=\'<div id=\\\"strip-img-wrap\\\" class=\\\"strip-icon\\\"><i class=\\\"' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '\\\"></i></div>\'" />';
+    } else {
+      imgWrap.outerHTML = '<div id="strip-img-wrap" class="strip-icon"><i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i></div>';
+    }
+    document.getElementById('strip-label').textContent = item.label;
+    document.getElementById('strip-type').textContent  = INV_TYPE_LABELS[item.itemType] || item.itemType;
+
+    // Pre-fill suggested price
+    document.getElementById('f-price').value = item.suggestedPrice || '';
+    document.getElementById('f-desc').value  = '';
     document.getElementById('create-err').textContent = '';
     document.getElementById('create-submit-btn').disabled = false;
     document.getElementById('create-submit-btn').textContent = 'Post Listing';
+
+    document.getElementById('step-pane-1').classList.remove('active');
+    document.getElementById('step-pane-2').classList.add('active');
+    document.getElementById('step-ind-1').classList.remove('active');
+    document.getElementById('step-ind-1').classList.add('done');
+    document.getElementById('step-ind-2').classList.add('active');
+  }
+
+  function renderInvPicker(items) {
+    var body = document.getElementById('inv-picker-body');
+    if (!items.length) {
+      body.innerHTML = '<div class="mkt-empty" style="padding:30px 0"><i class="fas fa-box-open"></i>' +
+        'Your inventory is empty.<br><a href="crates.html" style="color:#a259e6;font-weight:700">Buy a crate</a> to get items to sell!</div>';
+      return;
+    }
+    body.innerHTML = '<div class="inv-picker-grid">' +
+      items.map(function (item, idx) {
+        var iconOrImg = item.image
+          ? '<img src="' + esc(item.image) + '" alt="' + esc(item.label) + '" onerror="this.outerHTML=\'<div class=\\\"inv-pick-card-icon\\\"><i class=\\\"' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '\\\"></i></div>\'" />'
+          : '<div class="inv-pick-card-icon"><i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i></div>';
+        return '<div class="inv-pick-card" data-idx="' + idx + '" onclick="pickInvItem(' + idx + ')">' +
+          iconOrImg +
+          '<div class="inv-pick-card-label">' + esc(item.label) + '</div>' +
+          '<div class="inv-pick-card-type">' + esc(INV_TYPE_LABELS[item.itemType] || item.itemType) + '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  // Store loaded items globally for picker
+  var _invPickerItems = [];
+
+  window.pickInvItem = function (idx) {
+    document.querySelectorAll('.inv-pick-card').forEach(function (c) { c.classList.remove('chosen'); });
+    var card = document.querySelector('.inv-pick-card[data-idx="' + idx + '"]');
+    if (card) card.classList.add('chosen');
+    setTimeout(function () { goToStep2(_invPickerItems[idx]); }, 160);
+  };
+
+  window.openCreateModal = function () {
+    var user = Auth.getUser && Auth.getUser();
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    // Reset to step 1
+    goToStep1();
     openModal('create-modal');
+
+    var body = document.getElementById('inv-picker-body');
+    body.innerHTML = '<div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i> Loading inventory…</div>';
+    document.getElementById('inv-picker-err').textContent = '';
+
+    apiFetch('GET', '/market/listable')
+      .then(function (data) {
+        _invPickerItems = data.items || [];
+        renderInvPicker(_invPickerItems);
+      })
+      .catch(function (ex) {
+        body.innerHTML = '';
+        document.getElementById('inv-picker-err').textContent = ex.message;
+      });
   };
 
   window.submitListing = function (e) {
     e.preventDefault();
+    if (!selectedInvItem) return;
     var btn = document.getElementById('create-submit-btn');
     var err = document.getElementById('create-err');
     btn.disabled = true; btn.textContent = 'Posting…';
     err.textContent = '';
 
-    apiFetch('POST', '/market', {
-      title:       document.getElementById('f-title').value.trim(),
+    var body = {
+      title:       selectedInvItem.label,
       price:       parseFloat(document.getElementById('f-price').value),
-      category:    document.getElementById('f-category').value,
-      condition:   document.getElementById('f-condition').value,
-      imageUrl:    document.getElementById('f-image').value.trim(),
-      description: document.getElementById('f-desc').value.trim(),
-    })
+      category:    selectedInvItem.category,
+      condition:   selectedInvItem.condition,
+      imageUrl:    selectedInvItem.image || '',
+      description: (selectedInvItem.description || '') +
+                   (document.getElementById('f-desc').value.trim() ? '\n\n' + document.getElementById('f-desc').value.trim() : ''),
+      sourceType:  selectedInvItem.sourceType,
+    };
+    if (selectedInvItem.sourceType === 'INVENTORY_ITEM') body.sourceInventoryItemId = selectedInvItem.sourceId;
+    if (selectedInvItem.sourceType === 'CRATE_KEY')      body.sourceUserCrateId     = selectedInvItem.sourceId;
+
+    apiFetch('POST', '/market', body)
       .then(function () {
         closeModal('create-modal');
         showToast('Listing posted!');
