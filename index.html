@@ -29,8 +29,6 @@
 
 <div class="container">
 
-  <a href="crates.html" class="dork case banner addork-1" style="background-image: url('./Assets/Branding/dorkcases.png'); display:block; cursor:pointer; width:100%; min-height:580px; background-size:cover; background-position:center; background-repeat:no-repeat;" aria-label="Shop Dork Cases"></a>
-
   <!-- Announcement Bar -->
   <div class="announcement-bar">
     Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
@@ -217,6 +215,21 @@
 
 </div>
 
+<!-- Dork Cases Promo Modal -->
+<div id="cases-modal-overlay" class="cases-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cases-modal-title">
+  <div class="cases-modal">
+    <button class="cases-modal-close" id="cases-modal-close" aria-label="Close">&times;</button>
+    <div class="cases-modal-img" style="background-image:url('./Assets/Branding/dorkcases.png');"></div>
+    <div class="cases-modal-body">
+      <span class="cases-modal-eyebrow">NEW FEATURE</span>
+      <h2 id="cases-modal-title">Dork Cases are here.</h2>
+      <p>Buy a Dork Crate key and open it for a chance to score a mug at a steep discount. Random prizes, rare drops, and big savings await.</p>
+      <a href="crates.html" class="cases-modal-cta">Try Dork Cases</a>
+      <button class="cases-modal-skip" id="cases-modal-skip">Maybe later</button>
+    </div>
+  </div>
+</div>
+
 <!-- Cart Overlay -->
 <div id="cart-overlay" class="cart-overlay"></div>
 
@@ -241,9 +254,95 @@
 <!-- Toast -->
 <div id="cart-toast" class="cart-toast"></div>
 
+<style>
+.cases-modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.65);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: cmFadeIn .25s ease;
+}
+.cases-modal-overlay.hidden { display: none; }
+@keyframes cmFadeIn { from { opacity:0; } to { opacity:1; } }
+.cases-modal {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  position: relative;
+  animation: cmSlideUp .28s ease;
+}
+@keyframes cmSlideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.cases-modal-img {
+  width: 100%; height: 220px;
+  background-size: cover; background-position: center;
+  background-repeat: no-repeat;
+}
+.cases-modal-body {
+  padding: 28px 32px 32px;
+  text-align: center;
+}
+.cases-modal-eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #fff; background: #1a3a5c;
+  border-radius: 20px; padding: 3px 12px; margin-bottom: 12px;
+}
+.cases-modal-body h2 {
+  font-size: 1.7rem; margin: 0 0 12px; color: #0d1b2a;
+}
+.cases-modal-body p {
+  color: #555; font-size: .97rem; line-height: 1.55; margin: 0 0 24px;
+}
+.cases-modal-cta {
+  display: inline-block;
+  background: #1a3a5c; color: #fff;
+  font-weight: 700; font-size: 1rem;
+  padding: 13px 32px; border-radius: 8px;
+  text-decoration: none; letter-spacing: .04em;
+  transition: background .18s;
+}
+.cases-modal-cta:hover { background: #0d1b2a; }
+.cases-modal-skip {
+  display: block; margin: 14px auto 0;
+  background: none; border: none;
+  color: #888; font-size: .88rem;
+  cursor: pointer; text-decoration: underline;
+  padding: 0;
+}
+.cases-modal-skip:hover { color: #333; }
+.cases-modal-close {
+  position: absolute; top: 10px; right: 12px;
+  background: rgba(0,0,0,.35); border: none;
+  color: #fff; font-size: 1.3rem; line-height: 1;
+  width: 30px; height: 30px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  z-index: 1;
+}
+.cases-modal-close:hover { background: rgba(0,0,0,.6); }
+</style>
 <script src="./include/cart.js"></script>
 <script src="./include/auth.js"></script>
 <script src="./include/sexymode.js"></script>
+<script>
+(function () {
+  var STORAGE_KEY = 'dm_cases_modal_dismissed';
+  // Show at most once per session
+  if (sessionStorage.getItem(STORAGE_KEY)) return;
+  var overlay = document.getElementById('cases-modal-overlay');
+  function dismiss() {
+    sessionStorage.setItem(STORAGE_KEY, '1');
+    overlay.classList.add('hidden');
+  }
+  document.getElementById('cases-modal-close').addEventListener('click', dismiss);
+  document.getElementById('cases-modal-skip').addEventListener('click', dismiss);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) dismiss(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dismiss(); });
+}());
+</script>
 <script>
 (function() {
   var form = document.getElementById('newsletter-form');
