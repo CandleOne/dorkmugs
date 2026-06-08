@@ -884,26 +884,69 @@
     document.getElementById('step-ind-2').classList.add('active');
     }
 
-  function renderInvPicker(items) {
-    var body = document.getElementById('inv-picker-body');
-    if (!items.length) {
-      body.innerHTML = '<div class="mkt-empty" style="padding:30px 0"><i class="fas fa-box-open"></i>' +
-        'Your inventory is empty.<br><a href="crates.html" style="color:#a259e6;font-weight:700">Buy a crate</a> to get items to sell!</div>';
-      return;
-    }
-    body.innerHTML = '<div class="inv-picker-grid">' +
-      items.map(function (item, idx) {
-        var iconOrImg = item.image
-          ? '<img src="' + esc(item.image) + '" alt="' + esc(item.label) + '" onerror="this.outerHTML=\'<div class=\\\"inv-pick-card-icon\\\"><i class=\\\"' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '\\\"></i></div>\'" />'
-          : '<div class="inv-pick-card-icon"><i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i></div>';
-        return '<div class="inv-pick-card" data-idx="' + idx + '" onclick="pickInvItem(' + idx + ')">' +
-          iconOrImg +
-          '<div class="inv-pick-card-label">' + esc(item.label) + '</div>' +
-          '<div class="inv-pick-card-type">' + esc(INV_TYPE_LABELS[item.itemType] || item.itemType) + '</div>' +
-        '</div>';
-      }).join('') +
-    '</div>';
+function renderInvPicker(items) {
+  var body = document.getElementById('inv-picker-body');
+  if (!items.length) {
+    body.innerHTML = '<div class="mkt-empty" style="padding:30px 0"><i class="fas fa-box-open"></i>' +
+      'Your inventory is empty.<br><a href="crates.html" style="color:#a259e6;font-weight:700">Buy a crate</a> to get items to sell!</div>';
+    return;
   }
+
+  // Build grid container
+  var grid = document.createElement('div');
+  grid.className = 'inv-picker-grid';
+
+  items.forEach(function (item, idx) {
+    var card = document.createElement('div');
+    card.className = 'inv-pick-card';
+    card.dataset.idx = idx;
+
+    // Image or icon — created as real DOM nodes, no string escaping
+    var mediaEl;
+    if (item.image) {
+      mediaEl = document.createElement('img');
+      mediaEl.src = item.image;
+      mediaEl.alt = item.label;
+      mediaEl.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:6px;background:#ede0ff;';
+      mediaEl.onerror = function () {
+        var icon = document.createElement('div');
+        icon.className = 'inv-pick-card-icon';
+        icon.innerHTML = '<i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i>';
+        mediaEl.parentNode.replaceChild(icon, mediaEl);
+      };
+    } else {
+      mediaEl = document.createElement('div');
+      mediaEl.className = 'inv-pick-card-icon';
+      mediaEl.innerHTML = '<i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i>';
+    }
+
+    var label = document.createElement('div');
+    label.className = 'inv-pick-card-label';
+    label.textContent = item.label;
+
+    var type = document.createElement('div');
+    type.className = 'inv-pick-card-type';
+    type.textContent = INV_TYPE_LABELS[item.itemType] || item.itemType;
+
+    card.appendChild(mediaEl);
+    card.appendChild(label);
+    card.appendChild(type);
+
+    // Click handler attached directly — no inline onclick, no string escaping
+    card.addEventListener('click', function () {
+      document.querySelectorAll('.inv-pick-card').forEach(function (c) {
+        c.classList.remove('chosen');
+      });
+      card.classList.add('chosen');
+      setTimeout(function () { goToStep2(_invPickerItems[idx]); }, 150);
+    });
+
+    grid.appendChild(card);
+  });
+
+  body.innerHTML = '';
+  body.appendChild(grid);
+}
 
   // Store loaded items globally for picker
   var _invPickerItems = [];
