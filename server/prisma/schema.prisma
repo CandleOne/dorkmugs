@@ -39,6 +39,8 @@ model User {
   userCrates     UserCrate[]
   inventoryItems InventoryItem[]
   shardMerges    ShardMerge[]
+  marketListings MarketListing[]
+  marketOffers   MarketOffer[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -263,6 +265,42 @@ model UserCrate {
   createdAt       DateTime  @default(now())
 
   opening CrateOpening?
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Peer-to-peer Market
+// Users can list items for sale. Status: ACTIVE | SOLD | REMOVED
+// ─────────────────────────────────────────────────────────────────────────────
+
+model MarketListing {
+  id          String   @id @default(cuid())
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @default("")
+  price       Float
+  condition   String   @default("used")   // "new" | "like-new" | "used" | "for-parts"
+  category    String   @default("other")  // "mugs" | "accessories" | "art" | "other"
+  imageUrl    String   @default("")
+  status      String   @default("ACTIVE") // "ACTIVE" | "SOLD" | "REMOVED"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  offers MarketOffer[]
+}
+
+// Buyer expresses interest / makes an offer on a listing.
+model MarketOffer {
+  id        String        @id @default(cuid())
+  listingId String
+  listing   MarketListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User          @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  message   String        @default("")
+  status    String        @default("PENDING") // "PENDING" | "ACCEPTED" | "DECLINED"
+  createdAt DateTime      @default(now())
+
+  @@unique([listingId, buyerId])
 }
 
 // Record of a crate being opened and the prize won.

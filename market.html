@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Market – Dork Mugs</title>
+<meta name="description" content="The Dork Mugs peer-to-peer market. Buy and sell mugs, accessories, and art directly with other community members." />
+<link rel="canonical" href="https://dorkmugs.shop/market.html" />
+<meta property="og:title" content="Market – Dork Mugs" />
+<meta property="og:description" content="Buy and sell mugs, accessories, and art directly with the Dork Mugs community." />
+<meta property="og:url" content="https://dorkmugs.shop/market.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Dork Mugs" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="./favicon.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<script src="./include/prodbs.js"></script>
+<link href="style.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+<style>
+  /* ── Market hero ──────────────────────────────────────────────────────── */
+  .market-hero {
+    text-align: center;
+    padding: 48px 24px 32px;
+    background: linear-gradient(135deg, #1a0a2e 0%, #3b1f5e 50%, #1a0a2e 100%);
+    color: #fff;
+    border-radius: 12px;
+    margin: 0 0 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .market-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(180,100,255,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .market-hero h1 { font-size: 2.1rem; margin: 0 0 10px; letter-spacing: 1px; }
+  .market-hero p  { font-size: 1rem; opacity: 0.85; max-width: 500px; margin: 0 auto 24px; }
+  .market-hero-btn {
+    display: inline-block;
+    background: #a259e6; color: #fff; border: none;
+    padding: 12px 28px; border-radius: 8px; font-size: 1rem;
+    cursor: pointer; font-weight: 600; transition: background 0.2s;
+    text-decoration: none;
+  }
+  .market-hero-btn:hover { background: #8a42cc; }
+
+  /* ── Tabs ──────────────────────────────────────────────────────────────── */
+  .market-tabs {
+    display: flex; gap: 8px; margin-bottom: 24px;
+  }
+  .market-tab {
+    padding: 9px 22px; border-radius: 8px; border: 2px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 0.95rem;
+    font-weight: 600; color: #555; transition: all 0.15s;
+  }
+  .market-tab.active { border-color: #a259e6; color: #a259e6; background: #f7f0ff; }
+
+  /* ── Filter bar ────────────────────────────────────────────────────────── */
+  .market-filters {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .market-filters label { font-size: 0.88rem; font-weight: 600; color: #555; }
+  .market-filters select {
+    border: 1.5px solid #ddd; border-radius: 7px; padding: 7px 12px;
+    font-size: 0.9rem; background: #fff; color: #333;
+  }
+  .market-search-input {
+    flex: 1; min-width: 180px; max-width: 300px;
+    border: 1.5px solid #ddd; border-radius: 7px; padding: 7px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* ── Listing grid ──────────────────────────────────────────────────────── */
+  .market-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+    min-height: 200px;
+  }
+  .market-card {
+    border: 1.5px solid #e5daf5; border-radius: 12px;
+    background: #fff; overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .market-card:hover { box-shadow: 0 6px 28px rgba(162,89,230,0.16); transform: translateY(-3px); }
+  .market-card-img {
+    width: 100%; aspect-ratio: 1; object-fit: cover;
+    background: #f3eeff;
+  }
+  .market-card-img-placeholder {
+    width: 100%; aspect-ratio: 1;
+    background: linear-gradient(135deg, #f3eeff 0%, #e0ccff 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; color: #c9a5f0;
+  }
+  .market-card-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .market-card-title { font-size: 0.97rem; font-weight: 700; color: #1a1a2e; margin: 0; }
+  .market-card-price { font-size: 1.1rem; font-weight: 700; color: #a259e6; }
+  .market-card-meta  { font-size: 0.78rem; color: #888; display: flex; gap: 8px; flex-wrap: wrap; }
+  .market-card-seller { font-size: 0.8rem; color: #666; }
+  .market-card-badge {
+    display: inline-block; font-size: 0.7rem; padding: 2px 8px;
+    border-radius: 20px; font-weight: 600;
+  }
+  .badge-new       { background: #e6f7ec; color: #2a7a4b; }
+  .badge-like-new  { background: #e8f0ff; color: #2a54a5; }
+  .badge-used      { background: #fff3e0; color: #a05500; }
+  .badge-for-parts { background: #fce8e8; color: #a02020; }
+
+  .market-status-sold    { opacity: 0.55; }
+  .market-sold-label {
+    position: absolute; top: 10px; left: 10px;
+    background: #333; color: #fff; font-size: 0.72rem;
+    padding: 3px 10px; border-radius: 20px; font-weight: 700;
+  }
+  .market-card-wrap { position: relative; }
+
+  /* ── "My Listings" table ───────────────────────────────────────────────── */
+  .my-listings-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .my-listings-table th {
+    text-align: left; padding: 9px 14px; background: #f7f0ff;
+    border-bottom: 2px solid #e5daf5; font-weight: 700; color: #555;
+  }
+  .my-listings-table td { padding: 9px 14px; border-bottom: 1px solid #f0e8ff; vertical-align: middle; }
+  .my-listings-table tr:last-child td { border-bottom: none; }
+  .ml-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ml-btn {
+    font-size: 0.8rem; padding: 5px 12px; border-radius: 6px;
+    border: none; cursor: pointer; font-weight: 600; transition: opacity 0.15s;
+  }
+  .ml-btn:hover { opacity: 0.8; }
+  .ml-btn-primary  { background: #a259e6; color: #fff; }
+  .ml-btn-danger   { background: #e63946; color: #fff; }
+  .ml-btn-sold     { background: #555; color: #fff; }
+  .ml-btn-offers   { background: #1a6fc4; color: #fff; }
+
+  /* ── Modal backdrop ────────────────────────────────────────────────────── */
+  .mkt-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(10,6,20,0.6); backdrop-filter: blur(2px);
+    align-items: center; justify-content: center;
+  }
+  .mkt-modal-overlay.open { display: flex; }
+  .mkt-modal {
+    background: #fff; border-radius: 14px; padding: 32px;
+    width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+    position: relative; box-shadow: 0 12px 48px rgba(162,89,230,0.25);
+  }
+  .mkt-modal h3 { margin: 0 0 20px; font-size: 1.3rem; color: #1a0a2e; }
+  .mkt-modal-close {
+    position: absolute; top: 16px; right: 18px;
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;
+  }
+  .mkt-field { margin-bottom: 16px; }
+  .mkt-field label { display: block; font-size: 0.87rem; font-weight: 600; margin-bottom: 5px; color: #444; }
+  .mkt-field input,
+  .mkt-field textarea,
+  .mkt-field select {
+    width: 100%; padding: 9px 12px; border: 1.5px solid #ddd;
+    border-radius: 8px; font-size: 0.93rem; box-sizing: border-box;
+    font-family: inherit;
+  }
+  .mkt-field textarea { resize: vertical; min-height: 90px; }
+  .mkt-field input:focus,
+  .mkt-field textarea:focus,
+  .mkt-field select:focus { outline: none; border-color: #a259e6; }
+  .mkt-submit-btn {
+    width: 100%; padding: 12px; background: #a259e6; color: #fff;
+    border: none; border-radius: 9px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s; margin-top: 4px;
+  }
+  .mkt-submit-btn:hover { background: #8a42cc; }
+  .mkt-submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+  .mkt-err { color: #e63946; font-size: 0.85rem; margin-top: 8px; }
+
+  /* ── Listing detail modal ──────────────────────────────────────────────── */
+  .detail-img {
+    width: 100%; max-height: 300px; object-fit: contain;
+    border-radius: 8px; background: #f3eeff; margin-bottom: 16px;
+  }
+  .detail-price { font-size: 1.6rem; font-weight: 800; color: #a259e6; margin: 0 0 8px; }
+  .detail-meta  { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; font-size: 0.85rem; color: #666; }
+  .detail-desc  { font-size: 0.93rem; color: #333; white-space: pre-wrap; margin-bottom: 20px; }
+  .detail-seller { font-size: 0.88rem; color: #555; margin-bottom: 20px; }
+
+  /* ── Offers modal list ─────────────────────────────────────────────────── */
+  .offer-row {
+    border-bottom: 1px solid #f0e8ff; padding: 12px 0;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .offer-row:last-child { border-bottom: none; }
+  .offer-buyer { font-weight: 700; font-size: 0.9rem; }
+  .offer-msg   { font-size: 0.87rem; color: #555; white-space: pre-wrap; }
+  .offer-status-badge {
+    display: inline-block; font-size: 0.72rem; padding: 2px 8px;
+    border-radius: 20px; font-weight: 700;
+  }
+  .offer-PENDING  { background: #fff3cd; color: #856404; }
+  .offer-ACCEPTED { background: #d4edda; color: #155724; }
+  .offer-DECLINED { background: #f8d7da; color: #721c24; }
+
+  /* ── Misc ──────────────────────────────────────────────────────────────── */
+  .mkt-empty {
+    text-align: center; padding: 60px 24px; color: #999; font-size: 1rem;
+  }
+  .mkt-empty i { font-size: 2.5rem; display: block; margin-bottom: 12px; color: #d4b8f5; }
+  .mkt-loading { text-align: center; padding: 40px; color: #aaa; }
+
+  .mkt-login-cta {
+    background: #f7f0ff; border: 1.5px solid #e0ccff; border-radius: 10px;
+    padding: 18px 22px; text-align: center; margin-bottom: 24px; font-size: 0.95rem;
+  }
+  .mkt-login-cta a { color: #a259e6; font-weight: 700; text-decoration: none; }
+  .mkt-login-cta a:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    .market-hero h1 { font-size: 1.5rem; }
+    .market-filters { flex-direction: column; align-items: stretch; }
+    .market-search-input { max-width: 100%; }
+    .mkt-modal { padding: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
+  </div>
+
+  <!-- Search Bar -->
+  <div class="srcbar-wrap">
+  <form class="srcbartn" action="search.html">
+    <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
+           oninput="_srcSearch()" autocomplete="off" />
+    <button type="submit"><i class="fa fa-search"></i></button>
+    <ul id="productline"></ul>
+  </form>
+  <script>
+    function _escSafe(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function _srcPopulate() {
+      var prdlin = document.getElementById("productline");
+      if (!prdlin || prdlin.children.length) return;
+      var allist = "";
+      for (var i = 0; i < prodb.length; i++) {
+        allist += "<li id='liid" + i + "'><a href='item.html?id=" + encodeURIComponent(prodb[i].id) + "'>" + _escSafe(prodb[i].pname) + "</a></li>";
+      }
+      prdlin.innerHTML = allist;
+    }
+    function _srcSearch() {
+      _srcPopulate();
+      var filter = document.getElementById("srch001").value.toUpperCase();
+      var prdlin = document.getElementById("productline");
+      prdlin.style.display = filter ? '' : 'none';
+      for (var i = 0; i < prodb.length; i++) {
+        var el = document.getElementById("liid" + i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.srcbartn')) {
+        var pl = document.getElementById('productline');
+        if (pl) pl.style.display = 'none';
+      }
+    });
+  </script>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="crates.html">Crates</a></li>
+        <li><a href="market.html" class="active">Market</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li class="nav-auth-item" id="nav-li-login"><a href="login.html">Log In</a></li>
+        <li class="nav-auth-item" id="nav-li-signup"><a href="register.html">Sign Up</a></li>
+        <li class="nav-auth-item" id="nav-li-account" style="display:none"><a href="account.html">My Account</a></li>
+        <li class="nav-auth-item" id="nav-li-logout" style="display:none"><a href="#" id="nav-logout-link">Log Out</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button">Log In</button>
+      <button id="btn001" type="button">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" title="View cart" aria-label="View cart"><i class="fas fa-shopping-cart fa-lg"></i></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+      <button id="btn-sexy-mode" type="button" class="sexy-mode-btn" title="Sexy Mode: OFF" aria-label="Toggle Sexy Mode">🐾</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="market-hero">
+    <h1><i class="fas fa-store-alt"></i> Dork Market</h1>
+    <p>Buy and sell mugs, accessories, and art directly with the community.</p>
+    <button class="market-hero-btn" id="hero-post-btn">+ Post a Listing</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="market-tabs">
+    <button class="market-tab active" id="tab-browse" onclick="showTab('browse')">Browse Listings</button>
+    <button class="market-tab" id="tab-mine" onclick="showTab('mine')">My Listings</button>
+  </div>
+
+  <!-- Login CTA (shown when not logged in) -->
+  <div class="mkt-login-cta" id="login-cta" style="display:none">
+    <a href="login.html">Log in</a> or <a href="register.html">sign up</a> to post a listing or make offers.
+  </div>
+
+  <!-- Browse Tab -->
+  <div id="pane-browse">
+    <!-- Filters -->
+    <div class="market-filters">
+      <input type="text" id="mkt-search" class="market-search-input" placeholder="Search listings..." oninput="applyFilters()" />
+      <label>Category:
+        <select id="mkt-cat" onchange="applyFilters()">
+          <option value="">All Categories</option>
+          <option value="mugs">Mugs</option>
+          <option value="accessories">Accessories</option>
+          <option value="art">Art</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label>Sort:
+        <select id="mkt-sort" onchange="loadListings()">
+          <option value="">Newest</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Grid -->
+    <div class="market-grid" id="market-grid">
+      <div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i> Loading listings…</div>
+    </div>
+    <div id="mkt-no-results" class="mkt-empty" style="display:none">
+      <i class="fas fa-store-slash"></i>No listings found.
+    </div>
+  </div>
+
+  <!-- My Listings Tab -->
+  <div id="pane-mine" style="display:none">
+    <div style="margin-bottom:16px">
+      <button class="market-hero-btn" onclick="openCreateModal()">+ Post a Listing</button>
+    </div>
+    <div id="my-listings-wrap">
+      <div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i> Loading your listings…</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Info</h4>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="shipping.html">Shipping</a></li>
+          <li><a href="returns.html">Returns</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+
+</div>
+
+<!-- Cart Overlay -->
+<div id="cart-overlay" class="cart-overlay"></div>
+
+<!-- Cart Drawer -->
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div id="cart-toast" class="cart-toast"></div>
+
+<!-- ─── Create / Edit Listing Modal ────────────────────────────────────────── -->
+<div class="mkt-modal-overlay" id="create-modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
+  <div class="mkt-modal">
+    <button class="mkt-modal-close" onclick="closeModal('create-modal')" aria-label="Close">&times;</button>
+    <h3 id="create-modal-title">Post a Listing</h3>
+    <form id="create-form" onsubmit="submitListing(event)">
+      <div class="mkt-field">
+        <label for="f-title">Title *</label>
+        <input type="text" id="f-title" maxlength="120" placeholder="What are you selling?" required />
+      </div>
+      <div class="mkt-field">
+        <label for="f-price">Price ($) *</label>
+        <input type="number" id="f-price" min="0.01" max="99999" step="0.01" placeholder="0.00" required />
+      </div>
+      <div class="mkt-field">
+        <label for="f-category">Category</label>
+        <select id="f-category">
+          <option value="mugs">Mugs</option>
+          <option value="accessories">Accessories</option>
+          <option value="art">Art</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="mkt-field">
+        <label for="f-condition">Condition</label>
+        <select id="f-condition">
+          <option value="new">New</option>
+          <option value="like-new">Like New</option>
+          <option value="used" selected>Used</option>
+          <option value="for-parts">For Parts</option>
+        </select>
+      </div>
+      <div class="mkt-field">
+        <label for="f-image">Image URL (https://…)</label>
+        <input type="url" id="f-image" maxlength="500" placeholder="https://example.com/photo.jpg" />
+      </div>
+      <div class="mkt-field">
+        <label for="f-desc">Description</label>
+        <textarea id="f-desc" maxlength="2000" placeholder="Describe your item — condition details, size, any defects…"></textarea>
+      </div>
+      <div id="create-err" class="mkt-err"></div>
+      <button type="submit" class="mkt-submit-btn" id="create-submit-btn">Post Listing</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── Listing Detail Modal ────────────────────────────────────────────────── -->
+<div class="mkt-modal-overlay" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+  <div class="mkt-modal">
+    <button class="mkt-modal-close" onclick="closeModal('detail-modal')" aria-label="Close">&times;</button>
+    <div id="detail-modal-body"><!-- filled dynamically --></div>
+  </div>
+</div>
+
+<!-- ─── Make Offer Modal ────────────────────────────────────────────────────── -->
+<div class="mkt-modal-overlay" id="offer-modal" role="dialog" aria-modal="true" aria-labelledby="offer-modal-title">
+  <div class="mkt-modal">
+    <button class="mkt-modal-close" onclick="closeModal('offer-modal')" aria-label="Close">&times;</button>
+    <h3 id="offer-modal-title">Contact Seller</h3>
+    <form id="offer-form" onsubmit="submitOffer(event)">
+      <div class="mkt-field">
+        <label for="o-msg">Message to seller</label>
+        <textarea id="o-msg" maxlength="1000" rows="4" placeholder="Hi! I'm interested in this item. Is it still available?"></textarea>
+      </div>
+      <div id="offer-err" class="mkt-err"></div>
+      <button type="submit" class="mkt-submit-btn" id="offer-submit-btn">Send Message</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── Offers List Modal (seller view) ────────────────────────────────────── -->
+<div class="mkt-modal-overlay" id="offers-modal" role="dialog" aria-modal="true" aria-labelledby="offers-modal-title">
+  <div class="mkt-modal">
+    <button class="mkt-modal-close" onclick="closeModal('offers-modal')" aria-label="Close">&times;</button>
+    <h3 id="offers-modal-title">Offers Received</h3>
+    <div id="offers-list-body"><div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+  </div>
+</div>
+
+<!-- ─── Edit Listing Modal ──────────────────────────────────────────────────── -->
+<div class="mkt-modal-overlay" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+  <div class="mkt-modal">
+    <button class="mkt-modal-close" onclick="closeModal('edit-modal')" aria-label="Close">&times;</button>
+    <h3 id="edit-modal-title">Edit Listing</h3>
+    <form id="edit-form" onsubmit="submitEdit(event)">
+      <input type="hidden" id="e-id" />
+      <div class="mkt-field">
+        <label for="e-title">Title *</label>
+        <input type="text" id="e-title" maxlength="120" required />
+      </div>
+      <div class="mkt-field">
+        <label for="e-price">Price ($) *</label>
+        <input type="number" id="e-price" min="0.01" max="99999" step="0.01" required />
+      </div>
+      <div class="mkt-field">
+        <label for="e-category">Category</label>
+        <select id="e-category">
+          <option value="mugs">Mugs</option>
+          <option value="accessories">Accessories</option>
+          <option value="art">Art</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="mkt-field">
+        <label for="e-condition">Condition</label>
+        <select id="e-condition">
+          <option value="new">New</option>
+          <option value="like-new">Like New</option>
+          <option value="used">Used</option>
+          <option value="for-parts">For Parts</option>
+        </select>
+      </div>
+      <div class="mkt-field">
+        <label for="e-image">Image URL (https://…)</label>
+        <input type="url" id="e-image" maxlength="500" />
+      </div>
+      <div class="mkt-field">
+        <label for="e-desc">Description</label>
+        <textarea id="e-desc" maxlength="2000"></textarea>
+      </div>
+      <div id="edit-err" class="mkt-err"></div>
+      <button type="submit" class="mkt-submit-btn" id="edit-submit-btn">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── Scripts ─────────────────────────────────────────────────────────────── -->
+<script src="./include/cart.js"></script>
+<script src="./include/auth.js"></script>
+<script src="./include/sexymode.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── API base (mirrors auth.js pattern) ─────────────────────────────────── */
+  function apiBase() {
+    if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+    if (window.location.protocol === 'file:') return 'http://localhost:5000/api';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return window.location.protocol + '//' + window.location.hostname + ':5000/api';
+    }
+    return window.location.origin.replace(/\/+$/, '') + '/api';
+  }
+  var API = apiBase();
+
+  function apiFetch(method, path, body) {
+    return fetch(API + path, {
+      method: method,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) throw Object.assign(new Error(data.error || 'Request failed'), { status: r.status, data: data });
+        return data;
+      });
+    });
+  }
+
+  /* ── State ──────────────────────────────────────────────────────────────── */
+  var allListings = [];     // full page result
+  var currentListingId = null; // for offer modal
+  var currentTab = 'browse';
+
+  /* ── Tab switching ──────────────────────────────────────────────────────── */
+  window.showTab = function (tab) {
+    currentTab = tab;
+    document.getElementById('pane-browse').style.display = tab === 'browse' ? '' : 'none';
+    document.getElementById('pane-mine').style.display   = tab === 'mine'   ? '' : 'none';
+    document.getElementById('tab-browse').classList.toggle('active', tab === 'browse');
+    document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
+    if (tab === 'mine') loadMyListings();
+  };
+
+  /* ── Auth-gated "Post Listing" button ───────────────────────────────────── */
+  function initAuthUI() {
+    var user = Auth.getUser && Auth.getUser();
+    var loginCta = document.getElementById('login-cta');
+    var heroBtn  = document.getElementById('hero-post-btn');
+
+    if (!user) {
+      if (loginCta) loginCta.style.display = '';
+      heroBtn.onclick = function () { window.location.href = 'login.html'; };
+    } else {
+      if (loginCta) loginCta.style.display = 'none';
+      heroBtn.onclick = function () { openCreateModal(); };
+    }
+  }
+
+  /* ── Escape HTML ─────────────────────────────────────────────────────────── */
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Condition badge ─────────────────────────────────────────────────────── */
+  var conditionLabels = { 'new': 'New', 'like-new': 'Like New', 'used': 'Used', 'for-parts': 'For Parts' };
+  var conditionBadges = { 'new': 'badge-new', 'like-new': 'badge-like-new', 'used': 'badge-used', 'for-parts': 'badge-for-parts' };
+  var categoryLabels  = { mugs: 'Mugs', accessories: 'Accessories', art: 'Art', other: 'Other' };
+
+  function condBadge(c) {
+    return '<span class="market-card-badge ' + esc(conditionBadges[c] || '') + '">' + esc(conditionLabels[c] || c) + '</span>';
+  }
+
+  /* ── Load listings (browse tab) ──────────────────────────────────────────── */
+  window.loadListings = function () {
+    var cat  = document.getElementById('mkt-cat').value;
+    var sort = document.getElementById('mkt-sort').value;
+    var qs   = new URLSearchParams();
+    if (cat)  qs.set('category', cat);
+    if (sort) qs.set('sort', sort);
+
+    var grid = document.getElementById('market-grid');
+    grid.innerHTML = '<div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i> Loading listings…</div>';
+    document.getElementById('mkt-no-results').style.display = 'none';
+
+    apiFetch('GET', '/market?' + qs.toString())
+      .then(function (data) {
+        allListings = data.listings || [];
+        applyFilters();
+      })
+      .catch(function (err) {
+        grid.innerHTML = '<div class="mkt-empty"><i class="fas fa-exclamation-circle"></i>' + esc(err.message) + '</div>';
+      });
+  };
+
+  /* ── Client-side text filter ─────────────────────────────────────────────── */
+  window.applyFilters = function () {
+    var q   = (document.getElementById('mkt-search').value || '').trim().toUpperCase();
+    var cat = document.getElementById('mkt-cat').value;
+    var grid = document.getElementById('market-grid');
+    var noRes = document.getElementById('mkt-no-results');
+
+    var filtered = allListings.filter(function (l) {
+      if (cat && l.category !== cat) return false;
+      if (q && l.title.toUpperCase().indexOf(q) === -1) return false;
+      return true;
+    });
+
+    if (!filtered.length) {
+      grid.innerHTML = '';
+      noRes.style.display = '';
+      return;
+    }
+    noRes.style.display = 'none';
+    grid.innerHTML = filtered.map(cardHTML).join('');
+  };
+
+  function cardHTML(l) {
+    var imgPart = l.imageUrl
+      ? '<img class="market-card-img" src="' + esc(l.imageUrl) + '" alt="' + esc(l.title) + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=\\\"market-card-img-placeholder\\\"><i class=\\\"fas fa-mug-hot\\\"></i></div>\'" />'
+      : '<div class="market-card-img-placeholder"><i class="fas fa-mug-hot"></i></div>';
+    var soldLabel = l.status === 'SOLD' ? '<span class="market-sold-label">SOLD</span>' : '';
+    return '<div class="market-card-wrap' + (l.status !== 'ACTIVE' ? ' market-status-sold' : '') + '" onclick="openDetail(\'' + esc(l.id) + '\')">' +
+      soldLabel +
+      '<div class="market-card">' +
+        imgPart +
+        '<div class="market-card-body">' +
+          '<p class="market-card-title">' + esc(l.title) + '</p>' +
+          '<p class="market-card-price">$' + parseFloat(l.price).toFixed(2) + '</p>' +
+          '<div class="market-card-meta">' + condBadge(l.condition) +
+            '<span>' + esc(categoryLabels[l.category] || l.category) + '</span>' +
+          '</div>' +
+          '<p class="market-card-seller"><i class="fas fa-user"></i> ' + esc((l.seller && l.seller.name) || 'Unknown') + '</p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ── Listing detail modal ─────────────────────────────────────────────────── */
+  window.openDetail = function (id) {
+    currentListingId = id;
+    var body = document.getElementById('detail-modal-body');
+    body.innerHTML = '<div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+    openModal('detail-modal');
+
+    apiFetch('GET', '/market/' + encodeURIComponent(id))
+      .then(function (l) {
+        var user = Auth.getUser && Auth.getUser();
+        var isSeller = user && user.id === (l.seller && l.seller.id);
+        var isActive = l.status === 'ACTIVE';
+
+        var imgHtml = l.imageUrl
+          ? '<img class="detail-img" src="' + esc(l.imageUrl) + '" alt="' + esc(l.title) + '" onerror="this.style.display=\'none\'" />'
+          : '';
+
+        var offerBtn = '';
+        if (isActive && user && !isSeller) {
+          offerBtn = '<button class="mkt-submit-btn" onclick="openOfferModal(\'' + esc(l.id) + '\')">Contact Seller</button>';
+        } else if (isActive && !user) {
+          offerBtn = '<p style="color:#888;font-size:0.9rem"><a href="login.html" style="color:#a259e6;font-weight:700">Log in</a> to contact the seller.</p>';
+        } else if (l.status === 'SOLD') {
+          offerBtn = '<p style="color:#e63946;font-weight:700">This item has been sold.</p>';
+        }
+
+        body.innerHTML =
+          '<h3 id="detail-modal-title" style="margin-bottom:10px">' + esc(l.title) + '</h3>' +
+          imgHtml +
+          '<p class="detail-price">$' + parseFloat(l.price).toFixed(2) + '</p>' +
+          '<div class="detail-meta">' + condBadge(l.condition) +
+            '<span>' + esc(categoryLabels[l.category] || l.category) + '</span>' +
+          '</div>' +
+          (l.description ? '<p class="detail-desc">' + esc(l.description) + '</p>' : '') +
+          '<p class="detail-seller"><i class="fas fa-user"></i> Listed by <strong>' + esc((l.seller && l.seller.name) || 'Unknown') + '</strong></p>' +
+          offerBtn;
+      })
+      .catch(function (err) {
+        body.innerHTML = '<p class="mkt-err">' + esc(err.message) + '</p>';
+      });
+  };
+
+  /* ── Offer modal ──────────────────────────────────────────────────────────── */
+  window.openOfferModal = function (id) {
+    currentListingId = id;
+    closeModal('detail-modal');
+    document.getElementById('offer-err').textContent = '';
+    document.getElementById('o-msg').value = '';
+    openModal('offer-modal');
+  };
+
+  window.submitOffer = function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('offer-submit-btn');
+    var err = document.getElementById('offer-err');
+    var msg = document.getElementById('o-msg').value.trim();
+    btn.disabled = true; btn.textContent = 'Sending…';
+    err.textContent = '';
+
+    apiFetch('POST', '/market/' + encodeURIComponent(currentListingId) + '/offer', { message: msg })
+      .then(function () {
+        closeModal('offer-modal');
+        showToast('Message sent to seller!');
+      })
+      .catch(function (ex) {
+        err.textContent = ex.message;
+        btn.disabled = false; btn.textContent = 'Send Message';
+      });
+  };
+
+  /* ── Create listing ───────────────────────────────────────────────────────── */
+  window.openCreateModal = function () {
+    var user = Auth.getUser && Auth.getUser();
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('create-form').reset();
+    document.getElementById('create-err').textContent = '';
+    document.getElementById('create-submit-btn').disabled = false;
+    document.getElementById('create-submit-btn').textContent = 'Post Listing';
+    openModal('create-modal');
+  };
+
+  window.submitListing = function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('create-submit-btn');
+    var err = document.getElementById('create-err');
+    btn.disabled = true; btn.textContent = 'Posting…';
+    err.textContent = '';
+
+    apiFetch('POST', '/market', {
+      title:       document.getElementById('f-title').value.trim(),
+      price:       parseFloat(document.getElementById('f-price').value),
+      category:    document.getElementById('f-category').value,
+      condition:   document.getElementById('f-condition').value,
+      imageUrl:    document.getElementById('f-image').value.trim(),
+      description: document.getElementById('f-desc').value.trim(),
+    })
+      .then(function () {
+        closeModal('create-modal');
+        showToast('Listing posted!');
+        loadListings();
+        if (currentTab === 'mine') loadMyListings();
+      })
+      .catch(function (ex) {
+        err.textContent = ex.message;
+        btn.disabled = false; btn.textContent = 'Post Listing';
+      });
+  };
+
+  /* ── My listings ──────────────────────────────────────────────────────────── */
+  window.loadMyListings = function () {
+    var user = Auth.getUser && Auth.getUser();
+    var wrap = document.getElementById('my-listings-wrap');
+    if (!user) {
+      wrap.innerHTML = '<p style="color:#888">You need to <a href="login.html" style="color:#a259e6;font-weight:700">log in</a> to manage your listings.</p>';
+      return;
+    }
+    wrap.innerHTML = '<div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+    apiFetch('GET', '/market/my')
+      .then(function (listings) {
+        if (!listings.length) {
+          wrap.innerHTML = '<div class="mkt-empty"><i class="fas fa-store"></i>You have no listings yet.<br><br><button class="market-hero-btn" onclick="openCreateModal()">+ Post your first listing</button></div>';
+          return;
+        }
+        var rows = listings.map(function (l) {
+          var statusBadge = l.status === 'ACTIVE'
+            ? '<span style="color:#2a7a4b;font-weight:700">Active</span>'
+            : l.status === 'SOLD'
+              ? '<span style="color:#555;font-weight:700">Sold</span>'
+              : '<span style="color:#e63946;font-weight:700">Removed</span>';
+          var offerCount = l._count && l._count.offers ? l._count.offers : 0;
+          var actions = '<div class="ml-actions">' +
+            '<button class="ml-btn ml-btn-primary" onclick="openEditModal(' + JSON.stringify(l) + ')">Edit</button>';
+          if (l.status === 'ACTIVE') {
+            actions += '<button class="ml-btn ml-btn-sold" onclick="markSold(\'' + esc(l.id) + '\')">Mark Sold</button>';
+          }
+          if (offerCount) {
+            actions += '<button class="ml-btn ml-btn-offers" onclick="viewOffers(\'' + esc(l.id) + '\', ' + JSON.stringify(esc(l.title)) + ')">' +
+              '<i class="fas fa-envelope"></i> ' + offerCount + ' offer' + (offerCount !== 1 ? 's' : '') + '</button>';
+          }
+          actions += '<button class="ml-btn ml-btn-danger" onclick="deleteListing(\'' + esc(l.id) + '\')">Delete</button></div>';
+
+          return '<tr>' +
+            '<td><strong>' + esc(l.title) + '</strong></td>' +
+            '<td>$' + parseFloat(l.price).toFixed(2) + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + actions + '</td>' +
+          '</tr>';
+        }).join('');
+
+        wrap.innerHTML = '<div style="overflow-x:auto"><table class="my-listings-table"><thead><tr><th>Title</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      })
+      .catch(function (ex) {
+        wrap.innerHTML = '<p class="mkt-err">' + esc(ex.message) + '</p>';
+      });
+  };
+
+  window.markSold = function (id) {
+    if (!confirm('Mark this listing as sold?')) return;
+    apiFetch('PATCH', '/market/' + encodeURIComponent(id), { status: 'SOLD' })
+      .then(function () { showToast('Listing marked as sold.'); loadMyListings(); loadListings(); })
+      .catch(function (ex) { alert(ex.message); });
+  };
+
+  window.deleteListing = function (id) {
+    if (!confirm('Delete this listing? This cannot be undone.')) return;
+    apiFetch('DELETE', '/market/' + encodeURIComponent(id))
+      .then(function () { showToast('Listing deleted.'); loadMyListings(); loadListings(); })
+      .catch(function (ex) { alert(ex.message); });
+  };
+
+  /* ── Edit listing ─────────────────────────────────────────────────────────── */
+  window.openEditModal = function (l) {
+    document.getElementById('e-id').value        = l.id;
+    document.getElementById('e-title').value     = l.title;
+    document.getElementById('e-price').value     = l.price;
+    document.getElementById('e-category').value  = l.category;
+    document.getElementById('e-condition').value = l.condition;
+    document.getElementById('e-image').value     = l.imageUrl || '';
+    document.getElementById('e-desc').value      = l.description || '';
+    document.getElementById('edit-err').textContent = '';
+    document.getElementById('edit-submit-btn').disabled = false;
+    document.getElementById('edit-submit-btn').textContent = 'Save Changes';
+    openModal('edit-modal');
+  };
+
+  window.submitEdit = function (e) {
+    e.preventDefault();
+    var id  = document.getElementById('e-id').value;
+    var btn = document.getElementById('edit-submit-btn');
+    var err = document.getElementById('edit-err');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    err.textContent = '';
+
+    apiFetch('PATCH', '/market/' + encodeURIComponent(id), {
+      title:       document.getElementById('e-title').value.trim(),
+      price:       parseFloat(document.getElementById('e-price').value),
+      category:    document.getElementById('e-category').value,
+      condition:   document.getElementById('e-condition').value,
+      imageUrl:    document.getElementById('e-image').value.trim(),
+      description: document.getElementById('e-desc').value.trim(),
+    })
+      .then(function () {
+        closeModal('edit-modal');
+        showToast('Listing updated!');
+        loadMyListings(); loadListings();
+      })
+      .catch(function (ex) {
+        err.textContent = ex.message;
+        btn.disabled = false; btn.textContent = 'Save Changes';
+      });
+  };
+
+  /* ── View offers (seller side) ─────────────────────────────────────────────── */
+  window.viewOffers = function (listingId, title) {
+    document.getElementById('offers-modal-title').textContent = 'Offers: ' + title;
+    var body = document.getElementById('offers-list-body');
+    body.innerHTML = '<div class="mkt-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+    openModal('offers-modal');
+
+    apiFetch('GET', '/market/' + encodeURIComponent(listingId) + '/offers')
+      .then(function (offers) {
+        if (!offers.length) {
+          body.innerHTML = '<p style="color:#888;padding:12px 0">No offers yet.</p>';
+          return;
+        }
+        body.innerHTML = offers.map(function (o) {
+          var respond = o.status === 'PENDING'
+            ? '<div style="display:flex;gap:8px;margin-top:6px">' +
+                '<button class="ml-btn ml-btn-primary" onclick="respondOffer(\'' + esc(listingId) + '\',\'' + esc(o.id) + '\',\'ACCEPTED\')">Accept</button>' +
+                '<button class="ml-btn ml-btn-danger" onclick="respondOffer(\'' + esc(listingId) + '\',\'' + esc(o.id) + '\',\'DECLINED\')">Decline</button>' +
+              '</div>'
+            : '';
+          return '<div class="offer-row">' +
+            '<span class="offer-buyer"><i class="fas fa-user"></i> ' + esc(o.buyer && o.buyer.name) + '</span>' +
+            '<span class="offer-msg">' + (o.message ? esc(o.message) : '<em style="color:#bbb">No message</em>') + '</span>' +
+            '<span class="offer-status-badge offer-' + esc(o.status) + '">' + esc(o.status) + '</span>' +
+            respond +
+          '</div>';
+        }).join('');
+      })
+      .catch(function (ex) {
+        body.innerHTML = '<p class="mkt-err">' + esc(ex.message) + '</p>';
+      });
+  };
+
+  window.respondOffer = function (listingId, offerId, status) {
+    apiFetch('PATCH', '/market/' + encodeURIComponent(listingId) + '/offers/' + encodeURIComponent(offerId), { status: status })
+      .then(function () {
+        showToast(status === 'ACCEPTED' ? 'Offer accepted! Listing marked as sold.' : 'Offer declined.');
+        closeModal('offers-modal');
+        loadMyListings(); loadListings();
+      })
+      .catch(function (ex) { alert(ex.message); });
+  };
+
+  /* ── Modal helpers ────────────────────────────────────────────────────────── */
+  window.openModal  = function (id) { document.getElementById(id).classList.add('open'); };
+  window.closeModal = function (id) { document.getElementById(id).classList.remove('open'); };
+
+  // Close modal on backdrop click
+  document.querySelectorAll('.mkt-modal-overlay').forEach(function (overlay) {
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // Close modals on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.mkt-modal-overlay.open').forEach(function (el) {
+        el.classList.remove('open');
+      });
+    }
+  });
+
+  /* ── Toast notification ────────────────────────────────────────────────────── */
+  function showToast(msg) {
+    var t = document.getElementById('cart-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.style.opacity = '1'; t.style.visibility = 'visible';
+    setTimeout(function () { t.style.opacity = '0'; t.style.visibility = 'hidden'; }, 2800);
+  }
+
+  /* ── Init ─────────────────────────────────────────────────────────────────── */
+  // Wait for auth.js to expose Auth before initialising UI
+  function init() {
+    initAuthUI();
+    loadListings();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+
+</body>
+</html>
