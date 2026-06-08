@@ -379,20 +379,20 @@
 
         <!-- Add prize form (shown after selecting a crate) -->
         <div id="cr-prize-panel" style="display:none;background:#fff;border:1px solid #e0e6f2;border-radius:10px;padding:22px 24px;margin-top:28px">
-          <h2 style="margin:0 0 4px;font-size:1rem"><i class="fas fa-gift" style="color:#1a6fc4;margin-right:6px"></i>Add Prize to <strong id="cr-prize-crate-name"></strong></h2>
-          <p style="color:#888;font-size:.82rem;margin:0 0 14px">Product IDs come from the Shop Manager. Weights are relative probabilities (higher = more likely).</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end">
+          <h2 style="margin:0 0 4px;font-size:1rem"><i class="fas fa-gift" style="color:#1a6fc4;margin-right:6px"></i>Add Drop to <strong id="cr-prize-crate-name"></strong></h2>
+          <p style="color:#888;font-size:.82rem;margin:0 0 16px">Select the drop type, fill in the relevant fields, then click Add Drop. Weights are relative probabilities — higher = more likely.</p>
+
+          <!-- Row 1: type + rarity + weight -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div>
-              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Product ID</label>
-              <input id="pr-product-id" type="text" placeholder="e.g. gc01" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
-            </div>
-            <div>
-              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Win Price ($)</label>
-              <input id="pr-price" type="number" min="0" step="0.01" placeholder="12.99" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
-            </div>
-            <div>
-              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Weight</label>
-              <input id="pr-weight" type="number" min="1" value="100" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Drop Type</label>
+              <select id="pr-item-type" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box">
+                <option value="SHARD">🧩 Shard</option>
+                <option value="WILDCARD_SHARD">🃏 Wildcard Shard</option>
+                <option value="DORK_COIN">🪙 Dork Coins</option>
+                <option value="DISCOUNT_VOUCHER">🏷️ Discount Voucher</option>
+                <option value="MUG_VOUCHER">🎟️ Mug Voucher (Free Mug)</option>
+              </select>
             </div>
             <div>
               <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Rarity</label>
@@ -403,9 +403,41 @@
                 <option value="legendary">Legendary</option>
               </select>
             </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Weight</label>
+              <input id="pr-weight" type="number" min="1" value="100" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
           </div>
+
+          <!-- Row 2: contextual fields, toggled by drop type -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <!-- Product ID — shown for SHARD and MUG_VOUCHER -->
+            <div id="pr-field-product" style="display:none">
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Product ID <span style="color:#c00">*</span></label>
+              <input id="pr-product-id" type="text" placeholder="e.g. gc01" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+              <span style="font-size:.75rem;color:#888">Must match a Shop Product ID</span>
+            </div>
+            <!-- Coin amount — shown for DORK_COIN -->
+            <div id="pr-field-coins" style="display:none">
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Coin Amount <span style="color:#c00">*</span></label>
+              <input id="pr-coin-amount" type="number" min="1" placeholder="100" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <!-- Discount % — shown for DISCOUNT_VOUCHER -->
+            <div id="pr-field-discount" style="display:none">
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Discount % <span style="color:#c00">*</span></label>
+              <input id="pr-item-value" type="number" min="1" max="99" placeholder="10" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+              <span style="font-size:.75rem;color:#888">Percent off (e.g. 10 = 10% off)</span>
+            </div>
+            <!-- Bonus coins — shown for SHARD, WILDCARD_SHARD, MUG_VOUCHER -->
+            <div id="pr-field-bonus-coins" style="display:none">
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Bonus Coins (optional)</label>
+              <input id="pr-bonus-coins" type="number" min="0" value="0" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+              <span style="font-size:.75rem;color:#888">Extra Dork Coins awarded alongside this drop</span>
+            </div>
+          </div>
+
           <input type="hidden" id="pr-crate-id" value="" />
-          <button id="pr-add-btn" class="btn-primary" style="margin-top:14px"><i class="fas fa-plus"></i> Add Prize</button>
+          <button id="pr-add-btn" class="btn-primary" style="margin-top:4px"><i class="fas fa-plus"></i> Add Drop</button>
           <span id="pr-add-msg" style="margin-left:12px;font-size:.85rem"></span>
         </div>
 
@@ -2247,13 +2279,28 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
         '</td></tr>';
       // Prize sub-rows
       if (c.prizes && c.prizes.length) {
+        var ITEM_LABELS = { SHARD: '🧩 Shard', WILDCARD_SHARD: '🃏 Wildcard', DORK_COIN: '🪙 Coins', DISCOUNT_VOUCHER: '🏷️ Discount', MUG_VOUCHER: '🎟️ Mug Voucher' };
         html += '<tr><td colspan="6" style="padding:0 10px 10px 28px">' +
           '<table style="width:100%;border-collapse:collapse;font-size:.82rem;background:#fafbff;border-radius:6px;overflow:hidden">' +
-          '<thead><tr style="background:#eef2ff"><th style="padding:5px 8px;text-align:left">Product ID</th><th style="padding:5px 8px;text-align:right">Win Price</th><th style="padding:5px 8px;text-align:center">Weight</th><th style="padding:5px 8px;text-align:center">Rarity</th><th></th></tr></thead><tbody>';
+          '<thead><tr style="background:#eef2ff">' +
+          '<th style="padding:5px 8px;text-align:left">Type</th>' +
+          '<th style="padding:5px 8px;text-align:left">Product</th>' +
+          '<th style="padding:5px 8px;text-align:center">Value</th>' +
+          '<th style="padding:5px 8px;text-align:center">Bonus Coins</th>' +
+          '<th style="padding:5px 8px;text-align:center">Weight</th>' +
+          '<th style="padding:5px 8px;text-align:center">Rarity</th>' +
+          '<th></th></tr></thead><tbody>';
         c.prizes.forEach(function (p) {
+          var typeLabel = ITEM_LABELS[p.itemType] || esc(p.itemType || 'SHARD');
+          var valueCell = '';
+          if (p.itemType === 'DORK_COIN')        valueCell = p.coinAmount + ' coins';
+          else if (p.itemType === 'DISCOUNT_VOUCHER') valueCell = p.itemValue + '% off';
+          else                                    valueCell = '—';
           html += '<tr style="border-bottom:1px solid #eee">' +
-            '<td style="padding:5px 8px">' + esc(p.productId) + '</td>' +
-            '<td style="padding:5px 8px;text-align:right">$' + parseFloat(p.discountedPrice).toFixed(2) + '</td>' +
+            '<td style="padding:5px 8px;font-weight:600">' + typeLabel + '</td>' +
+            '<td style="padding:5px 8px;color:#555">' + (p.productId ? esc(p.productId) : '<em style="color:#aaa">n/a</em>') + '</td>' +
+            '<td style="padding:5px 8px;text-align:center">' + valueCell + '</td>' +
+            '<td style="padding:5px 8px;text-align:center">' + (p.coinAmount && p.itemType !== 'DORK_COIN' ? p.coinAmount : '—') + '</td>' +
             '<td style="padding:5px 8px;text-align:center">' + p.weight + '</td>' +
             '<td style="padding:5px 8px;text-align:center">' + esc(p.rarity) + '</td>' +
             '<td style="padding:5px 8px;text-align:right"><button class="btn-sm pr-del-btn" data-crate-id="' + esc(c.id) + '" data-prize-id="' + esc(p.id) + '" style="background:#fff0f0;color:#c00;font-size:.75rem">✕</button></td>' +
@@ -2362,24 +2409,65 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
     this.dataset.manual = '1';
   });
 
-  // ── Add prize ─────────────────────────────────────────────────────────────
+  // ── Add drop ──────────────────────────────────────────────────────────────
+
+  // Toggle contextual fields based on selected drop type
+  function updatePrizeFields() {
+    var type = document.getElementById('pr-item-type').value;
+    var showProduct     = type === 'SHARD' || type === 'MUG_VOUCHER';
+    var showCoins       = type === 'DORK_COIN';
+    var showDiscount    = type === 'DISCOUNT_VOUCHER';
+    var showBonusCoins  = type === 'SHARD' || type === 'WILDCARD_SHARD' || type === 'MUG_VOUCHER';
+    document.getElementById('pr-field-product').style.display     = showProduct    ? '' : 'none';
+    document.getElementById('pr-field-coins').style.display       = showCoins      ? '' : 'none';
+    document.getElementById('pr-field-discount').style.display    = showDiscount   ? '' : 'none';
+    document.getElementById('pr-field-bonus-coins').style.display = showBonusCoins ? '' : 'none';
+  }
+  document.getElementById('pr-item-type').addEventListener('change', updatePrizeFields);
+  // Run once on load to set initial state
+  updatePrizeFields();
+
   document.getElementById('pr-add-btn').addEventListener('click', function () {
-    var crateId = document.getElementById('pr-crate-id').value;
+    var crateId   = document.getElementById('pr-crate-id').value;
+    var itemType  = document.getElementById('pr-item-type').value;
+    var rarity    = document.getElementById('pr-rarity').value;
+    var weight    = parseInt(document.getElementById('pr-weight').value.trim(), 10) || 100;
     var productId = document.getElementById('pr-product-id').value.trim();
-    var price = document.getElementById('pr-price').value.trim();
-    var weight = document.getElementById('pr-weight').value.trim();
-    var rarity = document.getElementById('pr-rarity').value;
-    var msg = document.getElementById('pr-add-msg');
-    if (!productId || !price) { msg.textContent = 'Product ID and win price are required.'; msg.style.color = '#c00'; return; }
+    var coinAmt   = parseInt(document.getElementById('pr-coin-amount').value.trim(), 10) || 0;
+    var itemVal   = parseFloat(document.getElementById('pr-item-value').value.trim()) || 0;
+    var bonusCoins= parseInt(document.getElementById('pr-bonus-coins').value.trim(), 10) || 0;
+    var msg       = document.getElementById('pr-add-msg');
+
+    // Validation
+    if ((itemType === 'SHARD' || itemType === 'MUG_VOUCHER') && !productId) {
+      msg.textContent = 'Product ID is required for this drop type.'; msg.style.color = '#c00'; return;
+    }
+    if (itemType === 'DORK_COIN' && !coinAmt) {
+      msg.textContent = 'Coin amount is required.'; msg.style.color = '#c00'; return;
+    }
+    if (itemType === 'DISCOUNT_VOUCHER' && !itemVal) {
+      msg.textContent = 'Discount % is required.'; msg.style.color = '#c00'; return;
+    }
+
     msg.textContent = 'Adding…'; msg.style.color = '#555';
     apiFetch('/admin/crates/' + crateId + '/prizes', {
       method: 'POST',
-      body: JSON.stringify({ productId, discountedPrice: parseFloat(price), weight: parseInt(weight, 10) || 100, rarity }),
+      body: JSON.stringify({
+        itemType,
+        productId: productId || undefined,
+        itemValue: itemVal,
+        coinAmount: itemType === 'DORK_COIN' ? coinAmt : bonusCoins,
+        weight,
+        rarity,
+        discountedPrice: 0,
+      }),
     }).then(function () {
-      msg.textContent = 'Prize added!'; msg.style.color = '#2a8a2a';
-      document.getElementById('pr-product-id').value = '';
-      document.getElementById('pr-price').value = '';
-      document.getElementById('pr-weight').value = '100';
+      msg.textContent = 'Drop added!'; msg.style.color = '#2a8a2a';
+      document.getElementById('pr-product-id').value   = '';
+      document.getElementById('pr-coin-amount').value  = '';
+      document.getElementById('pr-item-value').value   = '';
+      document.getElementById('pr-bonus-coins').value  = '0';
+      document.getElementById('pr-weight').value       = '100';
       loadAdminCrates();
     }).catch(function (e) {
       msg.textContent = e.message || 'Failed.'; msg.style.color = '#c00';

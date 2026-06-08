@@ -350,20 +350,38 @@ async function adminDeleteCrate(req, res) {
 
 async function adminAddPrize(req, res) {
   const { id: crateId } = req.params;
-  const { productId, discountedPrice, weight = 100, rarity = 'common' } = req.body;
-  if (!productId || discountedPrice == null) {
-    return res.status(422).json({ error: 'productId and discountedPrice are required.' });
-  }
+  const {
+    itemType = 'SHARD',
+    productId,
+    discountedPrice = 0,
+    itemValue = 0,
+    coinAmount = 0,
+    weight = 100,
+    rarity = 'common',
+  } = req.body;
+
+  const validTypes    = ['SHARD', 'WILDCARD_SHARD', 'DISCOUNT_VOUCHER', 'MUG_VOUCHER', 'DORK_COIN'];
   const validRarities = ['common', 'uncommon', 'rare', 'legendary'];
-  const safeRarity = validRarities.includes(rarity) ? rarity : 'common';
+  const safeType   = validTypes.includes(itemType)    ? itemType   : 'SHARD';
+  const safeRarity = validRarities.includes(rarity)   ? rarity     : 'common';
+
+  // productId required for SHARD and MUG_VOUCHER
+  const needsProduct = safeType === 'SHARD' || safeType === 'MUG_VOUCHER';
+  if (needsProduct && !productId) {
+    return res.status(422).json({ error: 'productId is required for SHARD and MUG_VOUCHER drop types.' });
+  }
+
   try {
     const prize = await prisma.cratePrize.create({
       data: {
         crateId,
-        productId: String(productId).slice(0, 50),
-        discountedPrice: Math.max(0, parseFloat(discountedPrice)),
-        weight: Math.max(1, parseInt(weight, 10) || 100),
-        rarity: safeRarity,
+        productId:       needsProduct ? String(productId).slice(0, 50) : (productId ? String(productId).slice(0, 50) : ''),
+        discountedPrice: Math.max(0, parseFloat(discountedPrice) || 0),
+        itemType:        safeType,
+        itemValue:       Math.max(0, parseFloat(itemValue)  || 0),
+        coinAmount:      Math.max(0, parseInt(coinAmount, 10) || 0),
+        weight:          Math.max(1, parseInt(weight, 10)   || 100),
+        rarity:          safeRarity,
       },
     });
     return res.status(201).json({ prize });
