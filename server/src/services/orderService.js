@@ -91,6 +91,16 @@ async function ensureOrderFromSession(session) {
     console.error('[orderService] fulfillCrateKeys failed:', err.message);
   });
 
+  // Redeem a mug voucher if this checkout was a voucher redemption
+  if (metadata.voucherId && metadata.userId) {
+    prisma.inventoryItem.updateMany({
+      where: { id: metadata.voucherId, userId: metadata.userId, redeemed: false },
+      data:  { redeemed: true, redeemedAt: new Date() },
+    }).catch((err) => {
+      console.error('[orderService] voucher redemption mark failed:', err.message);
+    });
+  }
+
   // Submit to Printify if we have variant data
   const printifyLines = cartItems.filter((i) => i.printifyProductId && i.variantId);
   if (printifyLines.length > 0) {

@@ -618,17 +618,11 @@ async function redeemVoucher(req, res) {
       name:        'Mug Voucher Redemption',
     });
 
-    // Mark redeemed and create session atomically
-    let session;
-    await prisma.$transaction(async (tx) => {
-      await tx.inventoryItem.update({
-        where: { id: voucherId },
-        data:  { redeemed: true, redeemedAt: new Date() },
-      });
-      session = await stripeSvc.createCheckoutSession(
-        items, metadata, successUrl, cancelUrl, req.user.email, coupon.id
-      );
-    });
+    // Do NOT mark the voucher redeemed here — only mark it after payment
+    // completes (handled in orderService.ensureOrderFromSession via metadata.voucherId).
+    const session = await stripeSvc.createCheckoutSession(
+      items, metadata, successUrl, cancelUrl, req.user.email, coupon.id
+    );
 
     return res.json({ url: session.url });
   } catch (err) {
