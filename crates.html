@@ -831,23 +831,43 @@
     var product = opening.product;
     var winnerInfo = prizeDisplayInfo(prize, product);
 
-    // Build a reel of fake items + the winning item interspersed
-    var fakeCount = 30;
-    var itemW = 140;
-    var items = [];
-
-    // Populate reel items
-    for (var i = 0; i < fakeCount; i++) {
-      items.push(winnerInfo);
+    // Build a weighted pool from ALL prizes in this crate
+    var allPrizes = opening.allPrizes || [];
+    var pool = [];
+    if (allPrizes.length > 1) {
+      var totalWeight = allPrizes.reduce(function(s, p) { return s + (p.weight || 1); }, 0);
+      allPrizes.forEach(function(p) {
+        // Scale each prize to ~20 pool slots proportionally (min 1)
+        var slots = Math.max(1, Math.round((p.weight || 1) / totalWeight * 20));
+        for (var j = 0; j < slots; j++) {
+          var info = prizeDisplayInfo(p, p.product);
+          info.rarity = p.rarity || 'common';
+          pool.push(info);
+        }
+      });
+    } else {
+      // Fallback: just use winner
+      pool.push(Object.assign({}, winnerInfo, { rarity: (prize && prize.rarity) || 'common' }));
     }
-    // Place the winner near the end
-    var winnerIdx = fakeCount - 5;
-    items[winnerIdx] = Object.assign({}, winnerInfo, { isWinner: true });
+
+    // Build 42-item reel, force winner at landing slot
+    var REEL_COUNT = 42;
+    var itemW = 140;
+    var winnerIdx = REEL_COUNT - 8;
+    var items = [];
+    for (var i = 0; i < REEL_COUNT; i++) {
+      if (i === winnerIdx) {
+        items.push(Object.assign({}, winnerInfo, { isWinner: true, rarity: (prize && prize.rarity) || 'common' }));
+      } else {
+        var pick = pool[Math.floor(Math.random() * pool.length)];
+        items.push(Object.assign({}, pick));
+      }
+    }
 
     items.forEach(function (item) {
       var div = document.createElement('div');
       div.className = 'reel-item';
-      var color = RARITY_COLORS[(prize && prize.rarity) || 'common'] || '#1a6fc4';
+      var color = RARITY_COLORS[item.rarity || 'common'] || '#1a6fc4';
       div.style.background = item.isWinner ? 'rgba(255,215,0,0.12)' : 'transparent';
       if (item.img) {
         div.innerHTML = '<img src="' + esc(item.img) + '" alt="' + esc(item.name) + '" />';
@@ -859,12 +879,10 @@
     });
 
     // Animate reel scrolling to land on winner
-    var totalWidth = items.length * itemW;
     var targetX = winnerIdx * itemW - (reelWrap.offsetWidth / 2 - itemW / 2);
 
     var start = null;
     var duration = 3200; // ms
-    var startX = 0;
 
     function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
 

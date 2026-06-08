@@ -198,8 +198,20 @@ async function openCrate(req, res) {
       });
     }
 
+    // Fetch products for all prizes so the frontend reel can show every possible drop
+    const allPrizeProductIds = [...new Set(prizes.filter(p => p.productId).map(p => p.productId))];
+    let prizeProductMap = {};
+    if (allPrizeProductIds.length) {
+      const prizeProducts = await prisma.shopProduct.findMany({
+        where: { id: { in: allPrizeProductIds } },
+        select: { id: true, pname: true, imageLeft: true, price: true },
+      });
+      prizeProducts.forEach(p => { prizeProductMap[p.id] = p; });
+    }
+    const allPrizes = prizes.map(p => ({ ...p, product: p.productId ? (prizeProductMap[p.productId] || null) : null }));
+
     return res.json({
-      opening: { ...opening, prize, product, inventoryItems: createdItems },
+      opening: { ...opening, prize, product, inventoryItems: createdItems, allPrizes },
     });
   } catch (err) {
     console.error('[crates] openCrate error', err.message);
