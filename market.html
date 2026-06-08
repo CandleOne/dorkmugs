@@ -861,17 +861,16 @@
   function goToStep2(item) {
     selectedInvItem = item;
 
-    // Fill selected strip
+    // ── Fix: don't use outerHTML replacement, mutate innerHTML instead ──
     var imgWrap = document.getElementById('strip-img-wrap');
-    if (item.image) {
-      imgWrap.outerHTML = '<img id="strip-img-wrap" class="strip-icon" src="' + esc(item.image) + '" alt="' + esc(item.label) + '" onerror="this.outerHTML=\'<div id=\\\"strip-img-wrap\\\" class=\\\"strip-icon\\\"><i class=\\\"' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '\\\"></i></div>\'" />';
-    } else {
-      imgWrap.outerHTML = '<div id="strip-img-wrap" class="strip-icon"><i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i></div>';
-    }
+    imgWrap.className = 'strip-icon';
+    imgWrap.innerHTML = item.image
+        ? '<img src="' + esc(item.image) + '" alt="' + esc(item.label) + '" style="width:44px;height:44px;object-fit:cover;border-radius:6px;" onerror="this.parentNode.innerHTML=\'<i class=\\\"' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '\\\"></i>\'" />'
+        : '<i class="' + esc(INV_TYPE_ICONS[item.itemType] || 'fas fa-box') + '"></i>';
+
     document.getElementById('strip-label').textContent = item.label;
     document.getElementById('strip-type').textContent  = INV_TYPE_LABELS[item.itemType] || item.itemType;
 
-    // Pre-fill suggested price
     document.getElementById('f-price').value = item.suggestedPrice || '';
     document.getElementById('f-desc').value  = '';
     document.getElementById('create-err').textContent = '';
@@ -883,7 +882,7 @@
     document.getElementById('step-ind-1').classList.remove('active');
     document.getElementById('step-ind-1').classList.add('done');
     document.getElementById('step-ind-2').classList.add('active');
-  }
+    }
 
   function renderInvPicker(items) {
     var body = document.getElementById('inv-picker-body');
