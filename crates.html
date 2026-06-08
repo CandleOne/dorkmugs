@@ -209,7 +209,15 @@
   .reveal-price    { font-size: 1rem; color: #7de8a0; font-weight: 700; }
   .reveal-orig     { font-size: 0.82rem; color: rgba(255,255,255,0.55); text-decoration: line-through; }
 
-  .modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 18px; }
+  .btn-modal-open-another {
+    padding: 10px 20px; background: #1a6fc4; color: #fff; border: none;
+    border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-modal-open-another:hover { background: #155da0; }
+  .btn-modal-open-another:disabled { background: #aac4e0; cursor: default; }
+
+  .modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
   .btn-modal-claim {
     padding: 10px 28px; background: #2daa55; color: #fff; border: none;
     border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;
@@ -535,6 +543,7 @@
 
     <div class="modal-actions" id="modal-actions" style="display:none">
       <button class="btn-modal-claim" id="btn-modal-claim">🏷️ Claim Prize &amp; Checkout</button>
+      <button class="btn-modal-open-another" id="btn-modal-open-another" style="display:none">Open Another 📦</button>
       <button class="btn-modal-dismiss" id="btn-modal-dismiss">View My Crates</button>
     </div>
   </div>
@@ -700,6 +709,8 @@
       .then(function (data) {
         document.getElementById('inv-loading').style.display = 'none';
         var items = data.userCrates || [];
+        // Populate the unopened queue (ids only, preserving order)
+        _unopenedQueue = items.filter(function (uc) { return !uc.opened; }).map(function (uc) { return uc.id; });
         var grid = document.getElementById('inventory-grid');
         if (!items.length) {
           document.getElementById('inv-empty').style.display = 'block';
@@ -750,9 +761,12 @@
 
   // ── Open crate flow ───────────────────────────────────────────────────────
   var _currentOpening = null;
+  var _unopenedQueue  = []; // ids of remaining unopened UserCrates
 
   function doOpenCrate(btn) {
     var ucId = btn.dataset.ucId;
+    // Remove this id from the queue if it's there (opening from card)
+    _unopenedQueue = _unopenedQueue.filter(function (id) { return id !== ucId; });
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
 
@@ -932,6 +946,13 @@
     claimBtn.dataset.claimToken = opening.claimToken || '';
     var isInventoryItem = ['SHARD','WILDCARD_SHARD','DORK_COIN','DISCOUNT_VOUCHER','MUG_VOUCHER'].indexOf(itemType) > -1;
     claimBtn.style.display = isInventoryItem ? 'none' : '';
+
+    // Show "Open Another" if the user has more unopened crates
+    var openAnotherBtn = document.getElementById('btn-modal-open-another');
+    openAnotherBtn.style.display = _unopenedQueue.length > 0 ? '' : 'none';
+    openAnotherBtn.disabled = false;
+    openAnotherBtn.textContent = 'Open Another \uD83D\uDCE6' + (_unopenedQueue.length > 1 ? ' (' + _unopenedQueue.length + ' left)' : '');
+
     document.getElementById('modal-actions').style.display = 'flex';
   }
 
@@ -972,6 +993,41 @@
   });
   document.getElementById('btn-modal-claim').addEventListener('click', function () {
     doClaimPrize(this);
+  });
+  document.getElementById('btn-modal-open-another').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Opening…';
+    var nextId = _unopenedQueue.shift();
+    if (!nextId) { closeModal(); return; }
+
+    // Reset modal to loading state
+    document.getElementById('reveal-card').classList.remove('show');
+    document.getElementById('modal-actions').style.display = 'none';
+    document.getElementById('reel-strip').innerHTML = '';
+    document.getElementById('reel-strip').style.transform = '';
+    document.getElementById('modal-title').textContent = 'Opening crate…';
+    document.getElementById('modal-sub').textContent   = '';
+
+    fetch(API + '/crates/open/' + encodeURIComponent(nextId), {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.opening) {
+          _currentOpening = data.opening;
+          showOpeningModal(data.opening);
+        } else {
+          alert(data.error || 'Could not open crate.');
+          closeModal();
+          location.reload();
+        }
+      })
+      .catch(function () {
+        alert('Network error.');
+        closeModal();
+      });
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeModal();
