@@ -86,6 +86,11 @@ async function ensureOrderFromSession(session) {
   // Send confirmation email (non-fatal)
   emailSvc.sendOrderConfirmation(email, order).catch(() => {});
 
+  // Fulfill any crate keys in this order
+  fulfillCrateKeys(session, cartItems, metadata.userId || null).catch((err) => {
+    console.error('[orderService] fulfillCrateKeys failed:', err.message);
+  });
+
   // Submit to Printify if we have variant data
   const printifyLines = cartItems.filter((i) => i.printifyProductId && i.variantId);
   if (printifyLines.length > 0) {
@@ -129,6 +134,35 @@ async function ensureOrderFromSession(session) {
   }
 
   return order;
+}
+
+/**
+ * If a completed Stripe session contains crate key items, create UserCrate
+ * records so the user can open them. Idempotent — guarded by stripeSessionId.
+ */
+async function fulfillCrateKeys(session, cartItems, userId) {
+  if (!userId) return; // guest checkouts can't have user crates
+  const crateItems = cartItems.filter((i) => i.crateId);
+  if (!crateItems.length) return;
+
+  for (const item of crateItems) {
+    const qty = item.qty || 1;
+    // Verify crate exists to avoid orphaned records
+    const crate = await prisma.crate.findUnique({ where: { id: item.crateId }, select: { id: true } });
+    if (!crate) { console.warn(`[orderService] crateId ${item.crateId} not found — skipping`); continue; }
+
+    for (let i = 0; i < qty; i++) {
+      // Skip if we already created this key (re-entrancy guard)
+      const existing = await prisma.userCrate.findFirst({
+        where: { userId, crateId: item.crateId, stripeSessionId: session.id },
+      });
+      if (existing) break;
+
+      await prisma.userCrate.create({
+        data: { userId, crateId: item.crateId, stripeSessionId: session.id },
+      });
+    }
+  }
 }
 
 module.exports = { ensureOrderFromSession };

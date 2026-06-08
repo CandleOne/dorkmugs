@@ -105,6 +105,7 @@ app.use('/api/collections',   require('./routes/collections'));
 app.use('/api/checkout',      require('./routes/checkout'));
 app.use('/api/orders',        require('./routes/orders'));
 app.use('/api/reviews',       require('./routes/reviews'));
+app.use('/api/crates',        require('./routes/crates'));
 app.use('/api/admin',         require('./routes/admin'));
 app.use('/api/webhooks',      require('./routes/webhooks'));
 

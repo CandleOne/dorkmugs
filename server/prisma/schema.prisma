@@ -36,6 +36,7 @@ model User {
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
   reviews        Review[]
+  userCrates     UserCrate[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,4 +211,66 @@ model PageView {
   @@index([createdAt])
   @@index([path])
   @@index([sessionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Crates (loot-box system)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// A crate type that users can purchase as a key.
+model Crate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String   @default("")
+  image       String   @default("")
+  price       Float    // price in dollars
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prizes     CratePrize[]
+  userCrates UserCrate[]
+}
+
+// A possible prize inside a crate.
+model CratePrize {
+  id              String @id @default(cuid())
+  crateId         String
+  crate           Crate  @relation(fields: [crateId], references: [id], onDelete: Cascade)
+  productId       String // ShopProduct.id
+  discountedPrice Float  // winning price in dollars
+  weight          Int    @default(100) // relative probability weight
+  rarity          String @default("common") // "common" | "uncommon" | "rare" | "legendary"
+  createdAt       DateTime @default(now())
+}
+
+// A single crate key owned by a user (one row per key purchased).
+model UserCrate {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  crateId         String
+  crate           Crate     @relation(fields: [crateId], references: [id], onDelete: Restrict)
+  stripeSessionId String?
+  opened          Boolean   @default(false)
+  openedAt        DateTime?
+  createdAt       DateTime  @default(now())
+
+  opening CrateOpening?
+}
+
+// Record of a crate being opened and the prize won.
+model CrateOpening {
+  id          String    @id @default(cuid())
+  userCrateId String    @unique
+  userCrate   UserCrate @relation(fields: [userCrateId], references: [id], onDelete: Cascade)
+  userId      String
+  prizeId     String
+  productId   String    // ShopProduct.id that was won
+  wonPrice    Float     // discounted price in dollars
+  claimToken  String    @unique @default(cuid())
+  claimed     Boolean   @default(false)
+  claimedAt   DateTime?
+  createdAt   DateTime  @default(now())
 }

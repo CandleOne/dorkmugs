@@ -1,6 +1,7 @@
 // src/routes/admin.js
 const router = require('express').Router();
 const ctrl = require('../controllers/admin');
+const crateCtrl = require('../controllers/crates');
 const { requireAuth } = require('../middleware/auth');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -57,5 +58,14 @@ router.get('/collections', ctrl.adminListCollections);
 router.post('/collections', ctrl.createAdminCollection);
 router.patch('/collections/:slug', ctrl.updateAdminCollection);
 router.delete('/collections/:slug', ctrl.deleteAdminCollection);
+
+// Crates (loot-box system)
+router.get('/crates', crateCtrl.adminListCrates);
+router.post('/crates', crateCtrl.adminCreateCrate);
+router.patch('/crates/:id', crateCtrl.adminUpdateCrate);
+router.delete('/crates/:id', crateCtrl.adminDeleteCrate);
+router.post('/crates/:id/prizes', crateCtrl.adminAddPrize);
+router.delete('/crates/:id/prizes/:prizeId', crateCtrl.adminDeletePrize);
+router.get('/crates/openings', crateCtrl.adminListOpenings);
 
 module.exports = router;

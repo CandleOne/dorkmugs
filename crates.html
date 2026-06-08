@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dork Crates – Dork Mugs</title>
+<meta name="description" content="Buy a Dork Crate key and open it for a chance to win a mug at a lower price. Random prizes, rare drops, and big discounts await." />
+<link rel="canonical" href="https://dorkmugs.shop/crates.html" />
+<link rel="icon" type="image/png" href="./favicon.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<script src="./include/prodbs.js"></script>
+<link href="style.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+<style>
+  /* ── Crate page styles ─────────────────────────────────────────────── */
+  .crates-hero {
+    text-align: center;
+    padding: 48px 24px 32px;
+    background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 50%, #0d1b2a 100%);
+    color: #fff;
+    border-radius: 12px;
+    margin: 0 0 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .crates-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(100,180,255,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .crates-hero h1 { font-size: 2.2rem; margin: 0 0 12px; letter-spacing: 1px; }
+  .crates-hero p  { font-size: 1.05rem; opacity: 0.85; max-width: 520px; margin: 0 auto 24px; }
+
+  .how-it-works {
+    display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px;
+  }
+  .how-step {
+    background: #f7faff; border: 1px solid #dde7f5; border-radius: 10px;
+    padding: 22px 20px; text-align: center; width: 200px;
+  }
+  .how-step i  { font-size: 2rem; color: #1a6fc4; margin-bottom: 10px; display: block; }
+  .how-step h4 { margin: 0 0 6px; font-size: 0.95rem; }
+  .how-step p  { margin: 0; font-size: 0.82rem; color: #666; }
+
+  /* ── Crate cards ──────────────────────────────────────────────────── */
+  .crate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 24px; padding: 0 0 40px;
+  }
+  .crate-card {
+    border: 2px solid #dde7f5; border-radius: 14px;
+    overflow: hidden; transition: box-shadow 0.2s, transform 0.2s;
+    background: #fff; display: flex; flex-direction: column;
+  }
+  .crate-card:hover { box-shadow: 0 8px 32px rgba(26,111,196,0.18); transform: translateY(-3px); }
+  .crate-card-img {
+    height: 180px; background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5rem; position: relative; overflow: hidden;
+  }
+  .crate-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .crate-card-body  { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+  .crate-card-name  { font-size: 1.1rem; font-weight: 700; margin: 0 0 6px; }
+  .crate-card-desc  { font-size: 0.85rem; color: #555; flex: 1; margin: 0 0 14px; }
+  .crate-card-price { font-size: 1.2rem; font-weight: 700; color: #1a6fc4; margin: 0 0 8px; }
+  .crate-prize-preview {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px;
+  }
+  .rarity-badge {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 600;
+  }
+  .rarity-common     { background: #e8f4e8; color: #2d7a2d; }
+  .rarity-uncommon   { background: #e8f0ff; color: #1a5ccc; }
+  .rarity-rare       { background: #fff3cd; color: #996600; }
+  .rarity-legendary  { background: #fde8ff; color: #8a00c0; }
+
+  .btn-buy-crate {
+    width: 100%; padding: 10px; background: #1a6fc4; color: #fff;
+    border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-buy-crate:hover { background: #155da0; }
+  .btn-buy-crate:disabled { background: #aac4e0; cursor: default; }
+
+  /* ── My Crates inventory ──────────────────────────────────────────── */
+  .section-title {
+    font-size: 1.4rem; font-weight: 700; margin: 0 0 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title i { color: #1a6fc4; }
+
+  .inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px; margin-bottom: 40px;
+  }
+  .inv-card {
+    border: 2px solid #dde7f5; border-radius: 12px; overflow: hidden;
+    background: #fff; text-align: center; padding: 20px 14px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: box-shadow 0.2s;
+  }
+  .inv-card.opened { border-color: #b0c8e8; background: #f7f9ff; }
+  .inv-card-icon { font-size: 3rem; line-height: 1; }
+  .inv-card-name { font-weight: 700; font-size: 0.95rem; }
+  .inv-card-status { font-size: 0.8rem; color: #888; }
+  .btn-open-crate {
+    padding: 8px 20px; background: #1a6fc4; color: #fff;
+    border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+    font-size: 0.9rem; transition: background 0.2s; width: 100%;
+  }
+  .btn-open-crate:hover { background: #155da0; }
+  .btn-open-crate:disabled { background: #aac4e0; cursor: default; }
+  .btn-claim-prize {
+    padding: 8px 20px; background: #2daa55; color: #fff;
+    border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+    font-size: 0.9rem; transition: background 0.2s; width: 100%;
+  }
+  .btn-claim-prize:hover { background: #24883e; }
+  .won-price { font-size: 0.85rem; color: #2daa55; font-weight: 700; }
+  .orig-price { font-size: 0.78rem; color: #888; text-decoration: line-through; }
+
+  /* ── Opening modal ────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9000; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+  .modal-box {
+    background: #fff; border-radius: 18px; width: min(480px, 94vw);
+    padding: 36px 28px; text-align: center; position: relative;
+    transform: scale(0.88); transition: transform 0.25s;
+  }
+  .modal-overlay.visible .modal-box { transform: scale(1); }
+  .modal-close {
+    position: absolute; top: 14px; right: 16px; font-size: 1.4rem;
+    background: none; border: none; cursor: pointer; color: #555;
+  }
+
+  /* Slot-reel spinner */
+  .reel-wrap {
+    overflow: hidden; height: 140px; border-radius: 12px;
+    background: #0d1b2a; margin: 18px 0; position: relative;
+    border: 3px solid #1a6fc4;
+  }
+  .reel-strip {
+    display: flex; gap: 0;
+    transition: transform 0.05s linear;
+    will-change: transform;
+  }
+  .reel-item {
+    min-width: 140px; height: 140px; display: flex;
+    align-items: center; justify-content: center; flex-direction: column;
+    gap: 6px; flex-shrink: 0; border-right: 2px solid rgba(255,255,255,0.08);
+  }
+  .reel-item img  { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+  .reel-item span { font-size: 0.7rem; color: #cde; font-weight: 600; text-align: center; max-width: 120px; }
+  .reel-pointer {
+    position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
+    background: #f0c040; transform: translateX(-50%); pointer-events: none;
+  }
+  .reel-pointer::before, .reel-pointer::after {
+    content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+  }
+  .reel-pointer::before {
+    top: 0; border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 12px solid #f0c040;
+  }
+  .reel-pointer::after {
+    bottom: 0; border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-bottom: 12px solid #f0c040;
+  }
+
+  .reveal-card {
+    background: linear-gradient(135deg, #0d1b2a, #1a3a5c);
+    border-radius: 14px; padding: 24px; color: #fff; margin: 18px 0;
+    display: none;
+  }
+  .reveal-card.show { display: block; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .reveal-card img { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; margin-bottom: 12px; }
+  .reveal-rarity   { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+  .reveal-name     { font-size: 1.2rem; font-weight: 700; margin: 0 0 8px; }
+  .reveal-price    { font-size: 1rem; color: #7de8a0; font-weight: 700; }
+  .reveal-orig     { font-size: 0.82rem; color: rgba(255,255,255,0.55); text-decoration: line-through; }
+
+  .modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 18px; }
+  .btn-modal-claim {
+    padding: 10px 28px; background: #2daa55; color: #fff; border: none;
+    border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-modal-claim:hover { background: #24883e; }
+  .btn-modal-dismiss {
+    padding: 10px 20px; background: #eee; color: #333; border: none;
+    border-radius: 8px; font-size: 1rem; cursor: pointer;
+  }
+
+  .login-prompt {
+    background: #f7faff; border: 1px solid #dde7f5; border-radius: 10px;
+    padding: 28px; text-align: center; margin-bottom: 40px;
+  }
+  .login-prompt p  { margin: 0 0 14px; color: #555; }
+  .login-prompt a  { color: #1a6fc4; font-weight: 600; }
+
+  .empty-inv { text-align: center; color: #888; padding: 30px 0; font-size: 0.95rem; }
+
+  @media (max-width: 600px) {
+    .crates-hero h1 { font-size: 1.5rem; }
+    .how-step { width: 150px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    Free shipping on orders over $40 &nbsp;|&nbsp; Use code <strong>DORK10</strong> for 10% off your first order
+  </div>
+
+  <!-- Search Bar -->
+  <div class="srcbar-wrap">
+  <form class="srcbartn" action="search.html">
+    <input type="text" id="srch001" placeholder="Search mugs &amp; mug accessories..." name="search"
+           oninput="_srcSearch()" autocomplete="off" />
+    <button type="submit"><i class="fa fa-search"></i></button>
+    <ul id="productline"></ul>
+  </form>
+  <script>
+    function _escSafe(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function _srcBuild() {
+      var pl = document.getElementById('productline'); if (!pl) return;
+      pl.innerHTML = '';
+      for (var i = 0; i < prodb.length; i++)
+        pl.innerHTML += "<li id='liid"+i+"'><a href='item.html?id="+encodeURIComponent(prodb[i].id)+"'>"+_escSafe(prodb[i].pname)+"</a></li>";
+    }
+    function _srcSearch() {
+      _srcBuild();
+      var filter = document.getElementById('srch001').value.toUpperCase();
+      var pl = document.getElementById('productline');
+      pl.style.display = filter ? '' : 'none';
+      for (var i = 0; i < prodb.length; i++) {
+        var el = document.getElementById('liid'+i);
+        if (el) el.style.display = prodb[i].pname.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+      }
+    }
+    document.addEventListener('click', function(e) { if (!e.target.closest('.srcbartn')) { var pl = document.getElementById('productline'); if (pl) pl.style.display = 'none'; } });
+  </script>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="index.html">
+        <img src="./Assets/Branding/dorkmugsnobg.png" alt="Dork Mugs" class="header-logo" />
+      </a>
+    </div>
+    <nav>
+      <ul class="header-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Shop</a></li>
+        <li><a href="crates.html" class="active">Crates</a></li>
+        <li><a href="search.html">Collections</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li class="nav-auth-item" id="nav-li-login"><a href="login.html">Log In</a></li>
+        <li class="nav-auth-item" id="nav-li-signup"><a href="register.html">Sign Up</a></li>
+        <li class="nav-auth-item" id="nav-li-account" style="display:none"><a href="account.html">My Account</a></li>
+        <li class="nav-auth-item" id="nav-li-logout" style="display:none"><a href="#" id="nav-logout-link">Log Out</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-login" type="button">Log In</button>
+      <button id="btn001" type="button">Sign Up</button>
+      <button id="btn-account" type="button" style="display:none"></button>
+      <button id="btn-logout" type="button" style="display:none">Log Out</button>
+      <div class="cart-btn-wrap">
+        <button id="btn002" type="button" title="View cart" aria-label="View cart"><i class="fas fa-shopping-cart fa-lg"></i></button>
+        <span id="cart-badge" style="display:none">0</span>
+      </div>
+      <button id="btn-sexy-mode" type="button" class="sexy-mode-btn" title="Sexy Mode: OFF" aria-label="Toggle Sexy Mode">🐾</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- Hero -->
+    <div class="crates-hero">
+      <h1>🎁 Dork Crates</h1>
+      <p>Buy a crate key and open it for a chance to win a mug at a reduced price. Every key is a guaranteed win — it's just a matter of <em>how good</em> the deal is.</p>
+    </div>
+
+    <!-- How it works -->
+    <div class="how-it-works">
+      <div class="how-step">
+        <i class="fas fa-key"></i>
+        <h4>1. Buy a Key</h4>
+        <p>Purchase a crate key through normal checkout.</p>
+      </div>
+      <div class="how-step">
+        <i class="fas fa-box-open"></i>
+        <h4>2. Open the Crate</h4>
+        <p>Come back here and spin to reveal your prize mug.</p>
+      </div>
+      <div class="how-step">
+        <i class="fas fa-tag"></i>
+        <h4>3. Claim the Deal</h4>
+        <p>Check out at your discounted price — guaranteed lower than retail.</p>
+      </div>
+    </div>
+
+    <!-- Available Crates -->
+    <h2 class="section-title"><i class="fas fa-store"></i> Available Crates</h2>
+    <div id="crates-loading" style="text-align:center;padding:40px 0;color:#888">
+      <i class="fas fa-circle-notch fa-spin" style="font-size:1.8rem;color:#1a6fc4"></i>
+      <p style="margin-top:12px">Loading crates&hellip;</p>
+    </div>
+    <div id="crate-grid" class="crate-grid" style="display:none"></div>
+    <div id="crates-empty" style="display:none;text-align:center;padding:40px 0;color:#888">
+      No crates available right now. Check back soon!
+    </div>
+
+    <!-- My Crates (requires auth) -->
+    <h2 class="section-title" style="margin-top:40px"><i class="fas fa-boxes"></i> My Crates</h2>
+    <div id="inv-login-prompt" class="login-prompt" style="display:none">
+      <p><i class="fas fa-lock"></i> Log in to see your crate inventory and open your keys.</p>
+      <a href="login.html" class="btn-buy-crate" style="display:inline-block;width:auto;padding:10px 28px;text-decoration:none">Log In</a>
+    </div>
+    <div id="inv-loading" style="text-align:center;padding:40px 0;color:#888;display:none">
+      <i class="fas fa-circle-notch fa-spin" style="font-size:1.8rem;color:#1a6fc4"></i>
+    </div>
+    <div id="inventory-grid" class="inventory-grid" style="display:none"></div>
+    <div id="inv-empty" class="empty-inv" style="display:none">
+      You don't own any crate keys yet. Buy one above!
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3>Dork Mugs</h3>
+        <p>Original designs for people who think too much and drink too much coffee.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="product.html">All Mugs</a></li>
+          <li><a href="crates.html">Crates</a></li>
+          <li><a href="search.html?filter=bp">BP Collection</a></li>
+          <li><a href="search.html?filter=fame">Fame &amp; Infamy</a></li>
+          <li><a href="search.html?filter=stem">STEM Collection</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Info</h4>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="shipping.html">Shipping</a></li>
+          <li><a href="returns.html">Returns</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 Dork Mugs. All rights reserved.</div>
+  </footer>
+
+</div><!-- /.container -->
+
+<!-- ── Cart overlay/drawer (shared) ──────────────────────────────────────── -->
+<div id="cart-overlay" class="cart-overlay"></div>
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+  <div class="cart-drawer-header">
+    <h3>Your Cart <span class="cart-count-label">(<span id="cart-drawer-count">0</span> items)</span></h3>
+    <button id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-items" class="cart-items"></div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <p class="cart-shipping-note"><i class="fas fa-truck"></i> Free shipping on orders over $40</p>
+    <button class="cart-checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+    <a class="cart-continue-link" onclick="Cart.closeDrawer()">Continue Shopping</a>
+  </div>
+</aside>
+<div id="cart-toast" class="cart-toast"></div>
+
+<!-- ── Opening Modal ─────────────────────────────────────────────────────── -->
+<div id="crate-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Crate Opening">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    <h3 id="modal-title" style="margin:0 0 4px">Opening crate…</h3>
+    <p id="modal-sub" style="font-size:0.85rem;color:#666;margin:0 0 4px"></p>
+
+    <!-- Reel spinner -->
+    <div class="reel-wrap" id="reel-wrap">
+      <div class="reel-strip" id="reel-strip"></div>
+      <div class="reel-pointer"></div>
+    </div>
+
+    <!-- Prize reveal -->
+    <div class="reveal-card" id="reveal-card">
+      <img id="reveal-img" src="" alt="Prize mug" />
+      <div class="reveal-rarity" id="reveal-rarity"></div>
+      <div class="reveal-name"  id="reveal-name"></div>
+      <div class="reveal-price" id="reveal-price"></div>
+      <div class="reveal-orig"  id="reveal-orig"></div>
+    </div>
+
+    <div class="modal-actions" id="modal-actions" style="display:none">
+      <button class="btn-modal-claim" id="btn-modal-claim">🏷️ Claim Prize &amp; Checkout</button>
+      <button class="btn-modal-dismiss" id="btn-modal-dismiss">View My Crates</button>
+    </div>
+  </div>
+</div>
+
+<script src="./include/cart.js"></script>
+<script src="./include/auth.js"></script>
+<script src="./include/sexymode.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ── API base ──────────────────────────────────────────────────────────────
+  function apiBase() {
+    if (window.__DORKMUGS_API_BASE__) return String(window.__DORKMUGS_API_BASE__).replace(/\/+$/, '');
+    if (location.protocol === 'file:') return 'http://localhost:5000/api';
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      return location.protocol + '//' + location.hostname + ':5000/api';
+    return location.origin.replace(/\/+$/, '') + '/api';
+  }
+  var API = apiBase();
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Rarity helpers ────────────────────────────────────────────────────────
+  var RARITY_COLORS = {
+    common:    '#2d7a2d',
+    uncommon:  '#1a5ccc',
+    rare:      '#996600',
+    legendary: '#8a00c0',
+  };
+  var RARITY_LABELS = {
+    common: 'Common', uncommon: 'Uncommon', rare: 'Rare', legendary: 'Legendary',
+  };
+  function rarityBadge(r) {
+    return '<span class="rarity-badge rarity-' + esc(r) + '">' + esc(RARITY_LABELS[r] || r) + '</span>';
+  }
+
+  // ── Load available crates ─────────────────────────────────────────────────
+  function loadCrates() {
+    fetch(API + '/crates')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.getElementById('crates-loading').style.display = 'none';
+        var crates = data.crates || [];
+        if (!crates.length) {
+          document.getElementById('crates-empty').style.display = 'block';
+          return;
+        }
+        var grid = document.getElementById('crate-grid');
+        grid.style.display = '';
+        crates.forEach(function (c) { grid.innerHTML += buildCrateCard(c); });
+        grid.querySelectorAll('.btn-buy-crate').forEach(function (btn) {
+          btn.addEventListener('click', function () { buyCrate(btn); });
+        });
+      })
+      .catch(function () {
+        document.getElementById('crates-loading').style.display = 'none';
+        document.getElementById('crates-empty').style.display = 'block';
+      });
+  }
+
+  function buildCrateCard(c) {
+    var imgHtml = c.image
+      ? '<img src="' + esc(c.image) + '" alt="' + esc(c.name) + '" />'
+      : '<span style="font-size:4rem">📦</span>';
+
+    var prizes = (c.prizes || []).slice(0, 6);
+    var badgeHtml = prizes.map(function (p) { return rarityBadge(p.rarity); }).join('');
+    var uniqueRarities = [...new Set(prizes.map(function(p){ return p.rarity; }))];
+    if (!badgeHtml && uniqueRarities.length === 0) badgeHtml = rarityBadge('common');
+
+    return '<div class="crate-card">' +
+      '<div class="crate-card-img">' + imgHtml + '</div>' +
+      '<div class="crate-card-body">' +
+        '<div class="crate-card-name">' + esc(c.name) + '</div>' +
+        '<div class="crate-card-desc">' + esc(c.description || 'Open for a chance to win a mug at a discounted price.') + '</div>' +
+        '<div class="crate-prize-preview">' + badgeHtml + '</div>' +
+        '<div class="crate-card-price">$' + parseFloat(c.price).toFixed(2) + '</div>' +
+        '<button class="btn-buy-crate" data-crate-id="' + esc(c.id) + '" data-crate-price="' + esc(String(Math.round(c.price * 100))) + '" data-crate-name="' + esc(c.name) + '">' +
+          '<i class="fas fa-key"></i> Buy Key' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function buyCrate(btn) {
+    var crateId    = btn.dataset.crateId;
+    var crateName  = btn.dataset.crateName;
+    var cratePrice = parseInt(btn.dataset.cratePrice, 10);
+
+    // Check login
+    var user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+    if (!user) {
+      if (confirm('You must be logged in to buy a crate key. Log in now?')) {
+        location.href = 'login.html?redirect=' + encodeURIComponent('crates.html');
+      }
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Redirecting…';
+
+    fetch(API + '/checkout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: [{
+          name:    crateName + ' Key',
+          price:   cratePrice,
+          qty:     1,
+          crateId: crateId,
+        }],
+      }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.url) { location.href = data.url; }
+        else {
+          alert(data.error || 'Could not start checkout. Please try again.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-key"></i> Buy Key';
+        }
+      })
+      .catch(function () {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-key"></i> Buy Key';
+      });
+  }
+
+  // ── Load user inventory ───────────────────────────────────────────────────
+  function loadInventory() {
+    var user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+    if (!user) {
+      document.getElementById('inv-login-prompt').style.display = 'block';
+      return;
+    }
+    document.getElementById('inv-loading').style.display = 'block';
+
+    fetch(API + '/crates/my', { credentials: 'include' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.getElementById('inv-loading').style.display = 'none';
+        var items = data.userCrates || [];
+        var grid = document.getElementById('inventory-grid');
+        if (!items.length) {
+          document.getElementById('inv-empty').style.display = 'block';
+          return;
+        }
+        grid.style.display = '';
+        items.forEach(function (uc) { grid.innerHTML += buildInvCard(uc); });
+        grid.querySelectorAll('.btn-open-crate').forEach(function (btn) {
+          btn.addEventListener('click', function () { doOpenCrate(btn); });
+        });
+        grid.querySelectorAll('.btn-claim-prize').forEach(function (btn) {
+          btn.addEventListener('click', function () { doClaimPrize(btn); });
+        });
+      })
+      .catch(function () {
+        document.getElementById('inv-loading').style.display = 'none';
+        document.getElementById('inv-empty').style.display = 'block';
+      });
+  }
+
+  function buildInvCard(uc) {
+    var icon = '📦';
+    if (uc.opened) icon = '📭';
+    var statusHtml = '';
+    var actionHtml = '';
+
+    if (!uc.opened) {
+      statusHtml = '<div class="inv-card-status">Unopened</div>';
+      actionHtml = '<button class="btn-open-crate" data-uc-id="' + esc(uc.id) + '" data-crate-name="' + esc(uc.crate ? uc.crate.name : 'Crate') + '">Open <i class="fas fa-box-open"></i></button>';
+    } else if (uc.opening && !uc.opening.claimed) {
+      var prod = uc.opening.product;
+      statusHtml = '<div class="inv-card-status">Prize awaiting claim!</div>' +
+        (prod ? '<div class="won-price">Won: $' + parseFloat(uc.opening.wonPrice).toFixed(2) + '</div>' +
+          '<div class="orig-price">Retail: $' + parseFloat(prod.price).toFixed(2) + '</div>' : '');
+      actionHtml = '<button class="btn-claim-prize" data-claim-token="' + esc(uc.opening.claimToken) + '">🏷️ Claim Prize</button>';
+    } else if (uc.opening && uc.opening.claimed) {
+      statusHtml = '<div class="inv-card-status">Prize claimed ✓</div>';
+    } else {
+      statusHtml = '<div class="inv-card-status">Opened</div>';
+    }
+
+    return '<div class="inv-card' + (uc.opened ? ' opened' : '') + '">' +
+      '<div class="inv-card-icon">' + icon + '</div>' +
+      '<div class="inv-card-name">' + esc(uc.crate ? uc.crate.name : 'Crate') + '</div>' +
+      statusHtml + actionHtml +
+    '</div>';
+  }
+
+  // ── Open crate flow ───────────────────────────────────────────────────────
+  var _currentOpening = null;
+
+  function doOpenCrate(btn) {
+    var ucId = btn.dataset.ucId;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+    fetch(API + '/crates/open/' + encodeURIComponent(ucId), {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.opening) {
+          _currentOpening = data.opening;
+          showOpeningModal(data.opening);
+        } else {
+          alert(data.error || 'Could not open crate.');
+          btn.disabled = false;
+          btn.innerHTML = 'Open <i class="fas fa-box-open"></i>';
+        }
+      })
+      .catch(function () {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = 'Open <i class="fas fa-box-open"></i>';
+      });
+  }
+
+  // ── Opening modal / reel animation ───────────────────────────────────────
+  function showOpeningModal(opening) {
+    var modal = document.getElementById('crate-modal');
+    var strip = document.getElementById('reel-strip');
+    var reelWrap = document.getElementById('reel-wrap');
+    document.getElementById('modal-title').textContent = 'Opening crate…';
+    document.getElementById('modal-sub').textContent = '';
+    document.getElementById('reveal-card').classList.remove('show');
+    document.getElementById('modal-actions').style.display = 'none';
+    strip.innerHTML = '';
+    strip.style.transform = '';
+
+    modal.classList.add('visible');
+
+    var prize = opening.prize;
+    var product = opening.product;
+
+    // Build a reel of fake items + the winning item interspersed
+    var fakeCount = 30;
+    var itemW = 140;
+    var items = [];
+
+    // Populate reel items (mix of available prizes/products for visual effect)
+    for (var i = 0; i < fakeCount; i++) {
+      items.push({ img: product ? product.imageLeft : '', name: product ? product.pname : '?', rarity: prize ? prize.rarity : 'common' });
+    }
+    // Place the winner near the end
+    var winnerIdx = fakeCount - 5;
+    items[winnerIdx] = { img: product ? product.imageLeft : '', name: product ? product.pname : 'Prize', rarity: prize ? prize.rarity : 'common', isWinner: true };
+
+    items.forEach(function (item) {
+      var div = document.createElement('div');
+      div.className = 'reel-item';
+      var color = RARITY_COLORS[item.rarity] || '#1a6fc4';
+      div.style.background = item.isWinner ? 'rgba(255,215,0,0.12)' : 'transparent';
+      div.innerHTML = item.img
+        ? '<img src="' + esc(item.img) + '" alt="' + esc(item.name) + '" />'
+        : '<span style="font-size:2.5rem">☕</span>';
+      div.innerHTML += '<span style="color:' + color + '">' + esc(item.name) + '</span>';
+      strip.appendChild(div);
+    });
+
+    // Animate reel scrolling to land on winner
+    var totalWidth = items.length * itemW;
+    var targetX = winnerIdx * itemW - (reelWrap.offsetWidth / 2 - itemW / 2);
+
+    var start = null;
+    var duration = 3200; // ms
+    var startX = 0;
+
+    function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+    function animate(ts) {
+      if (!start) start = ts;
+      var elapsed = ts - start;
+      var progress = Math.min(elapsed / duration, 1);
+      var x = easeOut(progress) * targetX;
+      strip.style.transform = 'translateX(-' + x + 'px)';
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Show prize reveal
+        showPrizeReveal(opening);
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function showPrizeReveal(opening) {
+    var prize = opening.prize;
+    var product = opening.product;
+    var revCard = document.getElementById('reveal-card');
+
+    document.getElementById('modal-title').textContent = '🎉 You won!';
+    document.getElementById('modal-sub').textContent = 'Here\'s your prize:';
+
+    document.getElementById('reveal-img').src = product ? (product.imageLeft || '') : '';
+    document.getElementById('reveal-img').alt = product ? product.pname : 'Prize';
+    document.getElementById('reveal-rarity').innerHTML = rarityBadge(prize ? prize.rarity : 'common');
+    document.getElementById('reveal-name').textContent = product ? product.pname : 'Mystery Mug';
+    document.getElementById('reveal-price').textContent = '$' + parseFloat(opening.wonPrice).toFixed(2);
+    document.getElementById('reveal-orig').textContent = product ? 'Retail: $' + parseFloat(product.price).toFixed(2) : '';
+
+    revCard.classList.add('show');
+
+    document.getElementById('btn-modal-claim').dataset.claimToken = opening.claimToken || '';
+    document.getElementById('modal-actions').style.display = 'flex';
+  }
+
+  function doClaimPrize(btn) {
+    var token = btn.dataset.claimToken;
+    if (!token) return;
+    btn.disabled = true;
+    btn.textContent = 'Redirecting…';
+
+    fetch(API + '/crates/claim/' + encodeURIComponent(token), {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.url) { location.href = data.url; }
+        else {
+          alert(data.error || 'Could not create checkout.');
+          btn.disabled = false;
+          btn.textContent = '🏷️ Claim Prize & Checkout';
+        }
+      })
+      .catch(function () {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = '🏷️ Claim Prize & Checkout';
+      });
+  }
+
+  // ── Modal wiring ──────────────────────────────────────────────────────────
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  document.getElementById('crate-modal').addEventListener('click', function (e) {
+    if (e.target === this) closeModal();
+  });
+  document.getElementById('btn-modal-dismiss').addEventListener('click', function () {
+    closeModal();
+    location.reload();
+  });
+  document.getElementById('btn-modal-claim').addEventListener('click', function () {
+    doClaimPrize(this);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  function closeModal() {
+    document.getElementById('crate-modal').classList.remove('visible');
+    _currentOpening = null;
+  }
+
+  // Inventory card claim buttons also wire up via doClaimPrize
+  document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('btn-claim-prize') && e.target.dataset.claimToken) {
+      doClaimPrize(e.target);
+    }
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  loadCrates();
+  // Wait for Auth to be ready before loading inventory
+  window.addEventListener('DOMContentLoaded', function () {
+    // Give auth.js a tick to initialize
+    setTimeout(loadInventory, 50);
+  });
+  if (document.readyState !== 'loading') {
+    setTimeout(loadInventory, 50);
+  }
+
+})();
+</script>
+
+</body>
+</html>

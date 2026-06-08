@@ -51,6 +51,7 @@ async function createCheckout(req, res) {
     printifyProductId: item.printifyProductId ? String(item.printifyProductId) : undefined,
     variantId: item.variantId ? String(item.variantId) : undefined,
     placement: ['left', 'center', 'right'].includes(item.placement) ? item.placement : 'left',
+    crateId: item.crateId ? String(item.crateId).slice(0, 50) : undefined,
   }));
 
   // ── Server-side price validation ────────────────────────────────────────────
@@ -70,6 +71,23 @@ async function createCheckout(req, res) {
     }
   }
 
+  // ── Crate key price validation ───────────────────────────────────────────────
+  // Items with crateId are crate keys; look up price from the Crate table.
+  const crateIds = [...new Set(sanitised.map((i) => i.crateId).filter(Boolean))];
+  if (crateIds.length > 0) {
+    const dbCrates = await prisma.crate.findMany({
+      where: { id: { in: crateIds }, active: true },
+      select: { id: true, price: true, name: true },
+    });
+    const cratePriceMap = Object.fromEntries(dbCrates.map((c) => [c.id, { price: Math.round(c.price * 100), name: c.name }]));
+    for (const item of sanitised) {
+      if (item.crateId && cratePriceMap[item.crateId] !== undefined) {
+        item.price = cratePriceMap[item.crateId].price; // override with DB price
+        item.name  = `${cratePriceMap[item.crateId].name} Key`; // canonical name
+      }
+    }
+  }
+
   // Metadata stored on session — used by the Stripe webhook and success page.
   // NOTE: Stripe enforces a 500-char limit per metadata value. Images are omitted
   // to stay well within the limit; the download feature degrades gracefully.
@@ -78,6 +96,7 @@ async function createCheckout(req, res) {
     variantId: i.variantId || null,
     qty: i.qty,
     placement: i.placement,
+    crateId: i.crateId || null,
   }));
   const metaItemsJson = JSON.stringify(metaItems);
   if (metaItemsJson.length > 490) {

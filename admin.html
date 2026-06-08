@@ -186,6 +186,7 @@
         <a href="#" data-section="featured"><i class="fas fa-star"></i> Featured</a>
         <a href="#" data-section="collections"><i class="fas fa-layer-group"></i> Collections</a>
         <a href="#" data-section="coupons"><i class="fas fa-tag"></i> Coupons</a>
+        <a href="#" data-section="crates"><i class="fas fa-box-open"></i> Crates</a>
         <a href="#" data-section="email-tools"><i class="fas fa-envelope"></i> Email Tools</a>
         <a href="#" data-section="products"><i class="fas fa-sync-alt"></i> Printify Sync</a>
         <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
@@ -335,9 +336,91 @@
         <div id="cp-table-wrap"><p style="color:#888">Loading&hellip;</p></div>
       </div>
 
+      <!-- Crates -->
+      <div id="section-crates" class="admin-section section-inactive">
+        <h1 style="margin:0 0 4px">Crates</h1>
+        <p style="color:#5a6a80;margin:0 0 24px;font-size:.9rem">Manage loot crates and their prize pools. Users buy keys and open them for discounted mugs.</p>
+
+        <!-- Create crate form -->
+        <div class="panel-section" style="background:#fff;border:1px solid #e0e6f2;border-radius:10px;padding:22px 24px;margin-bottom:28px">
+          <h2 style="margin:0 0 18px;font-size:1rem"><i class="fas fa-plus-circle" style="color:#1a6fc4;margin-right:6px"></i>Create New Crate</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Name</label>
+              <input id="cr-name" type="text" placeholder="e.g. Dork Crate" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Slug (URL-safe)</label>
+              <input id="cr-slug" type="text" placeholder="e.g. dork-crate" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Price ($)</label>
+              <input id="cr-price" type="number" min="0" step="0.01" placeholder="9.99" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Image URL</label>
+              <input id="cr-image" type="text" placeholder="https://..." style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Description</label>
+              <input id="cr-desc" type="text" placeholder="Open for a chance to win a mug at a discounted price." style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+          </div>
+          <button id="cr-create-btn" class="btn-primary" style="margin-top:14px"><i class="fas fa-plus"></i> Create Crate</button>
+          <span id="cr-create-msg" style="margin-left:12px;font-size:.85rem"></span>
+        </div>
+
+        <!-- Crate list -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h2 style="margin:0;font-size:1rem">Existing Crates</h2>
+          <button class="btn-sm" id="cr-refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div id="cr-table-wrap"><p style="color:#888">Loading&hellip;</p></div>
+
+        <!-- Add prize form (shown after selecting a crate) -->
+        <div id="cr-prize-panel" style="display:none;background:#fff;border:1px solid #e0e6f2;border-radius:10px;padding:22px 24px;margin-top:28px">
+          <h2 style="margin:0 0 4px;font-size:1rem"><i class="fas fa-gift" style="color:#1a6fc4;margin-right:6px"></i>Add Prize to <strong id="cr-prize-crate-name"></strong></h2>
+          <p style="color:#888;font-size:.82rem;margin:0 0 14px">Product IDs come from the Shop Manager. Weights are relative probabilities (higher = more likely).</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end">
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Product ID</label>
+              <input id="pr-product-id" type="text" placeholder="e.g. gc01" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Win Price ($)</label>
+              <input id="pr-price" type="number" min="0" step="0.01" placeholder="12.99" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Weight</label>
+              <input id="pr-weight" type="number" min="1" value="100" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box" />
+            </div>
+            <div>
+              <label style="font-size:.83rem;font-weight:600;display:block;margin-bottom:4px">Rarity</label>
+              <select id="pr-rarity" style="width:100%;padding:7px 10px;border:1px solid #cdd6e8;border-radius:6px;font-size:.9rem;box-sizing:border-box">
+                <option value="common">Common</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="rare">Rare</option>
+                <option value="legendary">Legendary</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" id="pr-crate-id" value="" />
+          <button id="pr-add-btn" class="btn-primary" style="margin-top:14px"><i class="fas fa-plus"></i> Add Prize</button>
+          <span id="pr-add-msg" style="margin-left:12px;font-size:.85rem"></span>
+        </div>
+
+        <!-- Openings log -->
+        <div style="margin-top:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h2 style="margin:0;font-size:1rem">Recent Openings</h2>
+            <button class="btn-sm" id="cr-openings-refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <div id="cr-openings-wrap"><p style="color:#888">Loading&hellip;</p></div>
+        </div>
+      </div>
+
       <!-- Email Tools -->
       <div id="section-email-tools" class="admin-section section-inactive">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
           <h1 style="margin:0">Email Tools</h1>
           <a id="et-inbox-link" href="#" target="_blank" rel="noopener noreferrer"
             style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:#1a6fc4;color:#fff;border-radius:7px;font-size:.875rem;font-weight:600;text-decoration:none;line-height:1">
@@ -792,6 +875,7 @@ function showSection(name) {
   else if (name === 'collections') loadCollections();
   else if (name === 'featured') loadFeatured();
   else if (name === 'coupons') loadCoupons();
+  else if (name === 'crates') loadAdminCrates();
   else if (name === 'email-tools') { loadEmailInboxUrl(); }
   else if (name === 'products') { document.getElementById('products-table').innerHTML = '<p style="color:#888">Click "Fetch from Printify" to load products.</p>'; }
   else if (name === 'shop-manager') loadShopManager();
@@ -2105,6 +2189,211 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
     btn.textContent = 'Send Email';
   });
 });
+</script>
+
+<!-- ─── Crates Admin ─────────────────────────────────────────────────────── -->
+<script>
+(function () {
+  'use strict';
+
+  var _cratesList = [];
+
+  function loadAdminCrates() {
+    document.getElementById('cr-table-wrap').innerHTML = '<p style="color:#888">Loading&hellip;</p>';
+    document.getElementById('cr-openings-wrap').innerHTML = '<p style="color:#888">Loading&hellip;</p>';
+    document.getElementById('cr-prize-panel').style.display = 'none';
+
+    apiFetch('/admin/crates').then(function (data) {
+      _cratesList = data.crates || [];
+      renderCrateTable(_cratesList);
+    }).catch(function () {
+      document.getElementById('cr-table-wrap').innerHTML = '<p style="color:#c00">Failed to load crates.</p>';
+    });
+
+    apiFetch('/admin/crates/openings').then(function (data) {
+      renderOpeningsTable(data.openings || []);
+    }).catch(function () {
+      document.getElementById('cr-openings-wrap').innerHTML = '<p style="color:#c00">Failed to load openings.</p>';
+    });
+  }
+  window.loadAdminCrates = loadAdminCrates;
+
+  function renderCrateTable(crates) {
+    var wrap = document.getElementById('cr-table-wrap');
+    if (!crates.length) {
+      wrap.innerHTML = '<p style="color:#888;padding:16px 0">No crates yet. Create one above.</p>';
+      return;
+    }
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:.88rem">' +
+      '<thead><tr style="background:#f0f4fb">' +
+      '<th style="padding:8px 10px;text-align:left">Name</th>' +
+      '<th style="padding:8px 10px;text-align:left">Slug</th>' +
+      '<th style="padding:8px 10px;text-align:right">Price</th>' +
+      '<th style="padding:8px 10px;text-align:center">Active</th>' +
+      '<th style="padding:8px 10px;text-align:center">Prizes</th>' +
+      '<th style="padding:8px 10px;text-align:center">Actions</th>' +
+      '</tr></thead><tbody>';
+    crates.forEach(function (c) {
+      html += '<tr style="border-bottom:1px solid #eee">' +
+        '<td style="padding:8px 10px">' + esc(c.name) + '</td>' +
+        '<td style="padding:8px 10px;color:#555">' + esc(c.slug) + '</td>' +
+        '<td style="padding:8px 10px;text-align:right">$' + parseFloat(c.price).toFixed(2) + '</td>' +
+        '<td style="padding:8px 10px;text-align:center">' + (c.active ? '✅' : '❌') + '</td>' +
+        '<td style="padding:8px 10px;text-align:center">' + (c.prizes ? c.prizes.length : 0) + '</td>' +
+        '<td style="padding:8px 10px;text-align:center;white-space:nowrap">' +
+          '<button class="btn-sm cr-toggle-btn" data-id="' + esc(c.id) + '" data-active="' + c.active + '" style="margin-right:4px">' + (c.active ? 'Deactivate' : 'Activate') + '</button>' +
+          '<button class="btn-sm cr-prizes-btn" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '" style="margin-right:4px;background:#eaf3ff;color:#1a6fc4">Prizes</button>' +
+          '<button class="btn-sm cr-del-btn" data-id="' + esc(c.id) + '" style="background:#fff0f0;color:#c00">Delete</button>' +
+        '</td></tr>';
+      // Prize sub-rows
+      if (c.prizes && c.prizes.length) {
+        html += '<tr><td colspan="6" style="padding:0 10px 10px 28px">' +
+          '<table style="width:100%;border-collapse:collapse;font-size:.82rem;background:#fafbff;border-radius:6px;overflow:hidden">' +
+          '<thead><tr style="background:#eef2ff"><th style="padding:5px 8px;text-align:left">Product ID</th><th style="padding:5px 8px;text-align:right">Win Price</th><th style="padding:5px 8px;text-align:center">Weight</th><th style="padding:5px 8px;text-align:center">Rarity</th><th></th></tr></thead><tbody>';
+        c.prizes.forEach(function (p) {
+          html += '<tr style="border-bottom:1px solid #eee">' +
+            '<td style="padding:5px 8px">' + esc(p.productId) + '</td>' +
+            '<td style="padding:5px 8px;text-align:right">$' + parseFloat(p.discountedPrice).toFixed(2) + '</td>' +
+            '<td style="padding:5px 8px;text-align:center">' + p.weight + '</td>' +
+            '<td style="padding:5px 8px;text-align:center">' + esc(p.rarity) + '</td>' +
+            '<td style="padding:5px 8px;text-align:right"><button class="btn-sm pr-del-btn" data-crate-id="' + esc(c.id) + '" data-prize-id="' + esc(p.id) + '" style="background:#fff0f0;color:#c00;font-size:.75rem">✕</button></td>' +
+            '</tr>';
+        });
+        html += '</tbody></table></td></tr>';
+      }
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('.cr-toggle-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var active = btn.dataset.active === 'true';
+        apiFetch('/admin/crates/' + btn.dataset.id, { method: 'PATCH', body: JSON.stringify({ active: !active }) })
+          .then(loadAdminCrates);
+      });
+    });
+    wrap.querySelectorAll('.cr-prizes-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.getElementById('pr-crate-id').value = btn.dataset.id;
+        document.getElementById('cr-prize-crate-name').textContent = btn.dataset.name;
+        document.getElementById('cr-prize-panel').style.display = 'block';
+        document.getElementById('cr-prize-panel').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+    wrap.querySelectorAll('.cr-del-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('Delete this crate and all its prizes? This cannot be undone.')) return;
+        apiFetch('/admin/crates/' + btn.dataset.id, { method: 'DELETE' }).then(loadAdminCrates);
+      });
+    });
+    wrap.querySelectorAll('.pr-del-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        apiFetch('/admin/crates/' + btn.dataset.crateId + '/prizes/' + btn.dataset.prizeId, { method: 'DELETE' })
+          .then(loadAdminCrates);
+      });
+    });
+  }
+
+  function renderOpeningsTable(openings) {
+    var wrap = document.getElementById('cr-openings-wrap');
+    if (!openings.length) {
+      wrap.innerHTML = '<p style="color:#888">No crate openings yet.</p>';
+      return;
+    }
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:.85rem">' +
+      '<thead><tr style="background:#f0f4fb">' +
+      '<th style="padding:7px 10px;text-align:left">Date</th>' +
+      '<th style="padding:7px 10px;text-align:left">User</th>' +
+      '<th style="padding:7px 10px;text-align:left">Product Won</th>' +
+      '<th style="padding:7px 10px;text-align:right">Win Price</th>' +
+      '<th style="padding:7px 10px;text-align:center">Claimed</th>' +
+      '</tr></thead><tbody>';
+    openings.forEach(function (o) {
+      html += '<tr style="border-bottom:1px solid #eee">' +
+        '<td style="padding:7px 10px;color:#555">' + esc(new Date(o.createdAt).toLocaleDateString()) + '</td>' +
+        '<td style="padding:7px 10px;font-size:.8rem;color:#555">' + esc(o.userId.slice(0, 12)) + '…</td>' +
+        '<td style="padding:7px 10px">' + esc(o.productId) + '</td>' +
+        '<td style="padding:7px 10px;text-align:right">$' + parseFloat(o.wonPrice).toFixed(2) + '</td>' +
+        '<td style="padding:7px 10px;text-align:center">' + (o.claimed ? '✅' : '⏳') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Create crate ──────────────────────────────────────────────────────────
+  document.getElementById('cr-create-btn').addEventListener('click', function () {
+    var name  = document.getElementById('cr-name').value.trim();
+    var slug  = document.getElementById('cr-slug').value.trim();
+    var price = document.getElementById('cr-price').value.trim();
+    var image = document.getElementById('cr-image').value.trim();
+    var desc  = document.getElementById('cr-desc').value.trim();
+    var msg   = document.getElementById('cr-create-msg');
+    if (!name || !slug || !price) { msg.textContent = 'Name, slug, and price are required.'; msg.style.color = '#c00'; return; }
+    msg.textContent = 'Creating…'; msg.style.color = '#555';
+    apiFetch('/admin/crates', {
+      method: 'POST',
+      body: JSON.stringify({ name, slug, price: parseFloat(price), image, description: desc }),
+    }).then(function () {
+      msg.textContent = 'Created!'; msg.style.color = '#2a8a2a';
+      document.getElementById('cr-name').value = '';
+      document.getElementById('cr-slug').value = '';
+      document.getElementById('cr-price').value = '';
+      document.getElementById('cr-image').value = '';
+      document.getElementById('cr-desc').value = '';
+      loadAdminCrates();
+    }).catch(function (e) {
+      msg.textContent = e.message || 'Failed.'; msg.style.color = '#c00';
+    });
+  });
+
+  // Auto-slug from name
+  document.getElementById('cr-name').addEventListener('input', function () {
+    var slugEl = document.getElementById('cr-slug');
+    if (!slugEl.dataset.manual) {
+      slugEl.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+  });
+  document.getElementById('cr-slug').addEventListener('input', function () {
+    this.dataset.manual = '1';
+  });
+
+  // ── Add prize ─────────────────────────────────────────────────────────────
+  document.getElementById('pr-add-btn').addEventListener('click', function () {
+    var crateId = document.getElementById('pr-crate-id').value;
+    var productId = document.getElementById('pr-product-id').value.trim();
+    var price = document.getElementById('pr-price').value.trim();
+    var weight = document.getElementById('pr-weight').value.trim();
+    var rarity = document.getElementById('pr-rarity').value;
+    var msg = document.getElementById('pr-add-msg');
+    if (!productId || !price) { msg.textContent = 'Product ID and win price are required.'; msg.style.color = '#c00'; return; }
+    msg.textContent = 'Adding…'; msg.style.color = '#555';
+    apiFetch('/admin/crates/' + crateId + '/prizes', {
+      method: 'POST',
+      body: JSON.stringify({ productId, discountedPrice: parseFloat(price), weight: parseInt(weight, 10) || 100, rarity }),
+    }).then(function () {
+      msg.textContent = 'Prize added!'; msg.style.color = '#2a8a2a';
+      document.getElementById('pr-product-id').value = '';
+      document.getElementById('pr-price').value = '';
+      document.getElementById('pr-weight').value = '100';
+      loadAdminCrates();
+    }).catch(function (e) {
+      msg.textContent = e.message || 'Failed.'; msg.style.color = '#c00';
+    });
+  });
+
+  document.getElementById('cr-refresh-btn').addEventListener('click', loadAdminCrates);
+  document.getElementById('cr-openings-refresh-btn').addEventListener('click', function () {
+    apiFetch('/admin/crates/openings').then(function (data) {
+      renderOpeningsTable(data.openings || []);
+    });
+  });
+
+})();
 </script>
 
 <script src="./include/sexymode.js"></script>
