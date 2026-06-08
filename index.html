@@ -219,7 +219,7 @@
 <div id="cases-modal-overlay" class="cases-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cases-modal-title">
   <div class="cases-modal">
     <button class="cases-modal-close" id="cases-modal-close" aria-label="Close">&times;</button>
-    <div class="cases-modal-img" style="background-image:url('./Assets/Branding/dorkcases.png');"></div>
+    <img class="cases-modal-img" src="./Assets/Branding/dorkcases.png" alt="Dork Cases" />
     <div class="cases-modal-body">
       <span class="cases-modal-eyebrow">NEW FEATURE</span>
       <h2 id="cases-modal-title">Dork Cases are here.</h2>
@@ -276,9 +276,8 @@
 }
 @keyframes cmSlideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 .cases-modal-img {
-  width: 100%; height: 220px;
-  background-size: cover; background-position: center;
-  background-repeat: no-repeat;
+  width: 100%; height: auto;
+  display: block;
 }
 .cases-modal-body {
   padding: 28px 32px 32px;
