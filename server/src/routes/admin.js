@@ -65,6 +65,7 @@ router.post('/crates', crateCtrl.adminCreateCrate);
 router.patch('/crates/:id', crateCtrl.adminUpdateCrate);
 router.delete('/crates/:id', crateCtrl.adminDeleteCrate);
 router.post('/crates/:id/prizes', crateCtrl.adminAddPrize);
+router.patch('/crates/:id/prizes/:prizeId', crateCtrl.adminUpdatePrize);
 router.delete('/crates/:id/prizes/:prizeId', crateCtrl.adminDeletePrize);
 router.get('/crates/openings', crateCtrl.adminListOpenings);
 

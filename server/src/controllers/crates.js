@@ -404,6 +404,49 @@ async function adminAddPrize(req, res) {
   }
 }
 
+async function adminUpdatePrize(req, res) {
+  const { prizeId } = req.params;
+  const {
+    itemType,
+    productId,
+    itemValue,
+    coinAmount,
+    weight,
+    rarity,
+  } = req.body;
+
+  const validTypes    = ['SHARD', 'WILDCARD_SHARD', 'DISCOUNT_VOUCHER', 'MUG_VOUCHER', 'DORK_COIN'];
+  const validRarities = ['common', 'uncommon', 'rare', 'legendary'];
+  const data = {};
+
+  if (itemType != null) {
+    const safeType = validTypes.includes(itemType) ? itemType : null;
+    if (!safeType) return res.status(422).json({ error: 'Invalid itemType.' });
+    data.itemType = safeType;
+    const needsProduct = safeType === 'SHARD' || safeType === 'MUG_VOUCHER';
+    if (needsProduct && !productId) {
+      return res.status(422).json({ error: 'productId is required for SHARD and MUG_VOUCHER.' });
+    }
+    data.productId = needsProduct ? String(productId).slice(0, 50) : (productId ? String(productId).slice(0, 50) : '');
+  } else if (productId != null) {
+    data.productId = String(productId).slice(0, 50);
+  }
+
+  if (itemValue  != null) data.itemValue  = Math.max(0, parseFloat(itemValue)   || 0);
+  if (coinAmount != null) data.coinAmount = Math.max(0, parseInt(coinAmount, 10) || 0);
+  if (weight     != null) data.weight     = Math.max(1, parseInt(weight, 10)    || 100);
+  if (rarity     != null) data.rarity     = validRarities.includes(rarity) ? rarity : 'common';
+
+  try {
+    const prize = await prisma.cratePrize.update({ where: { id: prizeId }, data });
+    return res.json({ prize });
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Prize not found.' });
+    console.error('[crates] adminUpdatePrize error', err.message);
+    return res.status(500).json({ error: 'Could not update prize.' });
+  }
+}
+
 async function adminDeletePrize(req, res) {
   const { prizeId } = req.params;
   try {
@@ -674,6 +717,7 @@ module.exports = {
   adminUpdateCrate,
   adminDeleteCrate,
   adminAddPrize,
+  adminUpdatePrize,
   adminDeletePrize,
   adminListOpenings,
 };

@@ -840,6 +840,93 @@
     </div>
   </div>
 
+  <!-- Edit Crate Modal -->
+  <div class="modal-overlay" id="cr-edit-modal">
+    <div class="modal" style="max-width:520px;width:95%">
+      <h3 style="margin:0 0 20px">Edit Crate</h3>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="cr-edit-name" />
+      </div>
+      <div class="form-group">
+        <label>Slug</label>
+        <input type="text" id="cr-edit-slug" />
+      </div>
+      <div class="form-group">
+        <label>Price ($)</label>
+        <input type="number" min="0" step="0.01" id="cr-edit-price" />
+      </div>
+      <div class="form-group">
+        <label>Image URL</label>
+        <input type="text" id="cr-edit-image" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="cr-edit-desc" />
+      </div>
+      <div id="cr-edit-error" style="color:#b00020;font-size:.85rem;margin-bottom:8px;display:none"></div>
+      <div class="modal-actions">
+        <button class="btn-sm" id="cr-edit-cancel">Cancel</button>
+        <button class="btn-sm btn-primary" id="cr-edit-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Prize Modal -->
+  <div class="modal-overlay" id="pr-edit-modal">
+    <div class="modal" style="max-width:560px;width:95%">
+      <h3 style="margin:0 0 20px">Edit Drop</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin:0">
+          <label>Drop Type</label>
+          <select id="pr-edit-item-type">
+            <option value="SHARD">🧩 Shard</option>
+            <option value="WILDCARD_SHARD">🃏 Wildcard Shard</option>
+            <option value="DORK_COIN">🪙 Dork Coins</option>
+            <option value="DISCOUNT_VOUCHER">🏷️ Discount Voucher</option>
+            <option value="MUG_VOUCHER">🎟️ Mug Voucher</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Rarity</label>
+          <select id="pr-edit-rarity">
+            <option value="common">Common</option>
+            <option value="uncommon">Uncommon</option>
+            <option value="rare">Rare</option>
+            <option value="legendary">Legendary</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Weight</label>
+          <input type="number" min="1" id="pr-edit-weight" />
+        </div>
+        <div id="pr-edit-field-product" class="form-group" style="margin:0;display:none">
+          <label>Product ID <span style="color:#c00">*</span></label>
+          <input type="text" id="pr-edit-product-id" placeholder="e.g. gc01" />
+        </div>
+        <div id="pr-edit-field-coins" class="form-group" style="margin:0;display:none">
+          <label>Coin Amount <span style="color:#c00">*</span></label>
+          <input type="number" min="1" id="pr-edit-coin-amount" />
+        </div>
+        <div id="pr-edit-field-discount" class="form-group" style="margin:0;display:none">
+          <label>Discount % <span style="color:#c00">*</span></label>
+          <input type="number" min="1" max="99" id="pr-edit-item-value" />
+        </div>
+        <div id="pr-edit-field-bonus" class="form-group" style="margin:0;display:none">
+          <label>Bonus Coins</label>
+          <input type="number" min="0" id="pr-edit-bonus-coins" />
+        </div>
+      </div>
+      <input type="hidden" id="pr-edit-crate-id" />
+      <input type="hidden" id="pr-edit-prize-id" />
+      <div id="pr-edit-error" style="color:#b00020;font-size:.85rem;margin-top:12px;display:none"></div>
+      <div class="modal-actions">
+        <button class="btn-sm" id="pr-edit-cancel">Cancel</button>
+        <button class="btn-sm btn-primary" id="pr-edit-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="footer-copy">&copy; 2026 Dork Mugs — Admin Panel</div>
   </footer>
@@ -2275,6 +2362,7 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
         '<td style="padding:8px 10px;text-align:center;white-space:nowrap">' +
           '<button class="btn-sm cr-toggle-btn" data-id="' + esc(c.id) + '" data-active="' + c.active + '" style="margin-right:4px">' + (c.active ? 'Deactivate' : 'Activate') + '</button>' +
           '<button class="btn-sm cr-prizes-btn" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '" style="margin-right:4px;background:#eaf3ff;color:#1a6fc4">Prizes</button>' +
+          '<button class="btn-sm cr-edit-btn" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '" data-slug="' + esc(c.slug) + '" data-price="' + c.price + '" data-image="' + esc(c.image || '') + '" data-desc="' + esc(c.description || '') + '" style="margin-right:4px;background:#fffbe6;color:#7c5c00">Edit</button>' +
           '<button class="btn-sm cr-del-btn" data-id="' + esc(c.id) + '" style="background:#fff0f0;color:#c00">Delete</button>' +
         '</td></tr>';
       // Prize sub-rows
@@ -2303,7 +2391,10 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
             '<td style="padding:5px 8px;text-align:center">' + (p.coinAmount && p.itemType !== 'DORK_COIN' ? p.coinAmount : '—') + '</td>' +
             '<td style="padding:5px 8px;text-align:center">' + p.weight + '</td>' +
             '<td style="padding:5px 8px;text-align:center">' + esc(p.rarity) + '</td>' +
-            '<td style="padding:5px 8px;text-align:right"><button class="btn-sm pr-del-btn" data-crate-id="' + esc(c.id) + '" data-prize-id="' + esc(p.id) + '" style="background:#fff0f0;color:#c00;font-size:.75rem">✕</button></td>' +
+            '<td style="padding:5px 8px;text-align:right;white-space:nowrap">' +
+            '<button class="btn-sm pr-edit-btn" data-crate-id="' + esc(c.id) + '" data-prize-id="' + esc(p.id) + '" data-item-type="' + esc(p.itemType || 'SHARD') + '" data-rarity="' + esc(p.rarity) + '" data-weight="' + p.weight + '" data-product-id="' + esc(p.productId || '') + '" data-coin-amount="' + (p.coinAmount || 0) + '" data-item-value="' + (p.itemValue || 0) + '" style="background:#fffbe6;color:#7c5c00;font-size:.75rem;margin-right:4px">✏️</button>' +
+            '<button class="btn-sm pr-del-btn" data-crate-id="' + esc(c.id) + '" data-prize-id="' + esc(p.id) + '" style="background:#fff0f0;color:#c00;font-size:.75rem">✕</button>' +
+            '</td>' +
             '</tr>';
         });
         html += '</tbody></table></td></tr>';
@@ -2331,6 +2422,37 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
       btn.addEventListener('click', function () {
         if (!confirm('Delete this crate and all its prizes? This cannot be undone.')) return;
         apiFetch('/admin/crates/' + btn.dataset.id, { method: 'DELETE' }).then(loadAdminCrates);
+      });
+    });
+    wrap.querySelectorAll('.cr-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.getElementById('cr-edit-name').value  = btn.dataset.name;
+        document.getElementById('cr-edit-slug').value  = btn.dataset.slug;
+        document.getElementById('cr-edit-price').value = btn.dataset.price;
+        document.getElementById('cr-edit-image').value = btn.dataset.image;
+        document.getElementById('cr-edit-desc').value  = btn.dataset.desc;
+        document.getElementById('cr-edit-error').style.display = 'none';
+        document.getElementById('cr-edit-modal').dataset.crateId = btn.dataset.id;
+        document.getElementById('cr-edit-modal').classList.add('open');
+      });
+    });
+    wrap.querySelectorAll('.pr-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.getElementById('pr-edit-crate-id').value      = btn.dataset.crateId;
+        document.getElementById('pr-edit-prize-id').value      = btn.dataset.prizeId;
+        document.getElementById('pr-edit-item-type').value     = btn.dataset.itemType;
+        document.getElementById('pr-edit-rarity').value        = btn.dataset.rarity;
+        document.getElementById('pr-edit-weight').value        = btn.dataset.weight;
+        document.getElementById('pr-edit-product-id').value    = btn.dataset.productId;
+        document.getElementById('pr-edit-coin-amount').value   = btn.dataset.coinAmount;
+        // For DISCOUNT_VOUCHER itemValue is the %, for others treat as bonus coins
+        var isDiscount = btn.dataset.itemType === 'DISCOUNT_VOUCHER';
+        var isDorkCoin = btn.dataset.itemType === 'DORK_COIN';
+        document.getElementById('pr-edit-item-value').value    = isDiscount ? btn.dataset.itemValue : '0';
+        document.getElementById('pr-edit-bonus-coins').value   = (!isDorkCoin && !isDiscount) ? btn.dataset.coinAmount : '0';
+        document.getElementById('pr-edit-error').style.display = 'none';
+        updatePrizeEditFields();
+        document.getElementById('pr-edit-modal').classList.add('open');
       });
     });
     wrap.querySelectorAll('.pr-del-btn').forEach(function (btn) {
@@ -2471,6 +2593,95 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
       loadAdminCrates();
     }).catch(function (e) {
       msg.textContent = e.message || 'Failed.'; msg.style.color = '#c00';
+    });
+  });
+
+  // ── Edit Crate Modal ─────────────────────────────────────────────────────
+  document.getElementById('cr-edit-cancel').addEventListener('click', function () {
+    document.getElementById('cr-edit-modal').classList.remove('open');
+  });
+  document.getElementById('cr-edit-modal').addEventListener('click', function (e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+  document.getElementById('cr-edit-save').addEventListener('click', function () {
+    var modal   = document.getElementById('cr-edit-modal');
+    var crateId = modal.dataset.crateId;
+    var errEl   = document.getElementById('cr-edit-error');
+    var name    = document.getElementById('cr-edit-name').value.trim();
+    var slug    = document.getElementById('cr-edit-slug').value.trim();
+    var price   = document.getElementById('cr-edit-price').value.trim();
+    var image   = document.getElementById('cr-edit-image').value.trim();
+    var desc    = document.getElementById('cr-edit-desc').value.trim();
+    if (!name || !slug || !price) { errEl.textContent = 'Name, slug, and price are required.'; errEl.style.display = ''; return; }
+    errEl.style.display = 'none';
+    this.disabled = true;
+    apiFetch('/admin/crates/' + crateId, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, slug, price: parseFloat(price), image, description: desc }),
+    }).then(function () {
+      modal.classList.remove('open');
+      loadAdminCrates();
+    }).catch(function (e) {
+      errEl.textContent = e.message || 'Failed to save.'; errEl.style.display = '';
+    }).finally(function () {
+      document.getElementById('cr-edit-save').disabled = false;
+    });
+  });
+
+  // ── Edit Prize Modal ──────────────────────────────────────────────────────
+  function updatePrizeEditFields() {
+    var type = document.getElementById('pr-edit-item-type').value;
+    document.getElementById('pr-edit-field-product').style.display  = (type === 'SHARD' || type === 'MUG_VOUCHER') ? '' : 'none';
+    document.getElementById('pr-edit-field-coins').style.display    = (type === 'DORK_COIN') ? '' : 'none';
+    document.getElementById('pr-edit-field-discount').style.display = (type === 'DISCOUNT_VOUCHER') ? '' : 'none';
+    document.getElementById('pr-edit-field-bonus').style.display    = (type === 'SHARD' || type === 'WILDCARD_SHARD' || type === 'MUG_VOUCHER') ? '' : 'none';
+  }
+  document.getElementById('pr-edit-item-type').addEventListener('change', updatePrizeEditFields);
+  document.getElementById('pr-edit-cancel').addEventListener('click', function () {
+    document.getElementById('pr-edit-modal').classList.remove('open');
+  });
+  document.getElementById('pr-edit-modal').addEventListener('click', function (e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+  document.getElementById('pr-edit-save').addEventListener('click', function () {
+    var crateId  = document.getElementById('pr-edit-crate-id').value;
+    var prizeId  = document.getElementById('pr-edit-prize-id').value;
+    var itemType = document.getElementById('pr-edit-item-type').value;
+    var rarity   = document.getElementById('pr-edit-rarity').value;
+    var weight   = parseInt(document.getElementById('pr-edit-weight').value, 10) || 100;
+    var productId= document.getElementById('pr-edit-product-id').value.trim();
+    var coinAmt  = parseInt(document.getElementById('pr-edit-coin-amount').value, 10) || 0;
+    var itemVal  = parseFloat(document.getElementById('pr-edit-item-value').value) || 0;
+    var bonusCoins = parseInt(document.getElementById('pr-edit-bonus-coins').value, 10) || 0;
+    var errEl    = document.getElementById('pr-edit-error');
+    if ((itemType === 'SHARD' || itemType === 'MUG_VOUCHER') && !productId) {
+      errEl.textContent = 'Product ID is required for this drop type.'; errEl.style.display = ''; return;
+    }
+    if (itemType === 'DORK_COIN' && !coinAmt) {
+      errEl.textContent = 'Coin amount is required.'; errEl.style.display = ''; return;
+    }
+    if (itemType === 'DISCOUNT_VOUCHER' && !itemVal) {
+      errEl.textContent = 'Discount % is required.'; errEl.style.display = ''; return;
+    }
+    errEl.style.display = 'none';
+    this.disabled = true;
+    apiFetch('/admin/crates/' + crateId + '/prizes/' + prizeId, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        itemType,
+        productId: productId || undefined,
+        itemValue: itemType === 'DISCOUNT_VOUCHER' ? itemVal : 0,
+        coinAmount: itemType === 'DORK_COIN' ? coinAmt : bonusCoins,
+        weight,
+        rarity,
+      }),
+    }).then(function () {
+      document.getElementById('pr-edit-modal').classList.remove('open');
+      loadAdminCrates();
+    }).catch(function (e) {
+      errEl.textContent = e.message || 'Failed to save.'; errEl.style.display = '';
+    }).finally(function () {
+      document.getElementById('pr-edit-save').disabled = false;
     });
   });
 
