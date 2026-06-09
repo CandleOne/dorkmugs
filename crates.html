@@ -794,6 +794,7 @@
     DORK_COIN:        { icon: '🪙', label: 'Dork Coins' },
     DISCOUNT_VOUCHER: { icon: '🏷️', label: 'Discount Voucher' },
     MUG_VOUCHER:      { icon: '🎟️', label: 'Free Mug Voucher' },
+    OWNERSHIP_TOKEN:  { icon: '🏅', label: 'Ownership Token' },
   };
 
   function prizeDisplayInfo(prize, product) {
@@ -957,7 +958,7 @@
     // Only show Claim button for legacy direct-prize openings
     var claimBtn = document.getElementById('btn-modal-claim');
     claimBtn.dataset.claimToken = opening.claimToken || '';
-    var isInventoryItem = ['SHARD','WILDCARD_SHARD','DORK_COIN','DISCOUNT_VOUCHER','MUG_VOUCHER'].indexOf(itemType) > -1;
+    var isInventoryItem = ['SHARD','WILDCARD_SHARD','DORK_COIN','DISCOUNT_VOUCHER','MUG_VOUCHER','OWNERSHIP_TOKEN'].indexOf(itemType) > -1;
     claimBtn.style.display = isInventoryItem ? 'none' : '';
 
     // Show "Open Another" if the user has more unopened crates

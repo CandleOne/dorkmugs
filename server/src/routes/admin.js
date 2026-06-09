@@ -69,4 +69,8 @@ router.patch('/crates/:id/prizes/:prizeId', crateCtrl.adminUpdatePrize);
 router.delete('/crates/:id/prizes/:prizeId', crateCtrl.adminDeletePrize);
 router.get('/crates/openings', crateCtrl.adminListOpenings);
 
+// Ownership token transfers
+router.get('/transfers',      ctrl.listTransfers);
+router.patch('/transfers/:id', ctrl.updateTransfer);
+
 module.exports = router;

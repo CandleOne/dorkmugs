@@ -328,14 +328,14 @@ model CrateOpening {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inventory
-// Stores all items a user owns: shards, wildcards, vouchers, coins.
-// type values: SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN
+// Stores all items a user owns: shards, wildcards, vouchers, coins, ownership tokens.
+// type values: SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN | OWNERSHIP_TOKEN
 // ─────────────────────────────────────────────────────────────────────────────
 model InventoryItem {
   id          String    @id @default(cuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String    // SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN
+  type        String    // SHARD | WILDCARD_SHARD | DISCOUNT_VOUCHER | MUG_VOUCHER | DORK_COIN | OWNERSHIP_TOKEN
   productId   String?   // mug design this item is tied to (null for coins/wildcards)
   quantity    Int       @default(1)
   value       Float?    // DORK_COIN: coin amount. DISCOUNT_VOUCHER: percent off (e.g. 15)
@@ -364,4 +364,32 @@ model ShardMerge {
   createdAt     DateTime @default(now())
 
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ownership Token Transfers
+// Created when a market sale of an OWNERSHIP_TOKEN is accepted.
+// Tracks the physical re-ship logistics chain.
+// ─────────────────────────────────────────────────────────────────────────────
+model TransferRequest {
+  id               String   @id @default(cuid())
+  inventoryItemId  String   // InventoryItem being transferred
+  fromUserId       String   // seller
+  toUserId         String   // buyer
+  marketListingId  String   // the MarketListing that triggered this
+  status           String   @default("PENDING_RETURN")
+  // PENDING_RETURN   — waiting for seller to ship mug back to Dork Mugs
+  // MUG_RECEIVED     — Dork Mugs received the mug
+  // RESHIPPING       — Dork Mugs is shipping to new owner
+  // COMPLETED        — new owner received mug, token transferred
+  // CANCELLED        — transfer cancelled
+  sellerTrackingNumber   String?  // seller → Dork Mugs tracking
+  dorkmugsTrackingNumber String?  // Dork Mugs → buyer tracking
+  notes            String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([status])
 }

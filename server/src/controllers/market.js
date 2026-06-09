@@ -67,12 +67,13 @@ async function getListableInventory(req, res) {
         category:    'other',
       }));
 
-    // 3. InventoryItems (not redeemed, exclude DORK_COIN)
+    // 3. InventoryItems (not redeemed, exclude DORK_COIN, exclude transfer-locked tokens)
     const invItems = await prisma.inventoryItem.findMany({
       where: {
         userId:   req.user.id,
         redeemed: false,
         type:     { not: 'DORK_COIN' },
+        NOT: { source: { startsWith: 'TRANSFER_PENDING:' } },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -125,6 +126,16 @@ async function getListableInventory(req, res) {
             suggestedPrice = parseFloat(((i.value || 5) * 0.10).toFixed(2));
             condition      = 'new';
             category       = 'other';
+            break;
+          case 'OWNERSHIP_TOKEN':
+            label          = prod ? `${prod.pname} (Ownership Token)` : 'Ownership Token';
+            description    = prod
+              ? `Proof of ownership for "${prod.pname}". Selling this token initiates a physical mug transfer through Dork Mugs.`
+              : 'Proof of mug ownership. Selling transfers the physical mug via Dork Mugs.';
+            image          = prod ? prod.imageLeft : '';
+            suggestedPrice = prod ? parseFloat((prod.price * 0.70).toFixed(2)) : 10;
+            condition      = 'new';
+            category       = 'mugs';
             break;
           default:
             label          = i.type;
@@ -455,10 +466,37 @@ async function respondToOffer(req, res) {
       await prisma.marketListing.update({ where: { id: listing.id }, data: { status: 'SOLD' } });
 
       if (listing.sourceType === 'INVENTORY_ITEM' && listing.sourceInventoryItemId) {
-        await prisma.inventoryItem.update({
+        const invItem = await prisma.inventoryItem.findUnique({
           where: { id: listing.sourceInventoryItemId },
-          data:  { redeemed: true, redeemedAt: new Date() },
-        }).catch(() => {}); // non-fatal if already gone
+        });
+
+        if (invItem && invItem.type === 'OWNERSHIP_TOKEN') {
+          // Create a transfer request instead of immediately redeeming the token
+          await prisma.$transaction([
+            // Lock the token — mark it as pending transfer
+            prisma.inventoryItem.update({
+              where: { id: invItem.id },
+              data:  { source: `TRANSFER_PENDING:${listing.id}` },
+            }),
+            // Create the transfer record
+            prisma.transferRequest.create({
+              data: {
+                inventoryItemId: invItem.id,
+                fromUserId:      listing.sellerId,
+                toUserId:        offer.buyerId,
+                marketListingId: listing.id,
+                status:          'PENDING_RETURN',
+              },
+            }),
+          ]);
+          // TODO: send email to seller with return shipping instructions
+        } else {
+          // Non-token inventory items transfer immediately
+          await prisma.inventoryItem.update({
+            where: { id: listing.sourceInventoryItemId },
+            data:  { redeemed: true, redeemedAt: new Date() },
+          }).catch(() => {}); // non-fatal if already gone
+        }
       }
       // Note: crate keys are physical; we don't auto-consume them server-side —
       // the seller is responsible for transferring the key out-of-band for now.

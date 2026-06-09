@@ -654,7 +654,101 @@ module.exports = {
   backfillOrderShipping,
   sendAdminEmail,
   getEmailInboxUrl,
+  listTransfers,
+  updateTransfer,
 };
+
+// ─── Ownership Token Transfers ──────────────────────────────────────────────────
+
+// GET /api/admin/transfers
+async function listTransfers(req, res) {
+  try {
+    const { status } = req.query;
+    const where = status ? { status } : {};
+    const transfers = await prisma.transferRequest.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const userIds = [...new Set([
+      ...transfers.map(t => t.fromUserId),
+      ...transfers.map(t => t.toUserId),
+    ])];
+    const users = userIds.length
+      ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, email: true } })
+      : [];
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]));
+
+    const invIds = transfers.map(t => t.inventoryItemId).filter(Boolean);
+    const invItems = invIds.length
+      ? await prisma.inventoryItem.findMany({ where: { id: { in: invIds } }, select: { id: true, productId: true, type: true } })
+      : [];
+    const invMap = Object.fromEntries(invItems.map(i => [i.id, i]));
+
+    const productIds = [...new Set(invItems.map(i => i.productId).filter(Boolean))];
+    const products = productIds.length
+      ? await prisma.shopProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, pname: true } })
+      : [];
+    const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+
+    res.json(transfers.map(t => {
+      const inv = invMap[t.inventoryItemId];
+      const prod = inv && inv.productId ? productMap[inv.productId] : null;
+      return {
+        ...t,
+        fromUser:    userMap[t.fromUserId]  || null,
+        toUser:      userMap[t.toUserId]    || null,
+        productName: prod ? prod.pname       : (inv ? inv.type : null),
+      };
+    }));
+  } catch (err) {
+    console.error('[admin] listTransfers error', err.message);
+    res.status(500).json({ error: 'Could not fetch transfers.' });
+  }
+}
+
+// PATCH /api/admin/transfers/:id
+async function updateTransfer(req, res) {
+  try {
+    const VALID = ['PENDING_RETURN', 'MUG_RECEIVED', 'RESHIPPING', 'COMPLETED', 'CANCELLED'];
+    const { status, sellerTrackingNumber, dorkmugsTrackingNumber, notes } = req.body || {};
+    if (status && !VALID.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
+
+    const transfer = await prisma.transferRequest.findUnique({ where: { id: req.params.id } });
+    if (!transfer) return res.status(404).json({ error: 'Transfer not found.' });
+
+    const data = {};
+    if (status)                  data.status                  = status;
+    if (sellerTrackingNumber   !== undefined) data.sellerTrackingNumber   = sellerTrackingNumber;
+    if (dorkmugsTrackingNumber !== undefined) data.dorkmugsTrackingNumber = dorkmugsTrackingNumber;
+    if (notes                  !== undefined) data.notes                  = String(notes).slice(0, 2000);
+
+    const updated = await prisma.transferRequest.update({ where: { id: req.params.id }, data });
+
+    if (status === 'COMPLETED') {
+      await prisma.inventoryItem.update({
+        where: { id: updated.inventoryItemId },
+        data: {
+          userId:   updated.toUserId,
+          redeemed: false,
+          source:   `TRANSFER_COMPLETE:${updated.marketListingId}`,
+        },
+      });
+    }
+
+    if (status === 'CANCELLED') {
+      await prisma.inventoryItem.update({
+        where: { id: updated.inventoryItemId },
+        data: { source: `TRANSFER_CANCELLED:${updated.marketListingId}` },
+      });
+    }
+
+    res.json(updated);
+  } catch (err) {
+    console.error('[admin] updateTransfer error', err.message);
+    res.status(500).json({ error: 'Could not update transfer.' });
+  }
+}
 
 // ─── Coupons ──────────────────────────────────────────────────────────────────
 

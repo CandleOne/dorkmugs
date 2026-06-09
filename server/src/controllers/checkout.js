@@ -98,6 +98,7 @@ async function createCheckout(req, res) {
     qty: i.qty,
     placement: i.placement,
     crateId: i.crateId || null,
+    shopProductId: i.id || null,
   }));
   const metaItemsJson = JSON.stringify(metaItems);
   if (metaItemsJson.length > 490) {

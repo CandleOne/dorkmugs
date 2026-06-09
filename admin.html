@@ -187,6 +187,7 @@
         <a href="#" data-section="collections"><i class="fas fa-layer-group"></i> Collections</a>
         <a href="#" data-section="coupons"><i class="fas fa-tag"></i> Coupons</a>
         <a href="#" data-section="crates"><i class="fas fa-box-open"></i> Crates</a>
+        <a href="#" data-section="transfers"><i class="fas fa-exchange-alt"></i> Transfers</a>
         <a href="#" data-section="email-tools"><i class="fas fa-envelope"></i> Email Tools</a>
         <a href="#" data-section="products"><i class="fas fa-sync-alt"></i> Printify Sync</a>
         <a href="index.html" style="margin-top:auto"><i class="fas fa-arrow-left"></i> Back to Store</a>
@@ -451,9 +452,29 @@
         </div>
       </div>
 
+      <!-- Transfers -->
+      <div id="section-transfers" class="admin-section section-inactive">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+          <h1 style="margin:0">Ownership Token Transfers</h1>
+          <select id="tr-status-filter" style="padding:7px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:.875rem">
+            <option value="">All Statuses</option>
+            <option value="PENDING_RETURN" selected>Pending Return</option>
+            <option value="MUG_RECEIVED">Mug Received</option>
+            <option value="RESHIPPING">Reshipping</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <button id="tr-refresh-btn" style="padding:7px 14px;background:#a259e6;color:#fff;border:none;border-radius:7px;font-weight:600;cursor:pointer">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+        <div id="tr-wrap" style="overflow-x:auto">
+          <p style="color:#888">Loading&hellip;</p>
+        </div>
+      </div>
+
       <!-- Email Tools -->
       <div id="section-email-tools" class="admin-section section-inactive">
-          <h1 style="margin:0">Email Tools</h1>
           <a id="et-inbox-link" href="#" target="_blank" rel="noopener noreferrer"
             style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:#1a6fc4;color:#fff;border-radius:7px;font-size:.875rem;font-weight:600;text-decoration:none;line-height:1">
             <i class="fas fa-inbox"></i> Open Inbox
@@ -2689,6 +2710,175 @@ document.getElementById('et-custom-send-btn').addEventListener('click', function
   document.getElementById('cr-openings-refresh-btn').addEventListener('click', function () {
     apiFetch('/admin/crates/openings').then(function (data) {
       renderOpeningsTable(data.openings || []);
+    });
+  });
+
+})();
+</script>
+
+<!-- ── Transfers JS ──────────────────────────────────────────────────────── -->
+<script>
+(function () {
+  'use strict';
+
+  var TR_STATUS_LABELS = {
+    PENDING_RETURN: 'Pending Return',
+    MUG_RECEIVED:   'Mug Received',
+    RESHIPPING:     'Reshipping',
+    COMPLETED:      'Completed',
+    CANCELLED:      'Cancelled',
+  };
+  var TR_STATUS_COLORS = {
+    PENDING_RETURN: '#856404',
+    MUG_RECEIVED:   '#155724',
+    RESHIPPING:     '#1a6fc4',
+    COMPLETED:      '#2a7a4b',
+    CANCELLED:      '#721c24',
+  };
+  var TR_STATUS_BG = {
+    PENDING_RETURN: '#fff3cd',
+    MUG_RECEIVED:   '#d4edda',
+    RESHIPPING:     '#d0e4f7',
+    COMPLETED:      '#c3e6cb',
+    CANCELLED:      '#f8d7da',
+  };
+
+  function loadTransfers() {
+    var status = document.getElementById('tr-status-filter').value;
+    var wrap   = document.getElementById('tr-wrap');
+    wrap.innerHTML = '<p style="color:#888">Loading&hellip;</p>';
+    apiFetch('/admin/transfers' + (status ? '?status=' + encodeURIComponent(status) : ''))
+      .then(function (data) { renderTransfersTable(data); })
+      .catch(function (err) { wrap.innerHTML = '<p style="color:#e63946">' + esc(err.message) + '</p>'; });
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderTransfersTable(transfers) {
+    var wrap = document.getElementById('tr-wrap');
+    if (!transfers.length) {
+      wrap.innerHTML = '<p style="color:#888">No transfers found.</p>';
+      return;
+    }
+    var rows = transfers.map(function (t) {
+      var statusBadge = '<span style="display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:20px;font-weight:700;background:' +
+        esc(TR_STATUS_BG[t.status] || '#eee') + ';color:' + esc(TR_STATUS_COLORS[t.status] || '#333') + '">' +
+        esc(TR_STATUS_LABELS[t.status] || t.status) + '</span>';
+
+      var seller = t.fromUser ? (esc(t.fromUser.name) + '<br><small>' + esc(t.fromUser.email) + '</small>') : esc(t.fromUserId);
+      var buyer  = t.toUser   ? (esc(t.toUser.name)   + '<br><small>' + esc(t.toUser.email)   + '</small>') : esc(t.toUserId);
+      var created = new Date(t.createdAt).toLocaleDateString();
+
+      var updateBtn = '<button class="tr-update-btn" data-id="' + esc(t.id) + '" ' +
+        'data-status="' + esc(t.status) + '" ' +
+        'data-seller-tracking="' + esc(t.sellerTrackingNumber || '') + '" ' +
+        'data-dorkmugstracking="' + esc(t.dorkmugsTrackingNumber || '') + '" ' +
+        'data-notes="' + esc(t.notes || '') + '" ' +
+        'style="padding:5px 12px;background:#a259e6;color:#fff;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer">Update</button>';
+
+      return '<tr>' +
+        '<td style="font-size:.75rem;color:#888">' + esc(t.id.slice(-8)) + '</td>' +
+        '<td>' + seller + '</td>' +
+        '<td>' + buyer  + '</td>' +
+        '<td>' + esc(t.productName || '—') + '</td>' +
+        '<td>' + statusBadge + '</td>' +
+        '<td>' + esc(t.sellerTrackingNumber || '—') + '</td>' +
+        '<td>' + esc(t.dorkmugsTrackingNumber || '—') + '</td>' +
+        '<td>' + created + '</td>' +
+        '<td>' + updateBtn + '</td>' +
+        '</tr>';
+    }).join('');
+
+    wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.875rem">' +
+      '<thead><tr style="background:#f7f0ff">' +
+      ['ID','Seller','Buyer','Product','Status','Seller Tracking','DM Tracking','Created',''].map(function (h) {
+        return '<th style="text-align:left;padding:9px 12px;border-bottom:2px solid #e5daf5;font-weight:700;color:#555">' + h + '</th>';
+      }).join('') +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    wrap.querySelectorAll('.tr-update-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { openUpdateModal(btn); });
+    });
+  }
+
+  // ── Update modal ────────────────────────────────────────────────────────────
+  var _updateModal = null;
+
+  function openUpdateModal(btn) {
+    if (_updateModal) _updateModal.remove();
+
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center';
+
+    var modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff;border-radius:12px;padding:28px;width:460px;max-width:95vw;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.2)';
+
+    var VALID = ['PENDING_RETURN','MUG_RECEIVED','RESHIPPING','COMPLETED','CANCELLED'];
+    var opts = VALID.map(function (s) {
+      return '<option value="' + s + '"' + (s === btn.dataset.status ? ' selected' : '') + '>' + (TR_STATUS_LABELS[s] || s) + '</option>';
+    }).join('');
+
+    modal.innerHTML =
+      '<button style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888" id="tr-modal-close">&times;</button>' +
+      '<h3 style="margin:0 0 18px;font-size:1.1rem">Update Transfer <span style="color:#888;font-size:.85rem">#' + esc(btn.dataset.id.slice(-8)) + '</span></h3>' +
+      '<div style="margin-bottom:13px"><label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:4px">Status</label>' +
+        '<select id="tr-m-status" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:.9rem">' + opts + '</select></div>' +
+      '<div style="margin-bottom:13px"><label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:4px">Seller Tracking #</label>' +
+        '<input id="tr-m-seller-tracking" type="text" value="' + esc(btn.dataset.sellerTracking) + '" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:.9rem;box-sizing:border-box" /></div>' +
+      '<div style="margin-bottom:13px"><label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:4px">Dork Mugs Tracking #</label>' +
+        '<input id="tr-m-dm-tracking" type="text" value="' + esc(btn.dataset.dorkmugstracking) + '" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:.9rem;box-sizing:border-box" /></div>' +
+      '<div style="margin-bottom:18px"><label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:4px">Notes</label>' +
+        '<textarea id="tr-m-notes" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:.9rem;box-sizing:border-box;resize:vertical">' + esc(btn.dataset.notes) + '</textarea></div>' +
+      '<div id="tr-m-err" style="color:#e63946;font-size:.85rem;margin-bottom:10px"></div>' +
+      '<button id="tr-m-save" style="width:100%;padding:11px;background:#a259e6;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer">Save Changes</button>';
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    _updateModal = overlay;
+
+    document.getElementById('tr-modal-close').onclick = function () { overlay.remove(); _updateModal = null; };
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) { overlay.remove(); _updateModal = null; } });
+
+    document.getElementById('tr-m-save').onclick = function () {
+      var saveBtn = document.getElementById('tr-m-save');
+      var errEl   = document.getElementById('tr-m-err');
+      saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+      errEl.textContent = '';
+
+      apiFetch('/admin/transfers/' + encodeURIComponent(btn.dataset.id), {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status:                document.getElementById('tr-m-status').value,
+          sellerTrackingNumber:  document.getElementById('tr-m-seller-tracking').value.trim(),
+          dorkmugsTrackingNumber:document.getElementById('tr-m-dm-tracking').value.trim(),
+          notes:                 document.getElementById('tr-m-notes').value.trim(),
+        }),
+      })
+      .then(function () {
+        overlay.remove(); _updateModal = null;
+        loadTransfers();
+      })
+      .catch(function (err) {
+        errEl.textContent = err.message;
+        saveBtn.disabled = false; saveBtn.textContent = 'Save Changes';
+      });
+    };
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  document.getElementById('tr-refresh-btn').addEventListener('click', loadTransfers);
+  document.getElementById('tr-status-filter').addEventListener('change', loadTransfers);
+
+  // Load when the section becomes active
+  var _trLoaded = false;
+  document.querySelectorAll('.admin-sidebar nav a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (a.dataset.section === 'transfers' && !_trLoaded) {
+        _trLoaded = true;
+        loadTransfers();
+      }
     });
   });
 

@@ -91,6 +91,11 @@ async function ensureOrderFromSession(session) {
     console.error('[orderService] fulfillCrateKeys failed:', err.message);
   });
 
+  // Mint ownership tokens for any physical mug products purchased
+  mintOwnershipTokens(order, cartItems, metadata.userId || null).catch((err) => {
+    console.error('[orderService] mintOwnershipTokens failed:', err.message);
+  });
+
   // Redeem a mug voucher if this checkout was a voucher redemption
   if (metadata.voucherId && metadata.userId) {
     prisma.inventoryItem.updateMany({
@@ -176,3 +181,36 @@ async function fulfillCrateKeys(session, cartItems, userId) {
 }
 
 module.exports = { ensureOrderFromSession };
+
+
+/**
+ * Mint an OWNERSHIP_TOKEN InventoryItem for each physical mug purchased.
+ * Idempotent — the source field `ORDER:{orderId}:{idx}` acts as a unique key.
+ */
+async function mintOwnershipTokens(order, cartItems, userId) {
+  if (!userId) return;
+
+  for (let idx = 0; idx < cartItems.length; idx++) {
+    const item = cartItems[idx];
+    if (!item.shopProductId) continue; // only mint for items with a known shop product
+
+    const source = `ORDER:${order.id}:${idx}`;
+
+    // Idempotency: skip if already minted for this order line
+    const exists = await prisma.inventoryItem.findFirst({ where: { source, type: 'OWNERSHIP_TOKEN' } });
+    if (exists) continue;
+
+    const qty = item.qty || 1;
+    for (let q = 0; q < qty; q++) {
+      await prisma.inventoryItem.create({
+        data: {
+          userId,
+          type:      'OWNERSHIP_TOKEN',
+          productId: item.shopProductId,
+          quantity:  1,
+          source,
+        },
+      });
+    }
+  }
+}
