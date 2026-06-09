@@ -309,21 +309,20 @@ async function updateListing(req, res) {
     const { title, description, price, condition, category, imageUrl, status } = req.body || {};
     const data = {};
 
-  if (title       !== undefined) data.title       = title.toString().trim().slice(0, MAX_TITLE_LEN);
-  if (description !== undefined) data.description = description.toString().trim().slice(0, MAX_DESC_LEN);
-  if (price !== undefined) {
-    const p = parseFloat(price);
-    if (isNaN(p) || p <= 0 || p > 99999) return res.status(400).json({ error: 'Invalid price.' });
-    data.price = p;
-  }
-  if (condition !== undefined && VALID_CONDITIONS.includes(condition)) data.condition = condition;
-  if (category  !== undefined && VALID_CATEGORIES.includes(category))  data.category  = category;
-  if (imageUrl  !== undefined) data.imageUrl = sanitizeUrl(imageUrl);
+    if (title       !== undefined) data.title       = title.toString().trim().slice(0, MAX_TITLE_LEN);
+    if (description !== undefined) data.description = description.toString().trim().slice(0, MAX_DESC_LEN);
+    if (price !== undefined) {
+      const p = parseFloat(price);
+      if (isNaN(p) || p <= 0 || p > 99999) return res.status(400).json({ error: 'Invalid price.' });
+      data.price = p;
+    }
+    if (condition !== undefined && VALID_CONDITIONS.includes(condition)) data.condition = condition;
+    if (category  !== undefined && VALID_CATEGORIES.includes(category))  data.category  = category;
+    if (imageUrl  !== undefined) data.imageUrl = sanitizeUrl(imageUrl);
 
-  const allowedStatuses = req.user.role === 'ADMIN' ? ['ACTIVE','SOLD','REMOVED'] : ['ACTIVE','SOLD'];
-  if (status !== undefined && allowedStatuses.includes(status)) data.status = status;
+    const allowedStatuses = req.user.role === 'ADMIN' ? ['ACTIVE','SOLD','REMOVED'] : ['ACTIVE','SOLD'];
+    if (status !== undefined && allowedStatuses.includes(status)) data.status = status;
 
-  try {
     const updated = await prisma.marketListing.update({
       where: { id: req.params.id },
       data,
