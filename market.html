@@ -673,13 +673,14 @@
     var loginCta = document.getElementById('login-cta');
     var heroBtn  = document.getElementById('hero-post-btn');
 
-    if (!user) {
-      if (loginCta) loginCta.style.display = '';
-      heroBtn.onclick = function () { window.location.href = 'login.html'; };
-    } else {
-      if (loginCta) loginCta.style.display = 'none';
-      heroBtn.onclick = function () { openCreateModal(); };
-    }
+    if (loginCta) loginCta.style.display = user ? 'none' : '';
+
+    // Always check at click-time so the button works correctly even if
+    // auth.js's async initSession hasn't resolved yet when init() runs.
+    heroBtn.onclick = function () {
+      if (Auth.getUser && Auth.getUser()) { openCreateModal(); }
+      else { window.location.href = 'login.html'; }
+    };
   }
 
   /* ── Escape HTML ─────────────────────────────────────────────────────────── */
@@ -1198,6 +1199,9 @@ function renderInvPicker(items) {
   function init() {
     initAuthUI();
     loadListings();
+    // Re-run initAuthUI once auth.js's async initSession has settled so the
+    // hero button and login CTA reflect the real logged-in state on a fresh tab.
+    setTimeout(initAuthUI, 1200);
   }
 
   if (document.readyState === 'loading') {
